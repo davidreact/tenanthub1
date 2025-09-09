@@ -8,7 +8,7 @@ import { createClient } from "../../supabase/server";
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
-  const fullName = formData.get("full_name")?.toString() || '';
+  const fullName = formData.get("full_name")?.toString() || "";
   const supabase = await createClient();
   const origin = headers().get("origin");
 
@@ -20,7 +20,10 @@ export const signUpAction = async (formData: FormData) => {
     );
   }
 
-  const { data: { user }, error } = await supabase.auth.signUp({
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -29,7 +32,7 @@ export const signUpAction = async (formData: FormData) => {
         full_name: fullName,
         name: fullName,
         email: email,
-      }
+      },
     },
   });
 
@@ -137,4 +140,90 @@ export const signOutAction = async () => {
   const supabase = await createClient();
   await supabase.auth.signOut();
   return redirect("/sign-in");
+};
+
+export const createTenantAction = async (formData: FormData) => {
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
+  const fullName = formData.get("fullName")?.toString() || "";
+  const supabase = await createClient();
+
+  if (!email || !password || !fullName) {
+    return encodedRedirect(
+      "error",
+      "/admin/tenants",
+      "Email, password, and full name are required",
+    );
+  }
+
+  try {
+    // Create the user in Supabase Auth
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+          name: fullName,
+          email: email,
+          role: "tenant",
+        },
+      },
+    });
+
+    if (authError) {
+      console.error("Auth error:", authError);
+      return encodedRedirect("error", "/admin/tenants", authError.message);
+    }
+
+    if (!user) {
+      return encodedRedirect(
+        "error",
+        "/admin/tenants",
+        "Failed to create user",
+      );
+    }
+
+    // Insert the user into the public.users table
+    const { error: dbError } = await supabase.from("users").upsert(
+      {
+        id: user.id,
+        email: email,
+        full_name: fullName,
+        name: fullName,
+        role: "tenant",
+        is_active: true,
+        token_identifier: user.id,
+      },
+      {
+        onConflict: "id",
+      },
+    );
+
+    if (dbError) {
+      console.error("Database error:", dbError);
+      return encodedRedirect(
+        "error",
+        "/admin/tenants",
+        "Failed to create tenant profile: " + dbError.message,
+      );
+    }
+
+    // Success - redirect with success message
+    encodedRedirect(
+      "success",
+      "/admin/tenants",
+      `Tenant ${fullName} has been created successfully. They will receive an email confirmation.`,
+    );
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return encodedRedirect(
+      "error",
+      "/admin/tenants",
+      "An unexpected error occurred while creating the tenant",
+    );
+  }
 };
