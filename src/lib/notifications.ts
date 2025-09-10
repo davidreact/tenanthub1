@@ -1,4 +1,4 @@
-import { createClient } from "../../supabase/server";
+import { createClient } from "../../supabase/client";
 import { Database } from "@/types/supabase";
 
 type NotificationType = "info" | "success" | "warning" | "error";
@@ -23,7 +23,7 @@ interface CreateNotificationParams {
 }
 
 export async function createNotification(params: CreateNotificationParams) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { error } = await supabase.from("notifications").insert({
     user_id: params.userId,
@@ -50,7 +50,7 @@ export async function createAdminLogNotification(params: {
   entityId?: string;
   details?: Record<string, any>;
 }) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   // Get all admin users to notify
   const { data: adminUsers } = await supabase
@@ -100,7 +100,7 @@ export async function createTenantNotification(params: {
 }
 
 export async function markNotificationAsRead(notificationId: string) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { error } = await supabase
     .from("notifications")
@@ -117,7 +117,7 @@ export async function getUserNotifications(
   userId: string,
   isAdminLog: boolean = false,
 ) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data, error } = await supabase
     .from("notifications")
@@ -141,7 +141,7 @@ export async function getUserNotifications(
 }
 
 export async function getUnreadNotificationCount(userId: string) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { count, error } = await supabase
     .from("notifications")

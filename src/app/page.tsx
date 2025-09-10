@@ -1,6 +1,5 @@
 import Footer from "@/components/footer";
 import Hero from "@/components/hero";
-import Navbar from "@/components/navbar";
 import {
   ArrowUpRight,
   CheckCircle2,
@@ -21,7 +20,6 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
-      <Navbar />
       <Hero />
       {/* Features Section */}
       <section className="py-24 bg-white">
