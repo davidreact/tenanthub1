@@ -157,6 +157,11 @@ export const createTenantAction = async (formData: FormData) => {
   }
 
   try {
+    // Get current admin user for logging
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
+
     // Create the user in Supabase Auth
     const {
       data: { user },
@@ -212,6 +217,20 @@ export const createTenantAction = async (formData: FormData) => {
       );
     }
 
+    // Create admin log notification
+    if (currentUser) {
+      const { createAdminLogNotification } = await import(
+        "@/lib/notifications"
+      );
+      await createAdminLogNotification({
+        adminUserId: currentUser.id,
+        action: "Created new tenant",
+        entityType: "tenant",
+        entityId: user.id,
+        details: { tenantName: fullName, tenantEmail: email },
+      });
+    }
+
     // Success - redirect with success message
     encodedRedirect(
       "success",
@@ -225,5 +244,45 @@ export const createTenantAction = async (formData: FormData) => {
       "/admin/tenants",
       "An unexpected error occurred while creating the tenant",
     );
+  }
+};
+
+export const markNotificationAsReadAction = async (notificationId: string) => {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_read: true, updated_at: new Date().toISOString() })
+    .eq("id", notificationId);
+
+  if (error) {
+    console.error("Error marking notification as read:", error);
+    throw error;
+  }
+};
+
+export const updateUserLanguageAction = async (language: string) => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("User not authenticated");
+  }
+
+  const { error } = await supabase.from("user_preferences").upsert(
+    {
+      user_id: user.id,
+      language: language,
+    },
+    {
+      onConflict: "user_id",
+    },
+  );
+
+  if (error) {
+    console.error("Error updating language preference:", error);
+    throw error;
   }
 };

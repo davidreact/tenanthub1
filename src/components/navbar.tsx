@@ -3,13 +3,27 @@ import { createClient } from "../../supabase/server";
 import { Button } from "./ui/button";
 import { User, UserCircle, Home } from "lucide-react";
 import UserProfile from "./user-profile";
+import { LanguageSwitcher } from "./language-switcher";
+import { ThemeSwitcher } from "./theme-switcher";
+import NotificationsPanel from "./notifications-panel";
 
 export default async function Navbar() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await (await supabase).auth.getUser();
+  } = await supabase.auth.getUser();
+
+  // Get user profile to check if admin
+  let userProfile = null;
+  if (user) {
+    const { data } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    userProfile = data;
+  }
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white py-2">
@@ -22,9 +36,15 @@ export default async function Navbar() {
           <Home className="w-6 h-6" />
           Tenant Portal
         </Link>
-        <div className="flex gap-4 items-center">
+        <div className="flex gap-2 items-center">
+          <LanguageSwitcher />
+          <ThemeSwitcher />
           {user ? (
             <>
+              <NotificationsPanel
+                userId={user.id}
+                isAdmin={userProfile?.role === "admin"}
+              />
               <Link
                 href="/dashboard"
                 className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"

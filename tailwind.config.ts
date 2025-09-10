@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config = {
-  darkMode: ["class"],
+  darkMode: "class",
 
   content: [
     "./pages/**/*.{ts,tsx}",
@@ -31,7 +31,7 @@ const config = {
         foreground: "hsl(var(--foreground))",
 
         primary: {
-          DEFAULT: "hsl(var(--primary))",
+          DEFAULT: "#67C090",
           foreground: "hsl(var(--primary-foreground))"
         },
 
@@ -52,7 +52,7 @@ const config = {
 
         accent: {
           DEFAULT: "hsl(var(--accent))",
-          foreground: "#c58a8a"
+          foreground: "#c81b1b"
         },
 
         popover: {
@@ -63,6 +63,12 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
+        },
+
+        dark: {
+          primary: {
+            DEFAULT: "#fa3838"
+          }
         }
       },
 
