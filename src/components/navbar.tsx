@@ -14,12 +14,12 @@ export default async function Navbar() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Get user profile to check if admin
+  // Get user profile to check if admin and get user name
   let userProfile = null;
   if (user) {
     const { data } = await supabase
       .from("users")
-      .select("role")
+      .select("role, full_name, name")
       .eq("id", user.id)
       .single();
     userProfile = data;
@@ -51,6 +51,9 @@ export default async function Navbar() {
               >
                 <Button>Dashboard</Button>
               </Link>
+              <span className="text-sm text-gray-700 px-2">
+                {userProfile?.full_name || userProfile?.name || user.email}
+              </span>
               <UserProfile />
             </>
           ) : (

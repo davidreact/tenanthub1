@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, MessageSquare, Send, User } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
   id: string;
@@ -60,6 +61,8 @@ export default function AdminConversations() {
   const [selectedConversation, setSelectedConversation] =
     useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
   const supabase = createClient();
 
   useEffect(() => {
@@ -112,8 +115,18 @@ export default function AdminConversations() {
 
       setNewMessage("");
       fetchConversations(); // Refresh conversations
+
+      toast({
+        title: "Message Sent",
+        description: "Your message has been sent successfully.",
+      });
     } catch (error) {
       console.error("Error sending message:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -128,8 +141,18 @@ export default function AdminConversations() {
         .eq("id", conversationId);
 
       fetchConversations(); // Refresh conversations
+
+      toast({
+        title: "Conversation Updated",
+        description: `Conversation has been ${status}.`,
+      });
     } catch (error) {
       console.error("Error updating conversation status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update conversation status. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -235,12 +258,15 @@ export default function AdminConversations() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Dialog>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedConversation(conversation)}
+                        onClick={() => {
+                          setSelectedConversation(conversation);
+                          setIsDialogOpen(true);
+                        }}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
                         View Messages

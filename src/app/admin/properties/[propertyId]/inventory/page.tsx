@@ -32,6 +32,7 @@ import {
 import { ArrowLeft, Package, Plus, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Property {
   id: string;
@@ -57,6 +58,9 @@ export default function PropertyInventory() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { toast } = useToast();
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
@@ -99,8 +103,19 @@ export default function PropertyInventory() {
         .insert({ ...itemData, property_id: propertyId });
 
       fetchData(); // Refresh the list
+      setIsCreateDialogOpen(false);
+
+      toast({
+        title: "Item Added",
+        description: "Inventory item has been created successfully.",
+      });
     } catch (error) {
       console.error("Error creating inventory item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create inventory item. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -114,8 +129,19 @@ export default function PropertyInventory() {
       fetchData(); // Refresh the list
       setIsEditing(false);
       setSelectedItem(null);
+      setIsEditDialogOpen(false);
+
+      toast({
+        title: "Item Updated",
+        description: "Inventory item has been updated successfully.",
+      });
     } catch (error) {
       console.error("Error updating inventory item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update inventory item. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -127,8 +153,18 @@ export default function PropertyInventory() {
       await supabase.from("inventory_items").delete().eq("id", id);
 
       fetchData(); // Refresh the list
+
+      toast({
+        title: "Item Deleted",
+        description: "Inventory item has been deleted successfully.",
+      });
     } catch (error) {
       console.error("Error deleting inventory item:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete inventory item. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -199,9 +235,12 @@ export default function PropertyInventory() {
               </h1>
               <p className="text-gray-600 mt-2">{property.address}</p>
             </div>
-            <Dialog>
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            >
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Item
                 </Button>
@@ -351,7 +390,10 @@ export default function PropertyInventory() {
                 )}
 
                 <div className="flex gap-2">
-                  <Dialog>
+                  <Dialog
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -360,6 +402,7 @@ export default function PropertyInventory() {
                         onClick={() => {
                           setSelectedItem(item);
                           setIsEditing(true);
+                          setIsEditDialogOpen(true);
                         }}
                       >
                         <Edit className="h-4 w-4 mr-2" />

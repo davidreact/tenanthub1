@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowLeft, Calendar, Check, X, Clock } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
 
 interface KeyHandover {
   id: string;
@@ -50,6 +51,8 @@ export default function AdminHandovers() {
   const [selectedHandover, setSelectedHandover] = useState<KeyHandover | null>(
     null,
   );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
   const supabase = createClient();
 
   useEffect(() => {
@@ -101,8 +104,19 @@ export default function AdminHandovers() {
 
       fetchHandovers(); // Refresh the list
       setSelectedHandover(null);
+      setIsDialogOpen(false);
+
+      toast({
+        title: "Handover Updated",
+        description: `Handover has been ${status} successfully.`,
+      });
     } catch (error) {
       console.error("Error updating handover status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update handover status. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -287,12 +301,15 @@ export default function AdminHandovers() {
                 )}
 
                 <div className="flex gap-2">
-                  <Dialog>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedHandover(handover)}
+                        onClick={() => {
+                          setSelectedHandover(handover);
+                          setIsDialogOpen(true);
+                        }}
                       >
                         <Clock className="h-4 w-4 mr-2" />
                         Manage

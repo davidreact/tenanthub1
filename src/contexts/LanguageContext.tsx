@@ -26,6 +26,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getUser();
 
       if (user) {
+        // First try to get from user_preferences table
         const { data: preferences } = await supabase
           .from("user_preferences")
           .select("language")
@@ -34,6 +35,17 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
         if (preferences?.language) {
           setLanguageState(preferences.language as Language);
+        } else {
+          // If no preference exists, create one with default language
+          await supabase.from("user_preferences").upsert(
+            {
+              user_id: user.id,
+              language: "en",
+            },
+            {
+              onConflict: "user_id",
+            },
+          );
         }
       } else {
         // Load from localStorage for non-authenticated users

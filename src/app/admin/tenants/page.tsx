@@ -41,6 +41,7 @@ import Link from "next/link";
 import { createTenantAction } from "../../actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormMessage } from "@/components/form-message";
+import { useToast } from "@/components/ui/use-toast";
 
 interface User {
   id: string;
@@ -82,6 +83,8 @@ export default function AdminTenants() {
   const [loading, setLoading] = useState(true);
   const [selectedTenant, setSelectedTenant] = useState<User | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const { toast } = useToast();
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -143,8 +146,18 @@ export default function AdminTenants() {
         .eq("id", tenantId);
 
       fetchData(); // Refresh the list
+
+      toast({
+        title: "Tenant Status Updated",
+        description: `Tenant has been ${!isActive ? "activated" : "deactivated"} successfully.`,
+      });
     } catch (error) {
       console.error("Error updating tenant status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update tenant status. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -172,8 +185,19 @@ export default function AdminTenants() {
         .eq("id", propertyId);
 
       fetchData(); // Refresh the list
+      setIsAssignDialogOpen(false);
+
+      toast({
+        title: "Property Assigned",
+        description: "Property has been assigned to tenant successfully.",
+      });
     } catch (error) {
       console.error("Error assigning property:", error);
+      toast({
+        title: "Error",
+        description: "Failed to assign property. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -377,12 +401,18 @@ export default function AdminTenants() {
                     </Button>
 
                     {!tenantProperty && (
-                      <Dialog>
+                      <Dialog
+                        open={isAssignDialogOpen}
+                        onOpenChange={setIsAssignDialogOpen}
+                      >
                         <DialogTrigger asChild>
                           <Button
                             size="sm"
                             className="flex-1"
-                            onClick={() => setSelectedTenant(tenant)}
+                            onClick={() => {
+                              setSelectedTenant(tenant);
+                              setIsAssignDialogOpen(true);
+                            }}
                           >
                             <Building className="h-4 w-4 mr-2" />
                             Assign Property

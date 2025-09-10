@@ -41,6 +41,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Property {
   id: string;
@@ -64,6 +65,9 @@ export default function AdminProperties() {
     null,
   );
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { toast } = useToast();
   const supabase = createClient();
 
   useEffect(() => {
@@ -90,8 +94,19 @@ export default function AdminProperties() {
       await supabase.from("properties").insert(propertyData);
 
       fetchProperties(); // Refresh the list
+      setIsCreateDialogOpen(false);
+
+      toast({
+        title: "Property Created",
+        description: "Property has been created successfully.",
+      });
     } catch (error) {
       console.error("Error creating property:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create property. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -105,8 +120,19 @@ export default function AdminProperties() {
       fetchProperties(); // Refresh the list
       setIsEditing(false);
       setSelectedProperty(null);
+      setIsEditDialogOpen(false);
+
+      toast({
+        title: "Property Updated",
+        description: "Property has been updated successfully.",
+      });
     } catch (error) {
       console.error("Error updating property:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update property. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -117,8 +143,18 @@ export default function AdminProperties() {
       await supabase.from("properties").delete().eq("id", id);
 
       fetchProperties(); // Refresh the list
+
+      toast({
+        title: "Property Deleted",
+        description: "Property has been deleted successfully.",
+      });
     } catch (error) {
       console.error("Error deleting property:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete property. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -170,9 +206,12 @@ export default function AdminProperties() {
                 Manage all properties in your portfolio
               </p>
             </div>
-            <Dialog>
+            <Dialog
+              open={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+            >
               <DialogTrigger asChild>
-                <Button>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Property
                 </Button>
@@ -370,7 +409,10 @@ export default function AdminProperties() {
                 )}
 
                 <div className="flex gap-2">
-                  <Dialog>
+                  <Dialog
+                    open={isEditDialogOpen}
+                    onOpenChange={setIsEditDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -379,6 +421,7 @@ export default function AdminProperties() {
                         onClick={() => {
                           setSelectedProperty(property);
                           setIsEditing(true);
+                          setIsEditDialogOpen(true);
                         }}
                       >
                         <Edit className="h-4 w-4 mr-2" />

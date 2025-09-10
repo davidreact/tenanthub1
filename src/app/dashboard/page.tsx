@@ -1,4 +1,3 @@
-import DashboardNavbar from "@/components/dashboard-navbar";
 import { redirect } from "next/navigation";
 import { createClient } from "../../../supabase/server";
 import DashboardContent from "@/components/dashboard-content";
@@ -65,7 +64,6 @@ export default async function Dashboard() {
 
   return (
     <>
-      <DashboardNavbar />
       <DashboardContent
         isAdmin={isAdmin}
         userProfile={userProfile}

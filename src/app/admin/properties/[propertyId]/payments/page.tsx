@@ -23,6 +23,7 @@ import {
 import { ArrowLeft, CreditCard, Check, X, Eye } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Property {
   id: string;
@@ -55,6 +56,8 @@ export default function PropertyPayments() {
   const [selectedPayment, setSelectedPayment] = useState<PaymentProof | null>(
     null,
   );
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { toast } = useToast();
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
@@ -118,8 +121,19 @@ export default function PropertyPayments() {
 
       fetchData(); // Refresh the list
       setSelectedPayment(null);
+      setIsDialogOpen(false);
+
+      toast({
+        title: "Payment Updated",
+        description: `Payment has been ${status} successfully.`,
+      });
     } catch (error) {
       console.error("Error updating payment status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update payment status. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -280,12 +294,15 @@ export default function PropertyPayments() {
                 )}
 
                 <div className="flex gap-2">
-                  <Dialog>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setSelectedPayment(payment)}
+                        onClick={() => {
+                          setSelectedPayment(payment);
+                          setIsDialogOpen(true);
+                        }}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Review
