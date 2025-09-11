@@ -2,9 +2,6 @@ export const languages = {
   en: "English",
   es: "Español",
   fr: "Français",
-  de: "Deutsch",
-  it: "Italiano",
-  pt: "Português",
 };
 
 export const translations = {
@@ -12,7 +9,7 @@ export const translations = {
     // Navigation
     "nav.dashboard": "Dashboard",
     "nav.signIn": "Sign In",
-    "nav.signUp": "Sign Up",
+    "nav.signUp": "Sign Up", 
     "nav.signOut": "Sign Out",
     "nav.tenantPortal": "Tenant Portal",
 

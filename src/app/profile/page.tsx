@@ -167,7 +167,7 @@ export default function ProfilePage() {
                 <Input
                   id="email"
                   type="email"
-                  value={profile.email}
+                  value={profile?.email || ''}
                   disabled
                   className="bg-muted"
                 />
@@ -220,7 +220,6 @@ export default function ProfilePage() {
                     <SelectItem value="en">English</SelectItem>
                     <SelectItem value="es">Español</SelectItem>
                     <SelectItem value="fr">Français</SelectItem>
-                    <SelectItem value="de">Deutsch</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
