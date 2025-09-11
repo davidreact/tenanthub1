@@ -2,10 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const updateSession = async (request: NextRequest) => {
-  // This `try/catch` block is only here for the interactive tutorial.
-  // Feel free to remove once you have Supabase connected.
   try {
-    // Create an unmodified response
     let response = NextResponse.next({
       request: {
         headers: request.headers,
@@ -26,11 +23,6 @@ export const updateSession = async (request: NextRequest) => {
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
               request.cookies.set(name, value);
-              response = NextResponse.next({
-                request: {
-                  headers: request.headers,
-                },
-              });
               response.cookies.set(name, value, options);
             });
           },
@@ -38,24 +30,34 @@ export const updateSession = async (request: NextRequest) => {
       }
     );
 
-    // This will refresh session if expired - required for Server Components
-    // https://supabase.com/docs/guides/auth/server-side/nextjs
+    // Refresh session if expired
     const { data: { user }, error } = await supabase.auth.getUser();
 
-    // protected routes
-    if (request.nextUrl.pathname.startsWith("/dashboard") && error) {
+    // Protected routes - redirect to sign-in if not authenticated
+    if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
 
-    if (request.nextUrl.pathname === "/" && !error) {
-      return NextResponse.redirect(new URL("/", request.url));
+    if (request.nextUrl.pathname.startsWith("/admin") && !user) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
+    if (request.nextUrl.pathname.startsWith("/tenant") && !user) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
+    if (request.nextUrl.pathname.startsWith("/profile") && !user) {
+      return NextResponse.redirect(new URL("/sign-in", request.url));
+    }
+
+    // Redirect authenticated users away from auth pages
+    if ((request.nextUrl.pathname === "/sign-in" || request.nextUrl.pathname === "/sign-up") && user) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
     return response;
   } catch (e) {
-    // If you are here, a Supabase client could not be created!
-    // This is likely because you have not set up environment variables.
-    // Check out http://localhost:3000 for Next Steps.
+    console.error("Middleware error:", e);
     return NextResponse.next({
       request: {
         headers: request.headers,

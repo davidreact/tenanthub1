@@ -286,3 +286,50 @@ export const updateUserLanguageAction = async (language: string) => {
     throw error;
   }
 };
+
+export const updateUserProfileAction = async (formData: FormData) => {
+  const fullName = formData.get("fullName")?.toString();
+  const telephoneNumber = formData.get("telephoneNumber")?.toString();
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return encodedRedirect("error", "/profile", "User not authenticated");
+  }
+
+  try {
+    const { error } = await supabase
+      .from("users")
+      .update({
+        full_name: fullName,
+        telephone_number: telephoneNumber,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+
+    if (error) {
+      console.error("Error updating user profile:", error);
+      return encodedRedirect(
+        "error",
+        "/profile",
+        "Failed to update profile: " + error.message,
+      );
+    }
+
+    return encodedRedirect(
+      "success",
+      "/profile",
+      "Profile updated successfully!",
+    );
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return encodedRedirect(
+      "error",
+      "/profile",
+      "An unexpected error occurred while updating the profile",
+    );
+  }
+};

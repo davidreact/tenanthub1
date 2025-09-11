@@ -26,7 +26,7 @@ export default async function Navbar() {
   }
 
   return (
-    <nav className="w-full border-b border-gray-200 bg-white py-2">
+    <nav className="w-full border-b border-border bg-background py-2">
       <div className="container mx-auto px-4 flex justify-between items-center">
         <Link
           href="/"
@@ -47,11 +47,17 @@ export default async function Navbar() {
               />
               <Link
                 href="/dashboard"
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground/80"
               >
                 <Button>Dashboard</Button>
               </Link>
-              <span className="text-sm text-gray-700 px-2">
+              <Link
+                href="/profile"
+                className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground/80"
+              >
+                Profile
+              </Link>
+              <span className="text-sm text-foreground px-2">
                 {userProfile?.full_name || userProfile?.name || user.email}
               </span>
               <UserProfile />
@@ -60,13 +66,13 @@ export default async function Navbar() {
             <>
               <Link
                 href="/sign-in"
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground/80"
               >
                 Sign In
               </Link>
               <Link
                 href="/sign-up"
-                className="px-4 py-2 text-sm font-medium text-white bg-black rounded-md hover:bg-gray-800"
+                className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90"
               >
                 Sign Up
               </Link>
