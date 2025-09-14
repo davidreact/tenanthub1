@@ -27,31 +27,38 @@ export const updateSession = async (request: NextRequest) => {
             });
           },
         },
-      }
+      },
     );
 
-    // Refresh session if expired
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    // Protected routes - redirect to sign-in if not authenticated
-    if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
-    }
+    const path = request.nextUrl.pathname;
 
-    if (request.nextUrl.pathname.startsWith("/admin") && !user) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
-    }
+    // Publicly accessible routes
+    // Allow Tempo storyboards only when not navigating to protected app paths within them
+    const isTempobook = path.startsWith("/tempobook");
+    const isTempobookPublic =
+      isTempobook &&
+      !path.includes("/admin") &&
+      !path.includes("/tenant") &&
+      !path.includes("/dashboard") &&
+      !path.includes("/profile");
+    const isPublicRoute =
+      path === "/" ||
+      path.startsWith("/sign-in") ||
+      path.startsWith("/sign-up") ||
+      path.startsWith("/forgot-password") ||
+      isTempobookPublic;
 
-    if (request.nextUrl.pathname.startsWith("/tenant") && !user) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
-    }
-
-    if (request.nextUrl.pathname.startsWith("/profile") && !user) {
+    // Redirect unauthenticated users away from all non-public routes
+    if (!user && !isPublicRoute) {
       return NextResponse.redirect(new URL("/sign-in", request.url));
     }
 
     // Redirect authenticated users away from auth pages
-    if ((request.nextUrl.pathname === "/sign-in" || request.nextUrl.pathname === "/sign-up") && user) {
+    if (user && (path === "/sign-in" || path === "/sign-up")) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 

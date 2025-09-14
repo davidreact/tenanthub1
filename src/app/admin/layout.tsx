@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "supabase/server";
 
-export default async function TenantLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -14,6 +14,6 @@ export default async function TenantLayout({
   if (!user) {
     redirect("/sign-in");
   }
-  /*newcomment*/
+
   return <>{children}</>;
 }
