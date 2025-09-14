@@ -220,7 +220,7 @@ export default function PropertyInventory() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-hero-gradient">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">

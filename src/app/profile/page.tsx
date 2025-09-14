@@ -114,7 +114,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-hero-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Loading profile...</p>
@@ -125,7 +125,7 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-hero-gradient flex items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground">Profile not found</p>
         </div>
@@ -134,7 +134,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-hero-gradient">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -167,7 +167,7 @@ export default function ProfilePage() {
                 <Input
                   id="email"
                   type="email"
-                  value={profile?.email || ''}
+                  value={profile?.email || ""}
                   disabled
                   className="bg-muted"
                 />

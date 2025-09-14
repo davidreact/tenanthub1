@@ -37,7 +37,7 @@ export default function DashboardContent({
   const { t } = useLanguage();
 
   return (
-    <main className="w-full bg-background min-h-screen">
+    <main className="w-full bg-hero-gradient min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">

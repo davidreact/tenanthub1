@@ -204,7 +204,7 @@ export default function TenantMessages() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-hero-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">{t("common.loading")}</p>
@@ -214,7 +214,7 @@ export default function TenantMessages() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-hero-gradient">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -223,7 +223,7 @@ export default function TenantMessages() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-{t("common.backToDashboard")}
+            {t("common.backToDashboard")}
           </Link>
           <div className="flex justify-between items-center">
             <div>
@@ -239,12 +239,14 @@ export default function TenantMessages() {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-New {t("messages.conversations")}
+                  New {t("messages.conversations")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Start New {t("messages.conversations")}</DialogTitle>
+                  <DialogTitle>
+                    Start New {t("messages.conversations")}
+                  </DialogTitle>
                   <DialogDescription>
                     Create a new conversation with the property administrator
                   </DialogDescription>
@@ -280,7 +282,9 @@ New {t("messages.conversations")}
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="low">{t("common.low")}</SelectItem>
-                        <SelectItem value="medium">{t("common.medium")}</SelectItem>
+                        <SelectItem value="medium">
+                          {t("common.medium")}
+                        </SelectItem>
                         <SelectItem value="high">{t("common.high")}</SelectItem>
                       </SelectContent>
                     </Select>
@@ -296,7 +300,7 @@ New {t("messages.conversations")}
                     />
                   </div>
                   <Button type="submit" className="w-full">
-Start {t("messages.conversations")}
+                    Start {t("messages.conversations")}
                   </Button>
                 </form>
               </DialogContent>
@@ -307,7 +311,9 @@ Start {t("messages.conversations")}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Conversations List */}
           <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-lg font-semibold">Your {t("messages.conversations")}</h2>
+            <h2 className="text-lg font-semibold">
+              Your {t("messages.conversations")}
+            </h2>
 
             {conversations.length > 0 ? (
               <div className="space-y-3">
@@ -362,7 +368,9 @@ Start {t("messages.conversations")}
               <Card>
                 <CardContent className="text-center py-8">
                   <MessageSquare className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600 text-sm">No {t("messages.conversations")} yet</p>
+                  <p className="text-gray-600 text-sm">
+                    No {t("messages.conversations")} yet
+                  </p>
                 </CardContent>
               </Card>
             )}
