@@ -150,19 +150,19 @@ export default function PropertyTenants() {
         <div className="mb-8">
           <Link
             href="/admin/properties"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
+            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t("common.backToProperties")}
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <Users className="h-8 w-8" />
               {formatTranslation("tenants.tenantsFor", language, {
                 propertyName: property.name,
               })}
             </h1>
-            <p className="text-gray-600 mt-2">{property.address}</p>
+            <p className="text-muted-foreground mt-2">{property.address}</p>
           </div>
         </div>
 
@@ -212,7 +212,7 @@ export default function PropertyTenants() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {t("common.monthlyRent")}:
                     </span>
                     <p className="font-medium">
@@ -220,7 +220,7 @@ export default function PropertyTenants() {
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {t("common.leaseStart")}:
                     </span>
                     <p className="font-medium">
@@ -230,7 +230,7 @@ export default function PropertyTenants() {
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {t("common.leaseEnd")}:
                     </span>
                     <p className="font-medium">
@@ -267,10 +267,10 @@ export default function PropertyTenants() {
           <Card>
             <CardContent className="text-center py-12">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 {t("tenants.noTenantsAssignedTitle")}
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-muted-foreground mb-4">
                 {t("tenants.noTenantsAssignedDescription")}
               </p>
               <Link href="/admin/tenants">

@@ -52,7 +52,7 @@ interface Property {
   property_type: string;
   bedrooms: number;
   bathrooms: number;
-  square_feet: number;
+  square_meters: number;
   monthly_rent: number;
   deposit_amount: number;
   status: string;
@@ -99,14 +99,14 @@ export default function AdminProperties() {
       setIsCreateDialogOpen(false);
 
       toast({
-        title: "Property Created",
-        description: "Property has been created successfully.",
+        title: t("common.propertyCreated"),
+        description: t("common.propertyCreatedDescription"),
       });
     } catch (error) {
       console.error("Error creating property:", error);
       toast({
-        title: "Error",
-        description: "Failed to create property. Please try again.",
+        title: t("common.error"),
+        description: t("common.failedToCreateProperty"),
         variant: "destructive",
       });
     }
@@ -125,21 +125,21 @@ export default function AdminProperties() {
       setIsEditDialogOpen(false);
 
       toast({
-        title: "Property Updated",
-        description: "Property has been updated successfully.",
+        title: t("common.propertyUpdated"),
+        description: t("common.propertyUpdatedDescription"),
       });
     } catch (error) {
       console.error("Error updating property:", error);
       toast({
-        title: "Error",
-        description: "Failed to update property. Please try again.",
+        title: t("common.error"),
+        description: t("common.failedToUpdateProperty"),
         variant: "destructive",
       });
     }
   };
 
   const deleteProperty = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this property?")) return;
+    if (!confirm(t("common.areYouSureDeleteProperty"))) return;
 
     try {
       await supabase.from("properties").delete().eq("id", id);
@@ -147,14 +147,14 @@ export default function AdminProperties() {
       fetchProperties(); // Refresh the list
 
       toast({
-        title: "Property Deleted",
-        description: "Property has been deleted successfully.",
+        title: t("common.propertyDeleted"),
+        description: t("common.propertyDeletedDescription"),
       });
     } catch (error) {
       console.error("Error deleting property:", error);
       toast({
-        title: "Error",
-        description: "Failed to delete property. Please try again.",
+        title: t("common.error"),
+        description: t("common.failedToDeleteProperty"),
         variant: "destructive",
       });
     }
@@ -238,8 +238,8 @@ export default function AdminProperties() {
                       property_type: formData.get("property_type") as string,
                       bedrooms: parseInt(formData.get("bedrooms") as string),
                       bathrooms: parseInt(formData.get("bathrooms") as string),
-                      square_feet: parseInt(
-                        formData.get("square_feet") as string,
+                      square_meters: parseInt(
+                        formData.get("square_meters") as string,
                       ),
                       monthly_rent: parseFloat(
                         formData.get("monthly_rent") as string,
@@ -320,12 +320,12 @@ export default function AdminProperties() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="square_feet">
-                        {t("common.squareFeet")}
+                      <Label htmlFor="square_meters">
+                        {t("common.squareMeters")}
                       </Label>
                       <Input
-                        id="square_feet"
-                        name="square_feet"
+                        id="square_meters"
+                        name="square_meters"
                         type="number"
                         min="0"
                       />
@@ -376,7 +376,7 @@ export default function AdminProperties() {
                   </div>
 
                   <Button type="submit" className="w-full">
-                    Create Property
+                    {t("common.createProperty")}
                   </Button>
                 </form>
               </DialogContent>
@@ -413,7 +413,7 @@ export default function AdminProperties() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {t("common.propertyType")}:
                     </span>
                     <p className="font-medium capitalize">
@@ -421,19 +421,19 @@ export default function AdminProperties() {
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {t("common.monthlyRent")}:
                     </span>
                     <p className="font-medium">${property.monthly_rent}/mo</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {t("common.bedrooms")}:
                     </span>
                     <p className="font-medium">{property.bedrooms}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">
+                    <span className="text-muted-foreground">
                       {t("common.bathrooms")}:
                     </span>
                     <p className="font-medium">{property.bathrooms}</p>
@@ -441,7 +441,7 @@ export default function AdminProperties() {
                 </div>
 
                 {property.description && (
-                  <p className="text-sm text-gray-600 line-clamp-2">
+                  <p className="text-sm text-muted-foreground line-clamp-2">
                     {property.description}
                   </p>
                 )}
@@ -463,7 +463,7 @@ export default function AdminProperties() {
                         }}
                       >
                         <Edit className="h-4 w-4 mr-2" />
-                        Edit
+                        {t("common.edit")}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
@@ -495,8 +495,8 @@ export default function AdminProperties() {
                               bathrooms: parseInt(
                                 formData.get("bathrooms") as string,
                               ),
-                              square_feet: parseInt(
-                                formData.get("square_feet") as string,
+                              square_meters: parseInt(
+                                formData.get("square_meters") as string,
                               ),
                               monthly_rent: parseFloat(
                                 formData.get("monthly_rent") as string,
@@ -512,19 +512,19 @@ export default function AdminProperties() {
                           className="space-y-4"
                         >
                           <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="edit-name">Property Name</Label>
-                              <Input
-                                id="edit-name"
-                                name="name"
-                                defaultValue={selectedProperty.name}
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-property_type">
-                                Property Type
-                              </Label>
+                          <div>
+                            <Label htmlFor="edit-name">{t("common.propertyName")}</Label>
+                            <Input
+                              id="edit-name"
+                              name="name"
+                              defaultValue={selectedProperty.name}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="edit-property_type">
+                              {t("common.propertyType")}
+                            </Label>
                               <Select
                                 name="property_type"
                                 defaultValue={selectedProperty.property_type}
@@ -552,7 +552,7 @@ export default function AdminProperties() {
                           </div>
 
                           <div>
-                            <Label htmlFor="edit-address">Address</Label>
+                            <Label htmlFor="edit-address">{t("common.address")}</Label>
                             <Textarea
                               id="edit-address"
                               name="address"
@@ -563,7 +563,7 @@ export default function AdminProperties() {
 
                           <div>
                             <Label htmlFor="edit-description">
-                              Description
+                              {t("common.description")}
                             </Label>
                             <Textarea
                               id="edit-description"
@@ -575,7 +575,7 @@ export default function AdminProperties() {
 
                           <div className="grid grid-cols-3 gap-4">
                             <div>
-                              <Label htmlFor="edit-bedrooms">Bedrooms</Label>
+                              <Label htmlFor="edit-bedrooms">{t("common.bedrooms")}</Label>
                               <Input
                                 id="edit-bedrooms"
                                 name="bedrooms"
@@ -586,7 +586,7 @@ export default function AdminProperties() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="edit-bathrooms">Bathrooms</Label>
+                              <Label htmlFor="edit-bathrooms">{t("common.bathrooms")}</Label>
                               <Input
                                 id="edit-bathrooms"
                                 name="bathrooms"
@@ -598,15 +598,15 @@ export default function AdminProperties() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="edit-square_feet">
-                                Square Feet
+                              <Label htmlFor="edit-square_meters">
+                                {t("common.squareMeters")}
                               </Label>
                               <Input
-                                id="edit-square_feet"
-                                name="square_feet"
+                                id="edit-square_meters"
+                                name="square_meters"
                                 type="number"
                                 min="0"
-                                defaultValue={selectedProperty.square_feet}
+                                defaultValue={selectedProperty.square_meters}
                               />
                             </div>
                           </div>
@@ -614,7 +614,7 @@ export default function AdminProperties() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <Label htmlFor="edit-monthly_rent">
-                                Monthly Rent ($)
+                                {t("common.monthlyRent")} ($)
                               </Label>
                               <Input
                                 id="edit-monthly_rent"
@@ -628,7 +628,7 @@ export default function AdminProperties() {
                             </div>
                             <div>
                               <Label htmlFor="edit-deposit_amount">
-                                Deposit Amount ($)
+                                {t("common.depositAmount")} ($)
                               </Label>
                               <Input
                                 id="edit-deposit_amount"
@@ -641,9 +641,10 @@ export default function AdminProperties() {
                             </div>
                           </div>
 
+
                           <div>
-                            <Label htmlFor="edit-status">Status</Label>
-                            <Select
+                          <Label htmlFor="edit-status">{t("common.status")}</Label>                            
+                          <Select
                               name="status"
                               defaultValue={selectedProperty.status}
                               required
@@ -713,12 +714,12 @@ export default function AdminProperties() {
         {properties.length === 0 && (
           <Card>
             <CardContent className="text-center py-12">
-              <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <Building className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                No Properties
+                {t("common.noProperties")}
               </h3>
               <p className="text-muted-foreground">
-                Add your first property to get started.
+                {t("common.noPropertiesDescription")}
               </p>
             </CardContent>
           </Card>
