@@ -24,7 +24,7 @@ const LanguageSwitcher = () => {
           <Languages size={ICON_SIZE} className={"text-muted-foreground"} />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-content" align="start">
+      <DropdownMenuContent className="min-w-[12rem]" align="start">
         <DropdownMenuRadioGroup
           value={language}
           onValueChange={(value) => setLanguage(value as Language)}
