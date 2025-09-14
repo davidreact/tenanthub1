@@ -33,6 +33,7 @@ import { ArrowLeft, Package, Plus, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Property {
   id: string;
@@ -64,6 +65,7 @@ export default function PropertyInventory() {
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (propertyId) {
@@ -188,7 +190,9 @@ export default function PropertyInventory() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading inventory...</p>
+          <p className="mt-4 text-gray-600">
+            {t("inventory.loadingInventory")}
+          </p>
         </div>
       </div>
     );
@@ -199,15 +203,15 @@ export default function PropertyInventory() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Property Not Found
+            {t("common.propertyNotFound")}
           </h2>
           <p className="text-gray-600 mb-4">
-            The requested property could not be found.
+            {t("common.propertyNotFoundDescription")}
           </p>
           <Link href="/admin/properties">
             <Button>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Properties
+              {t("common.backToProperties")}
             </Button>
           </Link>
         </div>
@@ -225,13 +229,13 @@ export default function PropertyInventory() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Properties
+            {t("common.backToProperties")}
           </Link>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
                 <Package className="h-8 w-8" />
-                Inventory for {property.name}
+                {t("inventory.inventory")} - {property.name}
               </h1>
               <p className="text-gray-600 mt-2">{property.address}</p>
             </div>
@@ -247,9 +251,11 @@ export default function PropertyInventory() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Add Inventory Item</DialogTitle>
+                  <DialogTitle>
+                    {t("common.add")} {t("inventory.inventory")}
+                  </DialogTitle>
                   <DialogDescription>
-                    Add a new item to the property inventory
+                    {t("inventory.managePropertyInventories")}
                   </DialogDescription>
                 </DialogHeader>
                 <form
@@ -275,11 +281,11 @@ export default function PropertyInventory() {
                 >
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="name">Item Name</Label>
+                      <Label htmlFor="name">{t("common.name")}</Label>
                       <Input id="name" name="name" required />
                     </div>
                     <div>
-                      <Label htmlFor="location">Location</Label>
+                      <Label htmlFor="location">{t("common.location")}</Label>
                       <Input
                         id="location"
                         name="location"
@@ -289,13 +295,15 @@ export default function PropertyInventory() {
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">
+                      {t("common.description")}
+                    </Label>
                     <Textarea id="description" name="description" rows={2} />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="condition">Condition</Label>
+                      <Label htmlFor="condition">{t("common.condition")}</Label>
                       <Select name="condition" required>
                         <SelectTrigger>
                           <SelectValue placeholder="Select condition" />
@@ -309,7 +317,7 @@ export default function PropertyInventory() {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="quantity">Quantity</Label>
+                      <Label htmlFor="quantity">{t("common.quantity")}</Label>
                       <Input
                         id="quantity"
                         name="quantity"
@@ -320,7 +328,7 @@ export default function PropertyInventory() {
                     </div>
                     <div>
                       <Label htmlFor="estimated_value">
-                        Estimated Value ($)
+                        {t("common.estimatedValue")}
                       </Label>
                       <Input
                         id="estimated_value"
@@ -333,7 +341,7 @@ export default function PropertyInventory() {
                   </div>
 
                   <div>
-                    <Label htmlFor="notes">Notes</Label>
+                    <Label htmlFor="notes">{t("common.notes")}</Label>
                     <Textarea
                       id="notes"
                       name="notes"
@@ -343,7 +351,7 @@ export default function PropertyInventory() {
                   </div>
 
                   <Button type="submit" className="w-full">
-                    Add Item
+                    {t("common.add")}
                   </Button>
                 </form>
               </DialogContent>
@@ -373,18 +381,20 @@ export default function PropertyInventory() {
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Quantity:</span>
+                    <span className="text-gray-500">
+                      {t("common.quantity")}:
+                    </span>
                     <p className="font-medium">{item.quantity}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Value:</span>
+                    <span className="text-gray-500">{t("common.value")}:</span>
                     <p className="font-medium">${item.estimated_value || 0}</p>
                   </div>
                 </div>
 
                 {item.notes && (
                   <div className="bg-gray-50 p-2 rounded text-sm">
-                    <span className="text-gray-500">Notes:</span>
+                    <span className="text-gray-500">{t("common.notes")}:</span>
                     <p className="text-gray-700 mt-1">{item.notes}</p>
                   </div>
                 )}
@@ -444,7 +454,9 @@ export default function PropertyInventory() {
                         >
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <Label htmlFor="edit-name">Item Name</Label>
+                              <Label htmlFor="edit-name">
+                                {t("common.name")}
+                              </Label>
                               <Input
                                 id="edit-name"
                                 name="name"
@@ -453,7 +465,9 @@ export default function PropertyInventory() {
                               />
                             </div>
                             <div>
-                              <Label htmlFor="edit-location">Location</Label>
+                              <Label htmlFor="edit-location">
+                                {t("common.location")}
+                              </Label>
                               <Input
                                 id="edit-location"
                                 name="location"
@@ -464,7 +478,7 @@ export default function PropertyInventory() {
 
                           <div>
                             <Label htmlFor="edit-description">
-                              Description
+                              {t("common.description")}
                             </Label>
                             <Textarea
                               id="edit-description"
@@ -476,7 +490,9 @@ export default function PropertyInventory() {
 
                           <div className="grid grid-cols-3 gap-4">
                             <div>
-                              <Label htmlFor="edit-condition">Condition</Label>
+                              <Label htmlFor="edit-condition">
+                                {t("common.condition")}
+                              </Label>
                               <Select
                                 name="condition"
                                 defaultValue={selectedItem.condition}
@@ -496,7 +512,9 @@ export default function PropertyInventory() {
                               </Select>
                             </div>
                             <div>
-                              <Label htmlFor="edit-quantity">Quantity</Label>
+                              <Label htmlFor="edit-quantity">
+                                {t("common.quantity")}
+                              </Label>
                               <Input
                                 id="edit-quantity"
                                 name="quantity"
@@ -507,7 +525,7 @@ export default function PropertyInventory() {
                             </div>
                             <div>
                               <Label htmlFor="edit-estimated_value">
-                                Estimated Value ($)
+                                {t("common.estimatedValue")}
                               </Label>
                               <Input
                                 id="edit-estimated_value"
@@ -521,7 +539,9 @@ export default function PropertyInventory() {
                           </div>
 
                           <div>
-                            <Label htmlFor="edit-notes">Notes</Label>
+                            <Label htmlFor="edit-notes">
+                              {t("common.notes")}
+                            </Label>
                             <Textarea
                               id="edit-notes"
                               name="notes"
@@ -531,7 +551,7 @@ export default function PropertyInventory() {
                           </div>
 
                           <Button type="submit" className="w-full">
-                            Update Item
+                            {t("common.saveChanges")}
                           </Button>
                         </form>
                       )}
@@ -556,10 +576,10 @@ export default function PropertyInventory() {
             <CardContent className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Inventory Items
+                {t("inventory.noInventoryItemsTitle")}
               </h3>
               <p className="text-gray-600">
-                Add your first inventory item to get started.
+                {t("inventory.noInventoryItemsDescription")}
               </p>
             </CardContent>
           </Card>
@@ -569,7 +589,9 @@ export default function PropertyInventory() {
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Total Items</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("common.total")} {t("inventory.inventory")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{inventoryItems.length}</div>
@@ -578,7 +600,7 @@ export default function PropertyInventory() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Quantity
+                {t("common.total")} {t("common.quantity")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -593,7 +615,7 @@ export default function PropertyInventory() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Estimated Value
+                {t("common.estimatedValue")}
               </CardTitle>
             </CardHeader>
             <CardContent>

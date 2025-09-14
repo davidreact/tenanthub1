@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Users, UserX } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatTranslation } from "@/lib/i18n";
 
 interface Property {
   id: string;
@@ -47,6 +49,7 @@ export default function PropertyTenants() {
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (propertyId) {
@@ -113,7 +116,7 @@ export default function PropertyTenants() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading tenants...</p>
+          <p className="mt-4 text-gray-600">{t("tenants.loadingTenants")}</p>
         </div>
       </div>
     );
@@ -124,15 +127,15 @@ export default function PropertyTenants() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Property Not Found
+            {t("common.propertyNotFound")}
           </h2>
           <p className="text-gray-600 mb-4">
-            The requested property could not be found.
+            {t("common.propertyNotFoundDescription")}
           </p>
           <Link href="/admin/properties">
             <Button>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Properties
+              {t("common.backToProperties")}
             </Button>
           </Link>
         </div>
@@ -150,12 +153,14 @@ export default function PropertyTenants() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Properties
+            {t("common.backToProperties")}
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <Users className="h-8 w-8" />
-              Tenants for {property.name}
+              {formatTranslation("tenants.tenantsFor", language, {
+                propertyName: property.name,
+              })}
             </h1>
             <p className="text-gray-600 mt-2">{property.address}</p>
           </div>
@@ -187,8 +192,8 @@ export default function PropertyTenants() {
                       }
                     >
                       {tenantProperty.users.is_active
-                        ? "Active User"
-                        : "Inactive User"}
+                        ? t("tenants.activeUser")
+                        : t("tenants.inactiveUser")}
                     </Badge>
                     <Badge
                       variant={
@@ -198,8 +203,8 @@ export default function PropertyTenants() {
                       }
                     >
                       {tenantProperty.status === "active"
-                        ? "Active Lease"
-                        : "Terminated Lease"}
+                        ? t("tenants.activeLease")
+                        : t("tenants.terminatedLease")}
                     </Badge>
                   </div>
                 </div>
@@ -207,13 +212,17 @@ export default function PropertyTenants() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Monthly Rent:</span>
+                    <span className="text-gray-500">
+                      {t("common.monthlyRent")}:
+                    </span>
                     <p className="font-medium">
                       ${tenantProperty.monthly_rent}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Lease Start:</span>
+                    <span className="text-gray-500">
+                      {t("common.leaseStart")}:
+                    </span>
                     <p className="font-medium">
                       {new Date(
                         tenantProperty.lease_start_date,
@@ -221,7 +230,9 @@ export default function PropertyTenants() {
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Lease End:</span>
+                    <span className="text-gray-500">
+                      {t("common.leaseEnd")}:
+                    </span>
                     <p className="font-medium">
                       {new Date(
                         tenantProperty.lease_end_date,
@@ -243,7 +254,7 @@ export default function PropertyTenants() {
                       }
                     >
                       <UserX className="h-4 w-4 mr-2" />
-                      Terminate Lease
+                      {t("tenants.terminateLease")}
                     </Button>
                   </div>
                 )}
@@ -257,15 +268,15 @@ export default function PropertyTenants() {
             <CardContent className="text-center py-12">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Tenants Assigned
+                {t("tenants.noTenantsAssignedTitle")}
               </h3>
               <p className="text-gray-600 mb-4">
-                This property has no tenants assigned yet.
+                {t("tenants.noTenantsAssignedDescription")}
               </p>
               <Link href="/admin/tenants">
                 <Button>
                   <Users className="h-4 w-4 mr-2" />
-                  Manage Tenants
+                  {t("tenants.manageTenants")}
                 </Button>
               </Link>
             </CardContent>

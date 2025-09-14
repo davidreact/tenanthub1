@@ -38,7 +38,18 @@ export const translations = {
     "tenants.activeTenants": "Active Tenants",
     "tenants.manageTenants": "Manage Tenants",
     "tenants.viewTenants": "View Tenants",
-    "tenants.addEditManage": "Add, edit, and manage tenant accounts",
+    "tenants.addEditManage":
+      "Agregar, editar y gestionar cuentas de inquilinos",
+    "tenants.loadingTenants": "Cargando inquilinos...",
+    "tenants.tenantsFor": "Inquilinos de {{propertyName}}",
+    "tenants.activeUser": "Usuario Activo",
+    "tenants.inactiveUser": "Usuario Inactivo",
+    "tenants.activeLease": "Contrato Activo",
+    "tenants.terminatedLease": "Contrato Terminado",
+    "tenants.terminateLease": "Terminar Contrato",
+    "tenants.noTenantsAssignedTitle": "Sin Inquilinos Asignados",
+    "tenants.noTenantsAssignedDescription":
+      "Esta propiedad no tiene inquilinos asignados todavía.",
 
     // Payments
     "payments.pendingPayments": "Pending Payments",
@@ -47,6 +58,26 @@ export const translations = {
     "payments.reviewApprove": "Review and approve payment proofs",
     "payments.managePayments": "Manage Payments",
     "payments.uploadProofView": "Upload payment proofs and view history",
+    "payments.loadingPayments": "Loading payments...",
+    "payments.paymentsFor": "Payments for {{propertyName}}",
+    "payments.totalPayments": "Total Payments",
+    "payments.pendingReview": "Pending Review",
+    "payments.totalAmount": "Total Amount",
+    "payments.reviewPaymentProof": "Review Payment Proof",
+    "payments.reviewAndApproveOrReject":
+      "Review and approve or reject this payment submission",
+    "payments.adminNotesOptional": "Admin Notes (optional)",
+    "payments.addNotesAboutPaymentPlaceholder":
+      "Add any notes about this payment...",
+    "payments.paymentUpdatedTitle": "Payment Updated",
+    "payments.paymentUpdatedDescriptionApproved":
+      "Payment has been approved successfully.",
+    "payments.paymentUpdatedDescriptionRejected": "Payment has been rejected.",
+    "payments.failedToUpdatePaymentStatus":
+      "Failed to update payment status. Please try again.",
+    "payments.noPaymentSubmissionsTitle": "No Payment Submissions",
+    "payments.noPaymentSubmissionsDescription":
+      "No payment proofs have been submitted for this property yet.",
 
     // Inventory
     "inventory.inventory": "Inventory",
@@ -54,6 +85,10 @@ export const translations = {
     "inventory.viewInventory": "View Inventory",
     "inventory.managePropertyInventories": "Manage property inventories",
     "inventory.viewManageProperty": "View and manage property inventory",
+    "inventory.loadingInventory": "Loading inventory...",
+    "inventory.noInventoryItemsTitle": "No Inventory Items",
+    "inventory.noInventoryItemsDescription":
+      "Add your first inventory item to get started.",
 
     // Messages
     "messages.conversations": "Conversations",
@@ -62,6 +97,10 @@ export const translations = {
     "messages.sendMessage": "Send Message",
     "messages.manageTenantCommunications": "Manage tenant communications",
     "messages.contactAdminProperty": "Contact admin about your property",
+    "messages.loadingConversations": "Loading conversations...",
+    "messages.noConversationsTitle": "No Conversations",
+    "messages.noConversationsDescription":
+      "No conversations have been started for this property yet.",
 
     // Key Handover
     "handover.keyHandovers": "Key Handovers",
@@ -90,6 +129,7 @@ export const translations = {
     "common.delete": "Delete",
     "common.edit": "Edit",
     "common.view": "View",
+    "common.review": "Review",
     "common.add": "Add",
     "common.search": "Search",
     "common.filter": "Filter",
@@ -197,6 +237,10 @@ export const translations = {
     "common.modifyRequest": "Modify Request",
     "common.contactAdministrator": "Contact Administrator",
     "common.backToDashboard": "Back to Dashboard",
+    "common.backToProperties": "Back to Properties",
+    "common.propertyNotFound": "Property Not Found",
+    "common.propertyNotFoundDescription":
+      "The requested property could not be found.",
     "common.personalInformation": "Personal Information",
     "common.preferences": "Preferences",
     "common.preferredLanguage": "Preferred Language",
@@ -286,6 +330,16 @@ export const translations = {
     "tenants.viewTenants": "Ver Inquilinos",
     "tenants.addEditManage":
       "Agregar, editar y gestionar cuentas de inquilinos",
+    "tenants.loadingTenants": "Cargando inquilinos...",
+    "tenants.tenantsFor": "Inquilinos de {{propertyName}}",
+    "tenants.activeUser": "Usuario Activo",
+    "tenants.inactiveUser": "Usuario Inactivo",
+    "tenants.activeLease": "Contrato Activo",
+    "tenants.terminatedLease": "Contrato Terminado",
+    "tenants.terminateLease": "Terminar Contrato",
+    "tenants.noTenantsAssignedTitle": "Sin Inquilinos Asignados",
+    "tenants.noTenantsAssignedDescription":
+      "Esta propiedad no tiene inquilinos asignados todavía.",
 
     // Payments
     "payments.pendingPayments": "Pagos Pendientes",
@@ -294,6 +348,26 @@ export const translations = {
     "payments.reviewApprove": "Revisar y aprobar comprobantes de pago",
     "payments.managePayments": "Gestionar Pagos",
     "payments.uploadProofView": "Subir comprobantes de pago y ver historial",
+    "payments.loadingPayments": "Cargando pagos...",
+    "payments.paymentsFor": "Pagos de {{propertyName}}",
+    "payments.totalPayments": "Pagos Totales",
+    "payments.pendingReview": "Pendiente de Revisión",
+    "payments.totalAmount": "Monto Total",
+    "payments.reviewPaymentProof": "Revisar Comprobante de Pago",
+    "payments.reviewAndApproveOrReject":
+      "Revisa y aprueba o rechaza este envío de pago",
+    "payments.adminNotesOptional": "Notas del Administrador (opcional)",
+    "payments.addNotesAboutPaymentPlaceholder":
+      "Agrega notas sobre este pago...",
+    "payments.paymentUpdatedTitle": "Pago Actualizado",
+    "payments.paymentUpdatedDescriptionApproved":
+      "El pago ha sido aprobado correctamente.",
+    "payments.paymentUpdatedDescriptionRejected": "El pago ha sido rechazado.",
+    "payments.failedToUpdatePaymentStatus":
+      "No se pudo actualizar el estado del pago. Por favor, inténtalo de nuevo.",
+    "payments.noPaymentSubmissionsTitle": "Sin Envíos de Pago",
+    "payments.noPaymentSubmissionsDescription":
+      "Aún no se han enviado comprobantes de pago para esta propiedad.",
 
     // Inventory
     "inventory.inventory": "Inventario",
@@ -303,6 +377,10 @@ export const translations = {
       "Gestionar inventarios de propiedades",
     "inventory.viewManageProperty":
       "Ver y gestionar inventario de la propiedad",
+    "inventory.loadingInventory": "Cargando inventario...",
+    "inventory.noInventoryItemsTitle": "Sin Artículos de Inventario",
+    "inventory.noInventoryItemsDescription":
+      "Agrega tu primer artículo de inventario para comenzar.",
 
     // Messages
     "messages.conversations": "Conversaciones",
@@ -313,6 +391,10 @@ export const translations = {
       "Gestionar comunicaciones con inquilinos",
     "messages.contactAdminProperty":
       "Contactar al administrador sobre tu propiedad",
+    "messages.loadingConversations": "Cargando conversaciones...",
+    "messages.noConversationsTitle": "Sin Conversaciones",
+    "messages.noConversationsDescription":
+      "Aún no se han iniciado conversaciones para esta propiedad.",
 
     // Key Handover
     "handover.keyHandovers": "Entrega de Llaves",
@@ -341,6 +423,7 @@ export const translations = {
     "common.delete": "Eliminar",
     "common.edit": "Editar",
     "common.view": "Ver",
+    "common.review": "Revisar",
     "common.add": "Agregar",
     "common.search": "Buscar",
     "common.filter": "Filtrar",
@@ -448,6 +531,10 @@ export const translations = {
     "common.modifyRequest": "Modificar Solicitud",
     "common.contactAdministrator": "Contactar Administrador",
     "common.backToDashboard": "Volver al Panel",
+    "common.backToProperties": "Volver a Propiedades",
+    "common.propertyNotFound": "Propiedad No Encontrada",
+    "common.propertyNotFoundDescription":
+      "La propiedad solicitada no pudo ser encontrada.",
     "common.personalInformation": "Información Personal",
     "common.preferences": "Preferencias",
     "common.preferredLanguage": "Idioma Preferido",
@@ -539,6 +626,16 @@ export const translations = {
     "tenants.viewTenants": "Voir les Locataires",
     "tenants.addEditManage":
       "Ajouter, modifier et gérer les comptes locataires",
+    "tenants.loadingTenants": "Chargement des locataires...",
+    "tenants.tenantsFor": "Locataires pour {{propertyName}}",
+    "tenants.activeUser": "Utilisateur Actif",
+    "tenants.inactiveUser": "Utilisateur Inactif",
+    "tenants.activeLease": "Bail Actif",
+    "tenants.terminatedLease": "Bail Résilié",
+    "tenants.terminateLease": "Résilier le Bail",
+    "tenants.noTenantsAssignedTitle": "Aucun Locataire Assigné",
+    "tenants.noTenantsAssignedDescription":
+      "Cette propriété n'a pas encore de locataires assignés.",
 
     // Payments
     "payments.pendingPayments": "Paiements en Attente",
@@ -548,6 +645,26 @@ export const translations = {
     "payments.managePayments": "Gérer les Paiements",
     "payments.uploadProofView":
       "Télécharger les preuves de paiement et voir l'historique",
+    "payments.loadingPayments": "Chargement des paiements...",
+    "payments.paymentsFor": "Paiements pour {{propertyName}}",
+    "payments.totalPayments": "Total des Paiements",
+    "payments.pendingReview": "En attente d'examen",
+    "payments.totalAmount": "Montant Total",
+    "payments.reviewPaymentProof": "Examiner la Preuve de Paiement",
+    "payments.reviewAndApproveOrReject":
+      "Examiner et approuver ou rejeter cette soumission de paiement",
+    "payments.adminNotesOptional": "Notes Admin (optionnel)",
+    "payments.addNotesAboutPaymentPlaceholder":
+      "Ajoutez des notes concernant ce paiement...",
+    "payments.paymentUpdatedTitle": "Paiement Mis à Jour",
+    "payments.paymentUpdatedDescriptionApproved":
+      "Le paiement a été approuvé avec succès.",
+    "payments.paymentUpdatedDescriptionRejected": "Le paiement a été rejeté.",
+    "payments.failedToUpdatePaymentStatus":
+      "Échec de la mise à jour du statut du paiement. Veuillez réessayer.",
+    "payments.noPaymentSubmissionsTitle": "Aucune Soumission de Paiement",
+    "payments.noPaymentSubmissionsDescription":
+      "Aucune preuve de paiement n'a encore été soumise pour cette propriété.",
 
     // Inventory
     "inventory.inventory": "Inventaire",
@@ -557,6 +674,10 @@ export const translations = {
       "Gérer les inventaires de propriétés",
     "inventory.viewManageProperty":
       "Voir et gérer l'inventaire de la propriété",
+    "inventory.loadingInventory": "Chargement de l'inventaire...",
+    "inventory.noInventoryItemsTitle": "Aucun Élément d'Inventaire",
+    "inventory.noInventoryItemsDescription":
+      "Ajoutez votre premier élément d'inventaire pour commencer.",
 
     // Messages
     "messages.conversations": "Conversations",
@@ -567,6 +688,10 @@ export const translations = {
       "Gérer les communications avec les locataires",
     "messages.contactAdminProperty":
       "Contacter l'admin à propos de votre propriété",
+    "messages.loadingConversations": "Chargement des conversations...",
+    "messages.noConversationsTitle": "Aucune Conversation",
+    "messages.noConversationsDescription":
+      "Aucune conversation n'a été commencée pour cette propriété.",
 
     // Key Handover
     "handover.keyHandovers": "Remise de Clés",
@@ -595,6 +720,7 @@ export const translations = {
     "common.delete": "Supprimer",
     "common.edit": "Modifier",
     "common.view": "Voir",
+    "common.review": "Examiner",
     "common.add": "Ajouter",
     "common.search": "Rechercher",
     "common.filter": "Filtrer",
@@ -702,6 +828,10 @@ export const translations = {
     "common.modifyRequest": "Modifier Demande",
     "common.contactAdministrator": "Contacter Administrateur",
     "common.backToDashboard": "Retour au Tableau de Bord",
+    "common.backToProperties": "Retour aux Propriétés",
+    "common.propertyNotFound": "Propriété Introuvable",
+    "common.propertyNotFoundDescription":
+      "La propriété demandée est introuvable.",
     "common.personalInformation": "Informations Personnelles",
     "common.preferences": "Préférences",
     "common.preferredLanguage": "Langue Préférée",

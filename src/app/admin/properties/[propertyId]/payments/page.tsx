@@ -24,6 +24,8 @@ import { ArrowLeft, CreditCard, Check, X, Eye } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { formatTranslation } from "@/lib/i18n";
 
 interface Property {
   id: string;
@@ -61,6 +63,7 @@ export default function PropertyPayments() {
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (propertyId) {
@@ -123,15 +126,20 @@ export default function PropertyPayments() {
       setSelectedPayment(null);
       setIsDialogOpen(false);
 
+      const descriptionKey =
+        status === "approved"
+          ? "payments.paymentUpdatedDescriptionApproved"
+          : "payments.paymentUpdatedDescriptionRejected";
+
       toast({
-        title: "Payment Updated",
-        description: `Payment has been ${status} successfully.`,
+        title: t("payments.paymentUpdatedTitle"),
+        description: t(descriptionKey as any),
       });
     } catch (error) {
       console.error("Error updating payment status:", error);
       toast({
-        title: "Error",
-        description: "Failed to update payment status. Please try again.",
+        title: t("common.error"),
+        description: t("payments.failedToUpdatePaymentStatus"),
         variant: "destructive",
       });
     }
@@ -150,12 +158,25 @@ export default function PropertyPayments() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "approved":
+        return t("common.approved");
+      case "rejected":
+        return t("common.rejected");
+      case "pending":
+        return t("common.pending");
+      default:
+        return status;
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading payments...</p>
+          <p className="mt-4 text-gray-600">{t("payments.loadingPayments")}</p>
         </div>
       </div>
     );
@@ -166,15 +187,15 @@ export default function PropertyPayments() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Property Not Found
+            {t("common.propertyNotFound")}
           </h2>
           <p className="text-gray-600 mb-4">
-            The requested property could not be found.
+            {t("common.propertyNotFoundDescription")}
           </p>
           <Link href="/admin/properties">
             <Button>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Properties
+              {t("common.backToProperties")}
             </Button>
           </Link>
         </div>
@@ -192,12 +213,14 @@ export default function PropertyPayments() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Properties
+            {t("common.backToProperties")}
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <CreditCard className="h-8 w-8" />
-              Payments for {property.name}
+              {formatTranslation("payments.paymentsFor", language, {
+                propertyName: property.name,
+              })}
             </h1>
             <p className="text-gray-600 mt-2">{property.address}</p>
           </div>
@@ -208,7 +231,7 @@ export default function PropertyPayments() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Payments
+                {t("payments.totalPayments")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -218,7 +241,7 @@ export default function PropertyPayments() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Pending Review
+                {t("payments.pendingReview")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -230,7 +253,7 @@ export default function PropertyPayments() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Amount
+                {t("payments.totalAmount")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -260,26 +283,32 @@ export default function PropertyPayments() {
                     </CardDescription>
                   </div>
                   <Badge className={getStatusColor(payment.status)}>
-                    {payment.status}
+                    {getStatusLabel(payment.status)}
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Payment Date:</span>
+                    <span className="text-gray-500">
+                      {t("common.paymentDate")}:
+                    </span>
                     <p className="font-medium">
                       {new Date(payment.payment_date).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Submitted:</span>
+                    <span className="text-gray-500">
+                      {t("common.submitted")}:
+                    </span>
                     <p className="font-medium">
                       {new Date(payment.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Tenant Email:</span>
+                    <span className="text-gray-500">
+                      {t("common.tenantEmail")}:
+                    </span>
                     <p className="font-medium">
                       {payment.tenant_properties.users.email}
                     </p>
@@ -288,7 +317,9 @@ export default function PropertyPayments() {
 
                 {payment.admin_notes && (
                   <div className="bg-gray-50 p-3 rounded">
-                    <span className="text-gray-500 text-sm">Admin Notes:</span>
+                    <span className="text-gray-500 text-sm">
+                      {t("common.adminNotes")}:
+                    </span>
                     <p className="text-gray-700 mt-1">{payment.admin_notes}</p>
                   </div>
                 )}
@@ -305,21 +336,25 @@ export default function PropertyPayments() {
                         }}
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        Review
+                        {t("common.review")}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
-                        <DialogTitle>Review Payment Proof</DialogTitle>
+                        <DialogTitle>
+                          {t("payments.reviewPaymentProof")}
+                        </DialogTitle>
                         <DialogDescription>
-                          Review and approve or reject this payment submission
+                          {t("payments.reviewAndApproveOrReject")}
                         </DialogDescription>
                       </DialogHeader>
                       {selectedPayment && (
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <span className="text-gray-500">Tenant:</span>
+                              <span className="text-gray-500">
+                                {t("common.tenant")}:
+                              </span>
                               <p className="font-medium">
                                 {selectedPayment.tenant_properties.users
                                   .full_name ||
@@ -327,7 +362,9 @@ export default function PropertyPayments() {
                               </p>
                             </div>
                             <div>
-                              <span className="text-gray-500">Amount:</span>
+                              <span className="text-gray-500">
+                                {t("common.amount")}:
+                              </span>
                               <p className="font-medium">
                                 ${selectedPayment.amount}
                               </p>
@@ -336,7 +373,7 @@ export default function PropertyPayments() {
 
                           <div className="bg-gray-100 p-4 rounded">
                             <p className="text-sm text-gray-600 mb-2">
-                              Payment Proof:
+                              {t("common.paymentProof")}:
                             </p>
                             <img
                               src={selectedPayment.proof_url}
@@ -363,11 +400,13 @@ export default function PropertyPayments() {
                             >
                               <div>
                                 <label className="block text-sm font-medium mb-2">
-                                  Admin Notes (optional):
+                                  {t("payments.adminNotesOptional")}:
                                 </label>
                                 <Textarea
                                   name="notes"
-                                  placeholder="Add any notes about this payment..."
+                                  placeholder={t(
+                                    "payments.addNotesAboutPaymentPlaceholder",
+                                  )}
                                 />
                               </div>
 
@@ -379,7 +418,7 @@ export default function PropertyPayments() {
                                   className="flex-1"
                                 >
                                   <Check className="h-4 w-4 mr-2" />
-                                  Approve
+                                  {t("common.approve")}
                                 </Button>
                                 <Button
                                   type="submit"
@@ -389,7 +428,7 @@ export default function PropertyPayments() {
                                   className="flex-1"
                                 >
                                   <X className="h-4 w-4 mr-2" />
-                                  Reject
+                                  {t("common.reject")}
                                 </Button>
                               </div>
                             </form>
@@ -408,7 +447,7 @@ export default function PropertyPayments() {
                         }
                       >
                         <Check className="h-4 w-4 mr-2" />
-                        Approve
+                        {t("common.approve")}
                       </Button>
                       <Button
                         size="sm"
@@ -418,7 +457,7 @@ export default function PropertyPayments() {
                         }
                       >
                         <X className="h-4 w-4 mr-2" />
-                        Reject
+                        {t("common.reject")}
                       </Button>
                     </>
                   )}
@@ -433,10 +472,10 @@ export default function PropertyPayments() {
             <CardContent className="text-center py-12">
               <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Payment Submissions
+                {t("payments.noPaymentSubmissionsTitle")}
               </h3>
               <p className="text-gray-600">
-                No payment proofs have been submitted for this property yet.
+                {t("payments.noPaymentSubmissionsDescription")}
               </p>
             </CardContent>
           </Card>

@@ -24,6 +24,7 @@ import { ArrowLeft, MessageSquare, Send } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Property {
   id: string;
@@ -70,6 +71,7 @@ export default function PropertyConversations() {
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (propertyId) {
@@ -204,7 +206,9 @@ export default function PropertyConversations() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading conversations...</p>
+          <p className="mt-4 text-gray-600">
+            {t("messages.loadingConversations")}
+          </p>
         </div>
       </div>
     );
@@ -215,15 +219,15 @@ export default function PropertyConversations() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Property Not Found
+            {t("common.propertyNotFound")}
           </h2>
           <p className="text-gray-600 mb-4">
-            The requested property could not be found.
+            {t("common.propertyNotFoundDescription")}
           </p>
           <Link href="/admin/properties">
             <Button>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Properties
+              {t("common.backToProperties")}
             </Button>
           </Link>
         </div>
@@ -241,12 +245,12 @@ export default function PropertyConversations() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Properties
+            {t("common.backToProperties")}
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <MessageSquare className="h-8 w-8" />
-              Conversations for {property.name}
+              {t("messages.conversations")} - {property.name}
             </h1>
             <p className="text-gray-600 mt-2">{property.address}</p>
           </div>
@@ -257,7 +261,7 @@ export default function PropertyConversations() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Conversations
+                {t("common.total")} {t("messages.conversations")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -266,7 +270,9 @@ export default function PropertyConversations() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Open</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("common.open")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -277,7 +283,7 @@ export default function PropertyConversations() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Messages
+                {t("common.total")} {t("messages.messages")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -305,7 +311,7 @@ export default function PropertyConversations() {
                       {conversation.subject}
                     </CardTitle>
                     <CardDescription>
-                      From:{" "}
+                      {t("common.tenant")}:
                       {conversation.users.full_name || conversation.users.name}{" "}
                       ({conversation.users.email})
                     </CardDescription>
@@ -322,9 +328,12 @@ export default function PropertyConversations() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-sm text-gray-600">
-                  <p>Messages: {conversation.messages?.length || 0}</p>
                   <p>
-                    Last updated:{" "}
+                    {t("messages.messages")}:{" "}
+                    {conversation.messages?.length || 0}
+                  </p>
+                  <p>
+                    {t("common.lastUpdated")}:{" "}
                     {new Date(conversation.updated_at).toLocaleString()}
                   </p>
                 </div>
@@ -341,16 +350,14 @@ export default function PropertyConversations() {
                         }}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
-                        View Messages
+                        {t("common.viewMessages")}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
                       <DialogHeader>
                         <DialogTitle>{conversation.subject}</DialogTitle>
                         <DialogDescription>
-                          Conversation with{" "}
-                          {conversation.users.full_name ||
-                            conversation.users.name}
+                          {t("common.viewMessages")}
                         </DialogDescription>
                       </DialogHeader>
                       {selectedConversation && (
@@ -408,7 +415,7 @@ export default function PropertyConversations() {
                             <Textarea
                               value={newMessage}
                               onChange={(e) => setNewMessage(e.target.value)}
-                              placeholder="Type your reply..."
+                              placeholder={t("common.message")}
                               rows={3}
                             />
                             <div className="flex gap-2">
@@ -417,7 +424,7 @@ export default function PropertyConversations() {
                                 disabled={!newMessage.trim()}
                               >
                                 <Send className="h-4 w-4 mr-2" />
-                                Send Reply
+                                {t("common.sendReply")}
                               </Button>
                             </div>
                           </form>
@@ -434,7 +441,7 @@ export default function PropertyConversations() {
                         updateConversationStatus(conversation.id, "closed")
                       }
                     >
-                      Close
+                      {t("common.close")}
                     </Button>
                   )}
 
@@ -445,7 +452,7 @@ export default function PropertyConversations() {
                         updateConversationStatus(conversation.id, "open")
                       }
                     >
-                      Reopen
+                      {t("common.reopen")}
                     </Button>
                   )}
                 </div>
@@ -459,10 +466,10 @@ export default function PropertyConversations() {
             <CardContent className="text-center py-12">
               <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Conversations
+                {t("messages.noConversationsTitle")}
               </h3>
               <p className="text-gray-600">
-                No conversations have been started for this property yet.
+                {t("messages.noConversationsDescription")}
               </p>
             </CardContent>
           </Card>

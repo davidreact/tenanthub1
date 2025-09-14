@@ -180,7 +180,7 @@ export default function AdminProperties() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading properties...</p>
+          <p className="mt-4 text-muted-foreground">{t("common.loading")}</p>
         </div>
       </div>
     );
@@ -196,7 +196,7 @@ export default function AdminProperties() {
             className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("common.backToDashboard")}
           </Link>
           <div className="flex justify-between items-center">
             <div>
@@ -215,14 +215,16 @@ export default function AdminProperties() {
               <DialogTrigger asChild>
                 <Button onClick={() => setIsCreateDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Property
+                  {t("common.add")} {t("common.property")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Add New Property</DialogTitle>
+                  <DialogTitle>
+                    {t("common.add")} {t("common.property")}
+                  </DialogTitle>
                   <DialogDescription>
-                    Create a new property listing
+                    {t("properties.addEditManage")}
                   </DialogDescription>
                 </DialogHeader>
                 <form
@@ -254,38 +256,50 @@ export default function AdminProperties() {
                 >
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="name">Property Name</Label>
+                      <Label htmlFor="name">{t("common.propertyName")}</Label>
                       <Input id="name" name="name" required />
                     </div>
                     <div>
-                      <Label htmlFor="property_type">Property Type</Label>
+                      <Label htmlFor="property_type">
+                        {t("common.propertyType")}
+                      </Label>
                       <Select name="property_type" required>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
+                          <SelectValue placeholder={t("common.propertyType")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="apartment">Apartment</SelectItem>
-                          <SelectItem value="house">House</SelectItem>
-                          <SelectItem value="condo">Condo</SelectItem>
-                          <SelectItem value="studio">Studio</SelectItem>
+                          <SelectItem value="apartment">
+                            {t("common.apartment")}
+                          </SelectItem>
+                          <SelectItem value="house">
+                            {t("common.house")}
+                          </SelectItem>
+                          <SelectItem value="condo">
+                            {t("common.condo")}
+                          </SelectItem>
+                          <SelectItem value="studio">
+                            {t("common.studio")}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
                   <div>
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address">{t("common.address")}</Label>
                     <Textarea id="address" name="address" required />
                   </div>
 
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">
+                      {t("common.description")}
+                    </Label>
                     <Textarea id="description" name="description" rows={3} />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="bedrooms">Bedrooms</Label>
+                      <Label htmlFor="bedrooms">{t("common.bedrooms")}</Label>
                       <Input
                         id="bedrooms"
                         name="bedrooms"
@@ -295,7 +309,7 @@ export default function AdminProperties() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="bathrooms">Bathrooms</Label>
+                      <Label htmlFor="bathrooms">{t("common.bathrooms")}</Label>
                       <Input
                         id="bathrooms"
                         name="bathrooms"
@@ -306,7 +320,9 @@ export default function AdminProperties() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="square_feet">Square Feet</Label>
+                      <Label htmlFor="square_feet">
+                        {t("common.squareFeet")}
+                      </Label>
                       <Input
                         id="square_feet"
                         name="square_feet"
@@ -318,7 +334,9 @@ export default function AdminProperties() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="monthly_rent">Monthly Rent ($)</Label>
+                      <Label htmlFor="monthly_rent">
+                        {t("common.monthlyRent")} ($)
+                      </Label>
                       <Input
                         id="monthly_rent"
                         name="monthly_rent"
@@ -329,7 +347,9 @@ export default function AdminProperties() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="deposit_amount">Deposit Amount ($)</Label>
+                      <Label htmlFor="deposit_amount">
+                        {t("common.depositAmount")} ($)
+                      </Label>
                       <Input
                         id="deposit_amount"
                         name="deposit_amount"
@@ -341,10 +361,10 @@ export default function AdminProperties() {
                   </div>
 
                   <div>
-                    <Label htmlFor="status">Status</Label>
+                    <Label htmlFor="status">{t("common.status")}</Label>
                     <Select name="status" required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select status" />
+                        <SelectValue placeholder={t("common.status")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="available">Available</SelectItem>
@@ -375,7 +395,15 @@ export default function AdminProperties() {
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-lg">{property.name}</CardTitle>
                   <Badge className={getStatusColor(property.status)}>
-                    {property.status}
+                    {property.status === "available"
+                      ? t("common.available")
+                      : property.status === "occupied"
+                        ? t("common.occupied")
+                        : property.status === "maintenance"
+                          ? t("common.maintenance")
+                          : property.status === "unavailable"
+                            ? t("common.unavailable")
+                            : property.status}
                   </Badge>
                 </div>
                 <CardDescription className="text-sm">
@@ -385,21 +413,29 @@ export default function AdminProperties() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Type:</span>
+                    <span className="text-gray-500">
+                      {t("common.propertyType")}:
+                    </span>
                     <p className="font-medium capitalize">
                       {property.property_type}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Rent:</span>
+                    <span className="text-gray-500">
+                      {t("common.monthlyRent")}:
+                    </span>
                     <p className="font-medium">${property.monthly_rent}/mo</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Bedrooms:</span>
+                    <span className="text-gray-500">
+                      {t("common.bedrooms")}:
+                    </span>
                     <p className="font-medium">{property.bedrooms}</p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Bathrooms:</span>
+                    <span className="text-gray-500">
+                      {t("common.bathrooms")}:
+                    </span>
                     <p className="font-medium">{property.bathrooms}</p>
                   </div>
                 </div>
@@ -432,9 +468,11 @@ export default function AdminProperties() {
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
-                        <DialogTitle>Edit Property</DialogTitle>
+                        <DialogTitle>
+                          {t("common.edit")} {t("common.property")}
+                        </DialogTitle>
                         <DialogDescription>
-                          Update property information
+                          {t("common.modify")}
                         </DialogDescription>
                       </DialogHeader>
                       {selectedProperty && (
@@ -499,9 +537,15 @@ export default function AdminProperties() {
                                   <SelectItem value="apartment">
                                     Apartment
                                   </SelectItem>
-                                  <SelectItem value="house">House</SelectItem>
-                                  <SelectItem value="condo">Condo</SelectItem>
-                                  <SelectItem value="studio">Studio</SelectItem>
+                                  <SelectItem value="house">
+                                    {t("common.house")}
+                                  </SelectItem>
+                                  <SelectItem value="condo">
+                                    {t("common.condo")}
+                                  </SelectItem>
+                                  <SelectItem value="studio">
+                                    {t("common.studio")}
+                                  </SelectItem>
                                 </SelectContent>
                               </Select>
                             </div>
@@ -625,7 +669,7 @@ export default function AdminProperties() {
                           </div>
 
                           <Button type="submit" className="w-full">
-                            Update Property
+                            {t("common.saveChanges")}
                           </Button>
                         </form>
                       )}
@@ -648,7 +692,7 @@ export default function AdminProperties() {
                   >
                     <Button variant="secondary" size="sm" className="w-full">
                       <Users className="h-4 w-4 mr-2" />
-                      Tenants
+                      {t("tenants.viewTenants")}
                     </Button>
                   </Link>
                   <Link
@@ -657,7 +701,7 @@ export default function AdminProperties() {
                   >
                     <Button variant="secondary" size="sm" className="w-full">
                       <Package className="h-4 w-4 mr-2" />
-                      Inventory
+                      {t("inventory.inventory")}
                     </Button>
                   </Link>
                 </div>
