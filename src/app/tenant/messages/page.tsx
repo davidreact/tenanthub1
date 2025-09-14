@@ -2,15 +2,42 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, MessageSquare, Send, Plus, User, Shield } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  ArrowLeft,
+  MessageSquare,
+  Send,
+  Plus,
+  User,
+  Shield,
+} from "lucide-react";
 import Link from "next/link";
 
 interface Message {
@@ -32,10 +59,12 @@ interface Conversation {
 
 export default function TenantMessages() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [selectedConversation, setSelectedConversation] =
+    useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [propertyId, setPropertyId] = useState<string | null>(null);
+  const { t } = useLanguage();
   const supabase = createClient();
 
   useEffect(() => {
@@ -44,15 +73,17 @@ export default function TenantMessages() {
 
   const fetchConversations = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Get tenant's property
       const { data: tenantProperty } = await supabase
-        .from('tenant_properties')
-        .select('property_id')
-        .eq('tenant_id', user.id)
-        .eq('status', 'active')
+        .from("tenant_properties")
+        .select("property_id")
+        .eq("tenant_id", user.id)
+        .eq("status", "active")
         .single();
 
       if (!tenantProperty) return;
@@ -61,39 +92,47 @@ export default function TenantMessages() {
 
       // Get conversations with messages
       const { data: convos } = await supabase
-        .from('conversations')
-        .select(`
+        .from("conversations")
+        .select(
+          `
           *,
           messages (*)
-        `)
-        .eq('property_id', tenantProperty.property_id)
-        .eq('tenant_id', user.id)
-        .order('created_at', { ascending: false });
+        `,
+        )
+        .eq("property_id", tenantProperty.property_id)
+        .eq("tenant_id", user.id)
+        .order("created_at", { ascending: false });
 
       setConversations(convos || []);
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      console.error("Error fetching conversations:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const createConversation = async (subject: string, priority: string, initialMessage: string) => {
+  const createConversation = async (
+    subject: string,
+    priority: string,
+    initialMessage: string,
+  ) => {
     if (!propertyId) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Create conversation
       const { data: conversation, error: convError } = await supabase
-        .from('conversations')
+        .from("conversations")
         .insert({
           property_id: propertyId,
           tenant_id: user.id,
           subject: subject,
           priority: priority,
-          status: 'open'
+          status: "open",
         })
         .select()
         .single();
@@ -101,39 +140,37 @@ export default function TenantMessages() {
       if (convError || !conversation) return;
 
       // Add initial message
-      await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversation.id,
-          sender_id: user.id,
-          message: initialMessage,
-          is_admin: false
-        });
+      await supabase.from("messages").insert({
+        conversation_id: conversation.id,
+        sender_id: user.id,
+        message: initialMessage,
+        is_admin: false,
+      });
 
       fetchConversations(); // Refresh the list
     } catch (error) {
-      console.error('Error creating conversation:', error);
+      console.error("Error creating conversation:", error);
     }
   };
 
   const sendMessage = async (conversationId: string, message: string) => {
     setSending(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
-      await supabase
-        .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          sender_id: user.id,
-          message: message,
-          is_admin: false
-        });
+      await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_id: user.id,
+        message: message,
+        is_admin: false,
+      });
 
       fetchConversations(); // Refresh to get new message
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error("Error sending message:", error);
     } finally {
       setSending(false);
     }
@@ -141,19 +178,27 @@ export default function TenantMessages() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'open': return 'bg-green-100 text-green-800';
-      case 'closed': return 'bg-gray-100 text-gray-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "open":
+        return "bg-green-100 text-green-800";
+      case "closed":
+        return "bg-gray-100 text-gray-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "low":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -162,58 +207,64 @@ export default function TenantMessages() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading conversations...</p>
+          <p className="mt-4 text-gray-600">{t("common.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+{t("common.backToDashboard")}
           </Link>
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                 <MessageSquare className="h-8 w-8" />
-                Messages
+                {t("messages.messages")}
               </h1>
-              <p className="text-gray-600 mt-2">
-                Communicate with your property administrator
+              <p className="text-muted-foreground mt-2">
+                {t("messages.contactAdminProperty")}
               </p>
             </div>
             <Dialog>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  New Conversation
+New {t("messages.conversations")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Start New Conversation</DialogTitle>
+                  <DialogTitle>Start New {t("messages.conversations")}</DialogTitle>
                   <DialogDescription>
                     Create a new conversation with the property administrator
                   </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const subject = formData.get('subject') as string;
-                  const priority = formData.get('priority') as string;
-                  const message = formData.get('message') as string;
-                  
-                  if (subject && priority && message) {
-                    createConversation(subject, priority, message);
-                  }
-                }} className="space-y-4">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.currentTarget);
+                    const subject = formData.get("subject") as string;
+                    const priority = formData.get("priority") as string;
+                    const message = formData.get("message") as string;
+
+                    if (subject && priority && message) {
+                      createConversation(subject, priority, message);
+                    }
+                  }}
+                  className="space-y-4"
+                >
                   <div>
-                    <Label htmlFor="subject">Subject</Label>
+                    <Label htmlFor="subject">{t("common.subject")}</Label>
                     <Input
                       id="subject"
                       name="subject"
@@ -222,20 +273,20 @@ export default function TenantMessages() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="priority">Priority</Label>
+                    <Label htmlFor="priority">{t("common.priority")}</Label>
                     <Select name="priority" required>
                       <SelectTrigger>
                         <SelectValue placeholder="Select priority" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="low">{t("common.low")}</SelectItem>
+                        <SelectItem value="medium">{t("common.medium")}</SelectItem>
+                        <SelectItem value="high">{t("common.high")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="message">Message</Label>
+                    <Label htmlFor="message">{t("common.message")}</Label>
                     <Textarea
                       id="message"
                       name="message"
@@ -245,7 +296,7 @@ export default function TenantMessages() {
                     />
                   </div>
                   <Button type="submit" className="w-full">
-                    Start Conversation
+Start {t("messages.conversations")}
                   </Button>
                 </form>
               </DialogContent>
@@ -256,38 +307,51 @@ export default function TenantMessages() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Conversations List */}
           <div className="lg:col-span-1 space-y-4">
-            <h2 className="text-lg font-semibold">Your Conversations</h2>
-            
+            <h2 className="text-lg font-semibold">Your {t("messages.conversations")}</h2>
+
             {conversations.length > 0 ? (
               <div className="space-y-3">
                 {conversations.map((conversation) => (
-                  <Card 
-                    key={conversation.id} 
+                  <Card
+                    key={conversation.id}
                     className={`cursor-pointer transition-colors ${
-                      selectedConversation?.id === conversation.id 
-                        ? 'ring-2 ring-blue-500 bg-blue-50' 
-                        : 'hover:bg-gray-50'
+                      selectedConversation?.id === conversation.id
+                        ? "ring-2 ring-blue-500 bg-blue-50"
+                        : "hover:bg-gray-50"
                     }`}
                     onClick={() => setSelectedConversation(conversation)}
                   >
                     <CardContent className="p-4">
                       <div className="space-y-2">
                         <div className="flex justify-between items-start">
-                          <h3 className="font-medium text-sm truncate">{conversation.subject}</h3>
+                          <h3 className="font-medium text-sm truncate">
+                            {conversation.subject}
+                          </h3>
                           <div className="flex gap-1">
-                            <Badge className={getStatusColor(conversation.status)} variant="secondary">
+                            <Badge
+                              className={getStatusColor(conversation.status)}
+                              variant="secondary"
+                            >
                               {conversation.status}
                             </Badge>
                           </div>
                         </div>
                         <div className="flex justify-between items-center text-xs text-gray-500">
-                          <Badge className={getPriorityColor(conversation.priority)} variant="outline">
+                          <Badge
+                            className={getPriorityColor(conversation.priority)}
+                            variant="outline"
+                          >
                             {conversation.priority}
                           </Badge>
-                          <span>{new Date(conversation.created_at).toLocaleDateString()}</span>
+                          <span>
+                            {new Date(
+                              conversation.created_at,
+                            ).toLocaleDateString()}
+                          </span>
                         </div>
                         <p className="text-xs text-gray-600">
-                          {conversation.messages.length} message{conversation.messages.length !== 1 ? 's' : ''}
+                          {conversation.messages.length} message
+                          {conversation.messages.length !== 1 ? "s" : ""}
                         </p>
                       </div>
                     </CardContent>
@@ -298,7 +362,7 @@ export default function TenantMessages() {
               <Card>
                 <CardContent className="text-center py-8">
                   <MessageSquare className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-600 text-sm">No conversations yet</p>
+                  <p className="text-gray-600 text-sm">No {t("messages.conversations")} yet</p>
                 </CardContent>
               </Card>
             )}
@@ -313,66 +377,86 @@ export default function TenantMessages() {
                     <div>
                       <CardTitle>{selectedConversation.subject}</CardTitle>
                       <CardDescription>
-                        Started {new Date(selectedConversation.created_at).toLocaleDateString()}
+                        Started{" "}
+                        {new Date(
+                          selectedConversation.created_at,
+                        ).toLocaleDateString()}
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                      <Badge className={getPriorityColor(selectedConversation.priority)}>
+                      <Badge
+                        className={getPriorityColor(
+                          selectedConversation.priority,
+                        )}
+                      >
                         {selectedConversation.priority}
                       </Badge>
-                      <Badge className={getStatusColor(selectedConversation.status)}>
+                      <Badge
+                        className={getStatusColor(selectedConversation.status)}
+                      >
                         {selectedConversation.status}
                       </Badge>
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 {/* Messages */}
                 <CardContent className="flex-1 overflow-y-auto space-y-4">
                   {selectedConversation.messages
-                    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                    .sort(
+                      (a, b) =>
+                        new Date(a.created_at).getTime() -
+                        new Date(b.created_at).getTime(),
+                    )
                     .map((message) => (
-                    <div 
-                      key={message.id} 
-                      className={`flex ${message.is_admin ? 'justify-start' : 'justify-end'}`}
-                    >
-                      <div className={`max-w-[70%] rounded-lg p-3 ${
-                        message.is_admin 
-                          ? 'bg-gray-100 text-gray-900' 
-                          : 'bg-blue-600 text-white'
-                      }`}>
-                        <div className="flex items-center gap-2 mb-1">
-                          {message.is_admin ? (
-                            <Shield className="h-3 w-3" />
-                          ) : (
-                            <User className="h-3 w-3" />
-                          )}
-                          <span className="text-xs opacity-75">
-                            {message.is_admin ? 'Admin' : 'You'}
-                          </span>
-                          <span className="text-xs opacity-75">
-                            {new Date(message.created_at).toLocaleTimeString()}
-                          </span>
+                      <div
+                        key={message.id}
+                        className={`flex ${message.is_admin ? "justify-start" : "justify-end"}`}
+                      >
+                        <div
+                          className={`max-w-[70%] rounded-lg p-3 ${
+                            message.is_admin
+                              ? "bg-gray-100 text-gray-900"
+                              : "bg-blue-600 text-white"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            {message.is_admin ? (
+                              <Shield className="h-3 w-3" />
+                            ) : (
+                              <User className="h-3 w-3" />
+                            )}
+                            <span className="text-xs opacity-75">
+                              {message.is_admin ? "Admin" : "You"}
+                            </span>
+                            <span className="text-xs opacity-75">
+                              {new Date(
+                                message.created_at,
+                              ).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          <p className="text-sm">{message.message}</p>
                         </div>
-                        <p className="text-sm">{message.message}</p>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </CardContent>
 
                 {/* Send Message */}
-                {selectedConversation.status === 'open' && (
+                {selectedConversation.status === "open" && (
                   <div className="p-4 border-t">
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      const formData = new FormData(e.currentTarget);
-                      const message = formData.get('message') as string;
-                      
-                      if (message.trim()) {
-                        sendMessage(selectedConversation.id, message);
-                        (e.target as HTMLFormElement).reset();
-                      }
-                    }} className="flex gap-2">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const message = formData.get("message") as string;
+
+                        if (message.trim()) {
+                          sendMessage(selectedConversation.id, message);
+                          (e.target as HTMLFormElement).reset();
+                        }
+                      }}
+                      className="flex gap-2"
+                    >
                       <Input
                         name="message"
                         placeholder="Type your message..."
@@ -390,8 +474,12 @@ export default function TenantMessages() {
               <Card className="h-[600px] flex items-center justify-center">
                 <div className="text-center">
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Conversation</h3>
-                  <p className="text-gray-600">Choose a conversation from the list to view messages</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Select a {t("messages.conversations")}
+                  </h3>
+                  <p className="text-gray-600">
+                    Choose a conversation from the list to view messages
+                  </p>
                 </div>
               </Card>
             )}

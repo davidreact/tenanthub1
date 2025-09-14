@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Card,
   CardContent,
@@ -85,6 +86,7 @@ export default function AdminTenants() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -148,13 +150,13 @@ export default function AdminTenants() {
       fetchData(); // Refresh the list
 
       toast({
-        title: "Tenant Status Updated",
-        description: `Tenant has been ${!isActive ? "activated" : "deactivated"} successfully.`,
+        title: t("common.success"),
+        description: `${t("common.tenant")} has been ${!isActive ? t("common.active") : t("common.inactive")} successfully.`,
       });
     } catch (error) {
       console.error("Error updating tenant status:", error);
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: "Failed to update tenant status. Please try again.",
         variant: "destructive",
       });
@@ -188,13 +190,13 @@ export default function AdminTenants() {
       setIsAssignDialogOpen(false);
 
       toast({
-        title: "Property Assigned",
-        description: "Property has been assigned to tenant successfully.",
+        title: t("common.success"),
+        description: `${t("common.property")} has been assigned to ${t("common.tenant")} successfully.`,
       });
     } catch (error) {
       console.error("Error assigning property:", error);
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: "Failed to assign property. Please try again.",
         variant: "destructive",
       });
@@ -209,26 +211,26 @@ export default function AdminTenants() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading tenants...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">{t("common.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
+            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("common.backToDashboard")}
           </Link>
 
           {/* Show form messages */}
@@ -244,12 +246,12 @@ export default function AdminTenants() {
 
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                 <Users className="h-8 w-8" />
-                Tenant Management
+                {t("tenants.manageTenants")}
               </h1>
-              <p className="text-gray-600 mt-2">
-                Manage tenant accounts and property assignments
+              <p className="text-muted-foreground mt-2">
+                {t("tenants.addEditManage")}
               </p>
             </div>
             <Dialog
@@ -259,12 +261,14 @@ export default function AdminTenants() {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Tenant
+                  {t("common.add")} {t("common.tenant")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Tenant</DialogTitle>
+                  <DialogTitle>
+                    {t("common.add")} {t("common.tenant")}
+                  </DialogTitle>
                   <DialogDescription>
                     Create a new tenant account. They will receive an email
                     confirmation.
@@ -272,7 +276,7 @@ export default function AdminTenants() {
                 </DialogHeader>
                 <form action={handleCreateTenant} className="space-y-4">
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">{t("common.email")}</Label>
                     <Input
                       id="email"
                       name="email"
@@ -282,7 +286,7 @@ export default function AdminTenants() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="fullName">Full Name</Label>
+                    <Label htmlFor="fullName">{t("common.fullName")}</Label>
                     <Input
                       id="fullName"
                       name="fullName"
@@ -291,7 +295,9 @@ export default function AdminTenants() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="password">Temporary Password</Label>
+                    <Label htmlFor="password">
+                      {t("common.temporaryPassword")}
+                    </Label>
                     <Input
                       id="password"
                       name="password"
@@ -306,7 +312,7 @@ export default function AdminTenants() {
                     </p>
                   </div>
                   <Button type="submit" className="w-full">
-                    Create Tenant Account
+                    {t("common.save")}
                   </Button>
                 </form>
               </DialogContent>
@@ -327,12 +333,14 @@ export default function AdminTenants() {
                   <div className="flex justify-between items-start">
                     <div>
                       <CardTitle className="text-lg">
-                        {tenant.full_name || tenant.name || "Unnamed Tenant"}
+                        {tenant.full_name || tenant.name || t("common.tenant")}
                       </CardTitle>
                       <CardDescription>{tenant.email}</CardDescription>
                     </div>
                     <Badge variant={tenant.is_active ? "default" : "secondary"}>
-                      {tenant.is_active ? "Active" : "Inactive"}
+                      {tenant.is_active
+                        ? t("common.active")
+                        : t("common.inactive")}
                     </Badge>
                   </div>
                 </CardHeader>
@@ -343,7 +351,7 @@ export default function AdminTenants() {
                       <div className="flex items-center gap-2 mb-2">
                         <Building className="h-4 w-4 text-blue-600" />
                         <span className="font-medium text-blue-800">
-                          Assigned Property
+                          {t("common.property")}
                         </span>
                       </div>
                       <p className="text-sm text-blue-700 font-medium">
@@ -365,7 +373,7 @@ export default function AdminTenants() {
                   ) : (
                     <div className="bg-gray-50 p-3 rounded-lg">
                       <p className="text-sm text-gray-600">
-                        No property assigned
+                        No {t("common.property")} assigned
                       </p>
                     </div>
                   )}
@@ -373,7 +381,8 @@ export default function AdminTenants() {
                   {/* Account Info */}
                   <div className="text-sm text-gray-600">
                     <p>
-                      Joined: {new Date(tenant.created_at).toLocaleDateString()}
+                      {t("common.created")}:{" "}
+                      {new Date(tenant.created_at).toLocaleDateString()}
                     </p>
                   </div>
 
@@ -390,12 +399,12 @@ export default function AdminTenants() {
                       {tenant.is_active ? (
                         <>
                           <UserX className="h-4 w-4 mr-2" />
-                          Deactivate
+                          {t("common.inactive")}
                         </>
                       ) : (
                         <>
                           <UserCheck className="h-4 w-4 mr-2" />
-                          Activate
+                          {t("common.active")}
                         </>
                       )}
                     </Button>
@@ -415,14 +424,16 @@ export default function AdminTenants() {
                             }}
                           >
                             <Building className="h-4 w-4 mr-2" />
-                            Assign Property
+                            Assign {t("common.property")}
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Assign Property</DialogTitle>
+                            <DialogTitle>
+                              Assign {t("common.property")}
+                            </DialogTitle>
                             <DialogDescription>
-                              Assign a property to{" "}
+                              Assign a {t("common.property")} to{" "}
                               {tenant.full_name || tenant.name}
                             </DialogDescription>
                           </DialogHeader>
@@ -456,10 +467,14 @@ export default function AdminTenants() {
                             className="space-y-4"
                           >
                             <div>
-                              <Label htmlFor="propertyId">Property</Label>
+                              <Label htmlFor="propertyId">
+                                {t("common.property")}
+                              </Label>
                               <Select name="propertyId" required>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select a property" />
+                                  <SelectValue
+                                    placeholder={`Select a ${t("common.property")}`}
+                                  />
                                 </SelectTrigger>
                                 <SelectContent>
                                   {properties
@@ -478,16 +493,17 @@ export default function AdminTenants() {
                                 (p) => p.status === "available",
                               ).length === 0 && (
                                 <p className="text-sm text-gray-500 mt-1">
-                                  No available properties found. Please add
-                                  properties or change their status to
-                                  "available".
+                                  No available {t("common.property")} found.
+                                  Please add
+                                  {t("common.property")} or change their status
+                                  to "available".
                                 </p>
                               )}
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                               <div>
                                 <Label htmlFor="leaseStart">
-                                  Lease Start Date
+                                  {t("common.leaseStart")}
                                 </Label>
                                 <Input
                                   id="leaseStart"
@@ -497,7 +513,9 @@ export default function AdminTenants() {
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="leaseEnd">Lease End Date</Label>
+                                <Label htmlFor="leaseEnd">
+                                  {t("common.leaseEnd")}
+                                </Label>
                                 <Input
                                   id="leaseEnd"
                                   name="leaseEnd"
@@ -508,7 +526,7 @@ export default function AdminTenants() {
                             </div>
                             <div>
                               <Label htmlFor="monthlyRent">
-                                Monthly Rent ($)
+                                {t("common.monthlyRent")} ($)
                               </Label>
                               <Input
                                 id="monthlyRent"
@@ -520,7 +538,7 @@ export default function AdminTenants() {
                               />
                             </div>
                             <Button type="submit" className="w-full">
-                              Assign Property
+                              Assign {t("common.property")}
                             </Button>
                           </form>
                         </DialogContent>
@@ -537,11 +555,11 @@ export default function AdminTenants() {
           <Card>
             <CardContent className="text-center py-12">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Tenants
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                No {t("tenants.activeTenants")}
               </h3>
-              <p className="text-gray-600">
-                Add your first tenant to get started.
+              <p className="text-muted-foreground">
+                {t("tenants.addEditManage")}
               </p>
             </CardContent>
           </Card>
@@ -552,7 +570,7 @@ export default function AdminTenants() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Tenants
+                {t("tenants.activeTenants")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -562,7 +580,7 @@ export default function AdminTenants() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Active Tenants
+                {t("common.active")} {t("tenants.activeTenants")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -574,7 +592,7 @@ export default function AdminTenants() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Properties Assigned
+                {t("common.property")} Assigned
               </CardTitle>
             </CardHeader>
             <CardContent>

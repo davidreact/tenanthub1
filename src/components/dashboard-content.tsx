@@ -37,16 +37,16 @@ export default function DashboardContent({
   const { t } = useLanguage();
 
   return (
-    <main className="w-full bg-gray-50 min-h-screen">
+    <main className="w-full bg-background min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-3xl font-bold text-foreground">
             {isAdmin
               ? t("dashboard.adminDashboard")
               : t("dashboard.tenantDashboard")}
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-muted-foreground mt-2">
             {isAdmin
               ? t("dashboard.manageProperties")
               : `${t("dashboard.welcomeBack")}, ${userProfile?.full_name || userProfile?.name || "Tenant"}`}

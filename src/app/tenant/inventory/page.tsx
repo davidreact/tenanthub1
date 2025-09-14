@@ -2,11 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { ArrowLeft, Package, Camera, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,6 +46,7 @@ export default function TenantInventory() {
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [notes, setNotes] = useState("");
+  const { t } = useLanguage();
   const supabase = createClient();
 
   useEffect(() => {
@@ -40,32 +55,36 @@ export default function TenantInventory() {
 
   const fetchInventoryItems = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Get tenant's property
       const { data: tenantProperty } = await supabase
-        .from('tenant_properties')
-        .select('property_id')
-        .eq('tenant_id', user.id)
-        .eq('status', 'active')
+        .from("tenant_properties")
+        .select("property_id")
+        .eq("tenant_id", user.id)
+        .eq("status", "active")
         .single();
 
       if (!tenantProperty) return;
 
       // Get inventory items with photos
       const { data: items } = await supabase
-        .from('inventory_items')
-        .select(`
+        .from("inventory_items")
+        .select(
+          `
           *,
           inventory_photos (*)
-        `)
-        .eq('property_id', tenantProperty.property_id)
-        .order('name');
+        `,
+        )
+        .eq("property_id", tenantProperty.property_id)
+        .order("name");
 
       setInventoryItems(items || []);
     } catch (error) {
-      console.error('Error fetching inventory:', error);
+      console.error("Error fetching inventory:", error);
     } finally {
       setLoading(false);
     }
@@ -74,28 +93,33 @@ export default function TenantInventory() {
   const updateItemNotes = async (itemId: string, newNotes: string) => {
     try {
       await supabase
-        .from('inventory_items')
+        .from("inventory_items")
         .update({ notes: newNotes })
-        .eq('id', itemId);
-      
+        .eq("id", itemId);
+
       // Update local state
-      setInventoryItems(items => 
-        items.map(item => 
-          item.id === itemId ? { ...item, notes: newNotes } : item
-        )
+      setInventoryItems((items) =>
+        items.map((item) =>
+          item.id === itemId ? { ...item, notes: newNotes } : item,
+        ),
       );
     } catch (error) {
-      console.error('Error updating notes:', error);
+      console.error("Error updating notes:", error);
     }
   };
 
   const getConditionColor = (condition: string) => {
     switch (condition.toLowerCase()) {
-      case 'excellent': return 'bg-green-100 text-green-800';
-      case 'good': return 'bg-blue-100 text-blue-800';
-      case 'fair': return 'bg-yellow-100 text-yellow-800';
-      case 'poor': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "excellent":
+        return "bg-green-100 text-green-800";
+      case "good":
+        return "bg-blue-100 text-blue-800";
+      case "fair":
+        return "bg-yellow-100 text-yellow-800";
+      case "poor":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -111,20 +135,23 @@ export default function TenantInventory() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link href="/dashboard" className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Package className="h-8 w-8" />
-            Property Inventory
+            {t("inventory.inventory")}
           </h1>
-          <p className="text-gray-600 mt-2">
-            Review your property's inventory and add notes before signing
+          <p className="text-muted-foreground mt-2">
+            {t("inventory.viewManageProperty")}
           </p>
         </div>
 
@@ -160,9 +187,18 @@ export default function TenantInventory() {
                 )}
 
                 <div className="space-y-2 text-sm">
-                  <p><span className="font-medium">Description:</span> {item.description}</p>
-                  <p><span className="font-medium">Quantity:</span> {item.quantity}</p>
-                  <p><span className="font-medium">Estimated Value:</span> ${item.estimated_value}</p>
+                  <p>
+                    <span className="font-medium">Description:</span>{" "}
+                    {item.description}
+                  </p>
+                  <p>
+                    <span className="font-medium">Quantity:</span>{" "}
+                    {item.quantity}
+                  </p>
+                  <p>
+                    <span className="font-medium">Estimated Value:</span> $
+                    {item.estimated_value}
+                  </p>
                   {item.notes && (
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <p className="font-medium text-blue-800">Your Notes:</p>
@@ -174,9 +210,9 @@ export default function TenantInventory() {
                 <div className="flex gap-2">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="flex-1"
                         onClick={() => {
                           setSelectedItem(item);
@@ -189,9 +225,12 @@ export default function TenantInventory() {
                     </DialogTrigger>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Add Notes for {selectedItem?.name}</DialogTitle>
+                        <DialogTitle>
+                          Add Notes for {selectedItem?.name}
+                        </DialogTitle>
                         <DialogDescription>
-                          Add any observations or comments about this item's condition
+                          Add any observations or comments about this item's
+                          condition
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
@@ -202,7 +241,7 @@ export default function TenantInventory() {
                           rows={4}
                         />
                         <div className="flex gap-2">
-                          <Button 
+                          <Button
                             onClick={() => {
                               if (selectedItem) {
                                 updateItemNotes(selectedItem.id, notes);
@@ -241,7 +280,9 @@ export default function TenantInventory() {
                                 />
                               </div>
                               {photo.caption && (
-                                <p className="text-sm text-gray-600">{photo.caption}</p>
+                                <p className="text-sm text-gray-600">
+                                  {photo.caption}
+                                </p>
                               )}
                             </div>
                           ))}
@@ -259,8 +300,12 @@ export default function TenantInventory() {
           <Card>
             <CardContent className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No Inventory Items</h3>
-              <p className="text-gray-600">No inventory items found for your property.</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No Inventory Items
+              </h3>
+              <p className="text-gray-600">
+                No inventory items found for your property.
+              </p>
             </CardContent>
           </Card>
         )}

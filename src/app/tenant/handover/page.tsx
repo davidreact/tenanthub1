@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Card,
   CardContent,
@@ -56,6 +57,7 @@ export default function TenantHandover() {
   const [tenantPropertyId, setTenantPropertyId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const supabase = createClient();
 
   useEffect(() => {
@@ -190,7 +192,7 @@ export default function TenantHandover() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -203,12 +205,12 @@ export default function TenantHandover() {
           </Link>
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
                 <Key className="h-8 w-8" />
-                Key Handover Scheduling
+                {t("handover.keyHandover")}
               </h1>
-              <p className="text-gray-600 mt-2">
-                Schedule and manage key exchanges for move-in and move-out
+              <p className="text-muted-foreground mt-2">
+                {t("handover.scheduleKeyExchanges")}
               </p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Card,
   CardContent,
@@ -53,6 +54,7 @@ export default function AdminHandovers() {
   );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const supabase = createClient();
 
   useEffect(() => {
@@ -107,13 +109,13 @@ export default function AdminHandovers() {
       setIsDialogOpen(false);
 
       toast({
-        title: "Handover Updated",
-        description: `Handover has been ${status} successfully.`,
+        title: t("common.success"),
+        description: `${t("handover.keyHandover")} has been ${status} successfully.`,
       });
     } catch (error) {
       console.error("Error updating handover status:", error);
       toast({
-        title: "Error",
+        title: t("common.error"),
         description: "Failed to update handover status. Please try again.",
         variant: "destructive",
       });
@@ -152,34 +154,34 @@ export default function AdminHandovers() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading handovers...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">{t("common.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
+            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("common.backToDashboard")}
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <Calendar className="h-8 w-8" />
-              Key Handovers
+              {t("handover.keyHandovers")}
             </h1>
-            <p className="text-gray-600 mt-2">
-              Manage key handover appointments and schedules
+            <p className="text-muted-foreground mt-2">
+              {t("handover.scheduleManage")}
             </p>
           </div>
         </div>
@@ -189,7 +191,7 @@ export default function AdminHandovers() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Handovers
+                Total {t("handover.keyHandovers")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -198,7 +200,9 @@ export default function AdminHandovers() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("common.pending")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -212,7 +216,9 @@ export default function AdminHandovers() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Completed</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("common.completed")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
@@ -222,7 +228,9 @@ export default function AdminHandovers() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("common.overdue")}
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-red-600">
@@ -253,7 +261,9 @@ export default function AdminHandovers() {
                       {handover.tenant_properties.users.full_name ||
                         handover.tenant_properties.users.name}
                       {isOverdue(handover.scheduled_date, handover.status) && (
-                        <Badge variant="destructive">Overdue</Badge>
+                        <Badge variant="destructive">
+                          {t("common.overdue")}
+                        </Badge>
                       )}
                     </CardTitle>
                     <CardDescription>
@@ -274,19 +284,25 @@ export default function AdminHandovers() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-500">Scheduled Date:</span>
+                    <span className="text-gray-500">
+                      {t("common.scheduledDate")}:
+                    </span>
                     <p className="font-medium">
                       {new Date(handover.scheduled_date).toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Tenant Email:</span>
+                    <span className="text-gray-500">
+                      {t("common.tenantEmail")}:
+                    </span>
                     <p className="font-medium">
                       {handover.tenant_properties.users.email}
                     </p>
                   </div>
                   <div>
-                    <span className="text-gray-500">Requested:</span>
+                    <span className="text-gray-500">
+                      {t("common.requested")}:
+                    </span>
                     <p className="font-medium">
                       {new Date(handover.created_at).toLocaleDateString()}
                     </p>
@@ -295,7 +311,9 @@ export default function AdminHandovers() {
 
                 {handover.notes && (
                   <div className="bg-gray-50 p-3 rounded">
-                    <span className="text-gray-500 text-sm">Notes:</span>
+                    <span className="text-gray-500 text-sm">
+                      {t("common.notes")}:
+                    </span>
                     <p className="text-gray-700 mt-1">{handover.notes}</p>
                   </div>
                 )}
@@ -312,12 +330,12 @@ export default function AdminHandovers() {
                         }}
                       >
                         <Clock className="h-4 w-4 mr-2" />
-                        Manage
+                        {t("common.edit")}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-2xl">
                       <DialogHeader>
-                        <DialogTitle>Manage Key Handover</DialogTitle>
+                        <DialogTitle>{t("handover.keyHandover")}</DialogTitle>
                         <DialogDescription>
                           Update the status and add notes for this handover
                           appointment
@@ -327,7 +345,9 @@ export default function AdminHandovers() {
                         <div className="space-y-4">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <span className="text-gray-500">Tenant:</span>
+                              <span className="text-gray-500">
+                                {t("common.tenant")}:
+                              </span>
                               <p className="font-medium">
                                 {selectedHandover.tenant_properties.users
                                   .full_name ||
@@ -335,7 +355,9 @@ export default function AdminHandovers() {
                               </p>
                             </div>
                             <div>
-                              <span className="text-gray-500">Type:</span>
+                              <span className="text-gray-500">
+                                {t("common.type")}:
+                              </span>
                               <p className="font-medium capitalize">
                                 {selectedHandover.handover_type.replace(
                                   "_",
@@ -346,7 +368,9 @@ export default function AdminHandovers() {
                           </div>
 
                           <div>
-                            <span className="text-gray-500">Scheduled:</span>
+                            <span className="text-gray-500">
+                              {t("common.scheduled")}:
+                            </span>
                             <p className="font-medium">
                               {new Date(
                                 selectedHandover.scheduled_date,
@@ -372,7 +396,7 @@ export default function AdminHandovers() {
                             >
                               <div>
                                 <label className="block text-sm font-medium mb-2">
-                                  Notes (optional):
+                                  {t("common.notes")} (optional):
                                 </label>
                                 <Textarea
                                   name="notes"
@@ -389,7 +413,7 @@ export default function AdminHandovers() {
                                   className="flex-1"
                                 >
                                   <Check className="h-4 w-4 mr-2" />
-                                  Mark Completed
+                                  {t("common.markCompleted")}
                                 </Button>
                                 <Button
                                   type="submit"
@@ -399,7 +423,7 @@ export default function AdminHandovers() {
                                   className="flex-1"
                                 >
                                   <X className="h-4 w-4 mr-2" />
-                                  Cancel
+                                  {t("common.cancel")}
                                 </Button>
                               </div>
                             </form>
@@ -418,7 +442,7 @@ export default function AdminHandovers() {
                         }
                       >
                         <Check className="h-4 w-4 mr-2" />
-                        Confirm
+                        {t("common.confirm")}
                       </Button>
                       <Button
                         size="sm"
@@ -428,7 +452,7 @@ export default function AdminHandovers() {
                         }
                       >
                         <X className="h-4 w-4 mr-2" />
-                        Decline
+                        {t("common.decline")}
                       </Button>
                     </>
                   )}
@@ -441,7 +465,7 @@ export default function AdminHandovers() {
                       }
                     >
                       <Check className="h-4 w-4 mr-2" />
-                      Complete
+                      {t("common.complete")}
                     </Button>
                   )}
                 </div>
@@ -454,10 +478,10 @@ export default function AdminHandovers() {
           <Card>
             <CardContent className="text-center py-12">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Key Handovers
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                No {t("handover.keyHandovers")}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 No key handover appointments have been scheduled yet.
               </p>
             </CardContent>

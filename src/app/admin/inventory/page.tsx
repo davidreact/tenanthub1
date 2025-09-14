@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Card,
   CardContent,
@@ -51,6 +52,7 @@ export default function AdminInventory() {
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const { t } = useLanguage();
   const supabase = createClient();
 
   useEffect(() => {
@@ -140,34 +142,34 @@ export default function AdminInventory() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading inventory...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">{t("common.loading")}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
+            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("common.backToDashboard")}
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <Package className="h-8 w-8" />
-              Inventory Management
+              {t("inventory.inventoryManagement")}
             </h1>
-            <p className="text-gray-600 mt-2">
-              View and manage inventory across all properties
+            <p className="text-muted-foreground mt-2">
+              {t("inventory.managePropertyInventories")}
             </p>
           </div>
         </div>
@@ -175,13 +177,13 @@ export default function AdminInventory() {
         {/* Filters */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Filters</CardTitle>
+            <CardTitle>{t("common.filter")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Property
+                  {t("common.property")}
                 </label>
                 <Select
                   value={selectedProperty}
@@ -191,7 +193,9 @@ export default function AdminInventory() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Properties</SelectItem>
+                    <SelectItem value="all">
+                      All {t("common.property")}
+                    </SelectItem>
                     {properties.map((property) => (
                       <SelectItem key={property.id} value={property.id}>
                         {property.name}
@@ -202,12 +206,12 @@ export default function AdminInventory() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">
-                  Search Items
+                  {t("common.search")} Items
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search by name, description, or location..."
+                    placeholder={`${t("common.search")} by ${t("common.name")}, ${t("common.description")}, or ${t("common.location")}...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -231,7 +235,7 @@ export default function AdminInventory() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Total Quantity
+                Total {t("common.quantity")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -241,7 +245,7 @@ export default function AdminInventory() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
-                Estimated Value
+                {t("common.estimatedValue")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -282,7 +286,9 @@ export default function AdminInventory() {
                       <p className="font-medium">{propertyItems.length}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Value:</span>
+                      <span className="text-gray-500">
+                        {t("common.value")}:
+                      </span>
                       <p className="font-medium">${propertyValue.toFixed(2)}</p>
                     </div>
                   </div>
@@ -290,7 +296,7 @@ export default function AdminInventory() {
                   <Link href={`/admin/properties/${property.id}/inventory`}>
                     <Button className="w-full">
                       <Package className="h-4 w-4 mr-2" />
-                      Manage Inventory
+                      {t("inventory.inventoryManagement")}
                     </Button>
                   </Link>
                 </CardContent>
@@ -303,7 +309,7 @@ export default function AdminInventory() {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold text-gray-900">
             {selectedProperty === "all"
-              ? "All Inventory Items"
+              ? `All ${t("inventory.inventory")} Items`
               : "Filtered Items"}
           </h2>
 
@@ -328,11 +334,15 @@ export default function AdminInventory() {
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Quantity:</span>
+                      <span className="text-gray-500">
+                        {t("common.quantity")}:
+                      </span>
                       <p className="font-medium">{item.quantity}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Value:</span>
+                      <span className="text-gray-500">
+                        {t("common.value")}:
+                      </span>
                       <p className="font-medium">
                         ${item.estimated_value || 0}
                       </p>
@@ -343,7 +353,7 @@ export default function AdminInventory() {
                     href={`/admin/properties/${item.property_id}/inventory`}
                   >
                     <Button variant="outline" size="sm" className="w-full">
-                      View in Property
+                      View in {t("common.property")}
                     </Button>
                   </Link>
                 </CardContent>
@@ -356,13 +366,13 @@ export default function AdminInventory() {
           <Card>
             <CardContent className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Inventory Items
+              <h3 className="text-lg font-medium text-foreground mb-2">
+                No {t("inventory.inventory")} Items
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 {searchTerm || selectedProperty !== "all"
                   ? "No items match your current filters."
-                  : "No inventory items have been added yet."}
+                  : `No ${t("inventory.inventory")} items have been added yet.`}
               </p>
             </CardContent>
           </Card>

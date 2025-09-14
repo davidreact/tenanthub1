@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   Card,
   CardContent,
@@ -63,6 +64,7 @@ export default function AdminConversations() {
   const [newMessage, setNewMessage] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
   const supabase = createClient();
 
   useEffect(() => {
@@ -184,34 +186,34 @@ export default function AdminConversations() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading conversations...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading conversations...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
+            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
           </Link>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <MessageSquare className="h-8 w-8" />
-              Conversations
+              {t("messages.conversations")}
             </h1>
-            <p className="text-gray-600 mt-2">
-              Manage tenant communications and support requests
+            <p className="text-muted-foreground mt-2">
+              {t("messages.manageTenantCommunications")}
             </p>
           </div>
         </div>
@@ -386,10 +388,10 @@ export default function AdminConversations() {
           <Card>
             <CardContent className="text-center py-12">
               <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-foreground mb-2">
                 No Conversations
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 No tenant conversations have been started yet.
               </p>
             </CardContent>

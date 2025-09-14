@@ -1,29 +1,61 @@
+"use client";
+
 import Link from "next/link";
-import { createClient } from "../../supabase/server";
+import { createClient } from "../../supabase/client";
 import { Button } from "./ui/button";
-import { User, UserCircle, Home } from "lucide-react";
-import UserProfile from "./user-profile";
+import { Home, UserCircle } from "lucide-react";
 import { LanguageSwitcher } from "./language-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 import NotificationsPanel from "./notifications-panel";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-export default async function Navbar() {
-  const supabase = await createClient();
+export default function Navbar() {
+  const supabase = createClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { t } = useLanguage();
+  const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  useEffect(() => {
+    const getUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
 
-  // Get user profile to check if admin and get user name
-  let userProfile = null;
-  if (user) {
-    const { data } = await supabase
-      .from("users")
-      .select("role, full_name, name")
-      .eq("id", user.id)
-      .single();
-    userProfile = data;
-  }
+      if (user) {
+        const { data } = await supabase
+          .from("users")
+          .select("role, full_name, name")
+          .eq("id", user.id)
+          .single();
+        setUserProfile(data);
+      }
+      setLoading(false);
+    };
+
+    getUser();
+  }, [supabase, pathname]);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.refresh();
+  };
+
+  const isDashboardPage =
+    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/admin") ||
+    pathname?.startsWith("/tenant");
 
   return (
     <nav className="w-full border-b border-border bg-background py-2">
@@ -31,53 +63,57 @@ export default async function Navbar() {
         <Link
           href="/"
           prefetch
-          className="text-xl font-bold flex items-center gap-2"
+          className="text-xl font-bold flex items-center gap-2 text-foreground"
         >
           <Home className="w-6 h-6" />
-          Tenant Portal
+          {t("nav.tenantPortal")}
         </Link>
         <div className="flex gap-2 items-center">
           <LanguageSwitcher />
           <ThemeSwitcher />
-          {user ? (
+          {!loading && user ? (
             <>
               <NotificationsPanel
                 userId={user.id}
                 isAdmin={userProfile?.role === "admin"}
               />
-              <Link
-                href="/dashboard"
-                className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground/80"
-              >
-                <Button>Dashboard</Button>
-              </Link>
-              <Link
-                href="/profile"
-                className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground/80"
-              >
-                Profile
-              </Link>
-              <span className="text-sm text-foreground px-2">
-                {userProfile?.full_name || userProfile?.name || user.email}
-              </span>
-              <UserProfile />
+              {!isDashboardPage && (
+                <Link href="/dashboard">
+                  <Button variant="outline">{t("nav.dashboard")}</Button>
+                </Link>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <UserCircle className="h-6 w-6" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push("/profile")}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    {t("nav.signOut")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
-          ) : (
+          ) : !loading ? (
             <>
               <Link
                 href="/sign-in"
                 className="px-4 py-2 text-sm font-medium text-foreground hover:text-foreground/80"
               >
-                Sign In
+                {t("nav.signIn")}
               </Link>
               <Link
                 href="/sign-up"
                 className="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90"
               >
-                Sign Up
+                {t("nav.signUp")}
               </Link>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>
