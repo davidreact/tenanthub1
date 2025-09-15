@@ -4,6 +4,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { getTranslation } from "@/lib/i18n";
 
 interface LoginProps {
   searchParams: Promise<Message>;
@@ -20,19 +21,23 @@ export default async function SignInPage({ searchParams }: LoginProps) {
     );
   }
 
+  // Default to English for server-side rendering
+  // The client-side language switcher will handle dynamic translations
+  const t = (key: string) => getTranslation(key as any, "en");
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-sm">
         <form className="flex flex-col space-y-6">
           <div className="space-y-2 text-center">
-            <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">{t("auth.signInTitle")}</h1>
             <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
+              {t("auth.dontHaveAccount")}{" "}
               <Link
                 className="text-primary font-medium hover:underline transition-all"
                 href="/sign-up"
               >
-                Sign up
+                {t("auth.signUp")}
               </Link>
             </p>
           </div>
@@ -40,13 +45,13 @@ export default async function SignInPage({ searchParams }: LoginProps) {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium">
-                Email
+                {t("common.email")}
               </Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 required
                 className="w-full"
               />
@@ -55,20 +60,20 @@ export default async function SignInPage({ searchParams }: LoginProps) {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  {t("common.password")}
                 </Label>
                 <Link
                   className="text-xs text-muted-foreground hover:text-foreground hover:underline transition-all"
                   href="/forgot-password"
                 >
-                  Forgot Password?
+                  {t("auth.forgotPassword")}
                 </Link>
               </div>
               <Input
                 id="password"
                 type="password"
                 name="password"
-                placeholder="Your password"
+                placeholder={t("auth.passwordPlaceholder")}
                 required
                 className="w-full"
               />
@@ -77,10 +82,10 @@ export default async function SignInPage({ searchParams }: LoginProps) {
 
           <SubmitButton
             className="w-full"
-            pendingText="Signing in..."
+            pendingText={t("auth.signingIn")}
             formAction={signInAction}
           >
-            Sign in
+            {t("auth.signIn")}
           </SubmitButton>
 
           <FormMessage message={message} />

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { SmtpMessage } from "../smtp-message";
 import { signUpAction } from "@/app/actions";
 import { UrlProvider } from "@/components/url-provider";
+import { getTranslation } from "@/lib/i18n";
 
 export default async function Signup(props: {
   searchParams: Promise<Message>;
@@ -19,20 +20,24 @@ export default async function Signup(props: {
     );
   }
 
+  // Default to English for server-side rendering
+  // The client-side language switcher will handle dynamic translations
+  const t = (key: string) => getTranslation(key as any, "en");
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-sm">
         <UrlProvider>
           <form className="flex flex-col space-y-6">
             <div className="space-y-2 text-center">
-              <h1 className="text-3xl font-semibold tracking-tight">Sign up</h1>
+              <h1 className="text-3xl font-semibold tracking-tight">{t("auth.signUpTitle")}</h1>
               <p className="text-sm text-muted-foreground">
-                Already have an account?{" "}
+                {t("auth.alreadyHaveAccount")}{" "}
                 <Link
                   className="text-primary font-medium hover:underline transition-all"
                   href="/sign-in"
                 >
-                  Sign in
+                  {t("auth.signIn")}
                 </Link>
               </p>
             </div>
@@ -40,13 +45,13 @@ export default async function Signup(props: {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="full_name" className="text-sm font-medium">
-                  Full Name
+                  {t("common.fullName")}
                 </Label>
                 <Input
                   id="full_name"
                   name="full_name"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder={t("auth.fullNamePlaceholder")}
                   required
                   className="w-full"
                 />
@@ -54,13 +59,13 @@ export default async function Signup(props: {
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  {t("common.email")}
                 </Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("auth.emailPlaceholder")}
                   required
                   className="w-full"
                 />
@@ -68,13 +73,13 @@ export default async function Signup(props: {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Password
+                  {t("common.password")}
                 </Label>
                 <Input
                   id="password"
                   type="password"
                   name="password"
-                  placeholder="Your password"
+                  placeholder={t("auth.passwordPlaceholder")}
                   minLength={6}
                   required
                   className="w-full"
@@ -84,10 +89,10 @@ export default async function Signup(props: {
 
             <SubmitButton
               formAction={signUpAction}
-              pendingText="Signing up..."
+              pendingText={t("auth.signingUp")}
               className="w-full"
             >
-              Sign up
+              {t("auth.signUp")}
             </SubmitButton>
 
             <FormMessage message={searchParams} />

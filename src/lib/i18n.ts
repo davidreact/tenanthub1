@@ -13,6 +13,20 @@ export const translations = {
     "nav.signOut": "Sign Out",
     "nav.tenantPortal": "Tenant Portal",
 
+    // Auth
+    "auth.signIn": "Sign in",
+    "auth.signUp": "Sign up",
+    "auth.signInTitle": "Sign in",
+    "auth.signUpTitle": "Sign up",
+    "auth.dontHaveAccount": "Don't have an account?",
+    "auth.alreadyHaveAccount": "Already have an account?",
+    "auth.forgotPassword": "Forgot Password?",
+    "auth.signingIn": "Signing in...",
+    "auth.signingUp": "Signing up...",
+    "auth.emailPlaceholder": "you@example.com",
+    "auth.passwordPlaceholder": "Your password",
+    "auth.fullNamePlaceholder": "John Doe",
+
     // Dashboard
     "dashboard.adminDashboard": "Admin Dashboard",
     "dashboard.tenantDashboard": "Tenant Dashboard",
@@ -315,6 +329,20 @@ export const translations = {
     "nav.signUp": "Registrarse",
     "nav.signOut": "Cerrar Sesión",
     "nav.tenantPortal": "Portal del Inquilino",
+
+    // Auth
+    "auth.signIn": "Iniciar Sesión",
+    "auth.signUp": "Registrarse",
+    "auth.signInTitle": "Iniciar Sesión",
+    "auth.signUpTitle": "Registrarse",
+    "auth.dontHaveAccount": "¿No tienes una cuenta?",
+    "auth.alreadyHaveAccount": "¿Ya tienes una cuenta?",
+    "auth.forgotPassword": "¿Olvidaste tu Contraseña?",
+    "auth.signingIn": "Iniciando Sesión...",
+    "auth.signingUp": "Registrándose...",
+    "auth.emailPlaceholder": "tu@ejemplo.com",
+    "auth.passwordPlaceholder": "Tu contraseña",
+    "auth.fullNamePlaceholder": "Juan Pérez",
 
     // Dashboard
     "dashboard.adminDashboard": "Panel de Administrador",
@@ -625,6 +653,20 @@ export const translations = {
     "nav.signUp": "S'inscrire",
     "nav.signOut": "Se Déconnecter",
     "nav.tenantPortal": "Portail Locataire",
+
+    // Auth
+    "auth.signIn": "Se Connecter",
+    "auth.signUp": "S'inscrire",
+    "auth.signInTitle": "Se Connecter",
+    "auth.signUpTitle": "S'inscrire",
+    "auth.dontHaveAccount": "Vous n'avez pas de compte ?",
+    "auth.alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "auth.forgotPassword": "Mot de passe oublié ?",
+    "auth.signingIn": "Connexion en cours...",
+    "auth.signingUp": "Inscription en cours...",
+    "auth.emailPlaceholder": "vous@exemple.com",
+    "auth.passwordPlaceholder": "Votre mot de passe",
+    "auth.fullNamePlaceholder": "Jean Dupont",
 
     // Dashboard
     "dashboard.adminDashboard": "Tableau de Bord Admin",
