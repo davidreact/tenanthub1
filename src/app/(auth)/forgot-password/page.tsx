@@ -7,11 +7,22 @@ import { SmtpMessage } from "../smtp-message";
 import { forgotPasswordAction } from "@/app/actions";
 import Navbar from "@/components/navbar";
 import { UrlProvider } from "@/components/url-provider";
+import { getTranslation, Language } from "@/lib/i18n";
+import { cookies } from "next/headers";
+
+async function getLanguageFromCookies(): Promise<Language> {
+  const cookieStore = await cookies();
+  const languageCookie = cookieStore.get("language")?.value as Language;
+  return languageCookie || "en";
+}
 
 export default async function ForgotPassword(props: {
   searchParams: Promise<Message>;
 }) {
-  const searchParams = await props.searchParams;
+  const [searchParams, language] = await Promise.all([
+    props.searchParams,
+    getLanguageFromCookies(),
+  ]);
 
   if ("message" in searchParams) {
     return (
@@ -21,6 +32,8 @@ export default async function ForgotPassword(props: {
     );
   }
 
+  const t = (key: string) => getTranslation(key as any, language);
+
   return (
     <>
       <Navbar />
@@ -29,14 +42,14 @@ export default async function ForgotPassword(props: {
           <UrlProvider>
             <form className="flex flex-col space-y-6">
               <div className="space-y-2 text-center">
-                <h1 className="text-3xl font-semibold tracking-tight">Reset Password</h1>
+                <h1 className="text-3xl font-semibold tracking-tight">{t("auth.forgotPasswordTitle") || "Reset Password"}</h1>
                 <p className="text-sm text-muted-foreground">
-                  Already have an account?{" "}
+                  {t("auth.alreadyHaveAccount") || "Already have an account?"}{" "}
                   <Link
                     className="text-primary font-medium hover:underline transition-all"
                     href="/sign-in"
                   >
-                    Sign in
+                    {t("auth.signIn") || "Sign in"}
                   </Link>
                 </p>
               </div>
@@ -44,13 +57,13 @@ export default async function ForgotPassword(props: {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-medium">
-                    Email
+                    {t("common.email") || "Email"}
                   </Label>
                   <Input
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder={t("auth.emailPlaceholder") || "you@example.com"}
                     required
                     className="w-full"
                   />
@@ -59,10 +72,10 @@ export default async function ForgotPassword(props: {
 
               <SubmitButton
                 formAction={forgotPasswordAction}
-                pendingText="Sending reset link..."
+                pendingText={t("auth.sendingResetLink") || "Sending reset link..."}
                 className="w-full"
               >
-                Reset Password
+                {t("auth.resetPassword") || "Reset Password"}
               </SubmitButton>
 
               <FormMessage message={searchParams} />

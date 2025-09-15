@@ -3,27 +3,27 @@ import { FormMessage, Message } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getTranslation, Language } from "@/lib/i18n";
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { getTranslation } from "@/lib/i18n";
 
 interface LoginProps {
   searchParams: Promise<Message>;
 }
 
+async function getLanguageFromCookies(): Promise<Language> {
+  const cookieStore = await cookies();
+  const languageCookie = cookieStore.get("language")?.value as Language;
+  return languageCookie || "en";
+}
+
 export default async function SignInPage({ searchParams }: LoginProps) {
-  const message = await searchParams;
+  const [resolvedSearchParams, language] = await Promise.all([
+    searchParams,
+    getLanguageFromCookies(),
+  ]);
 
-  if ("message" in message) {
-    return (
-      <div className="flex h-screen w-full flex-1 items-center justify-center p-4 sm:max-w-md">
-        <FormMessage message={message} />
-      </div>
-    );
-  }
-
-  // Default to English for server-side rendering
-  // The client-side language switcher will handle dynamic translations
-  const t = (key: string) => getTranslation(key as any, "en");
+  const t = (key: string) => getTranslation(key as any, language);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">
@@ -88,7 +88,7 @@ export default async function SignInPage({ searchParams }: LoginProps) {
             {t("auth.signIn")}
           </SubmitButton>
 
-          <FormMessage message={message} />
+          <FormMessage message={resolvedSearchParams} />
         </form>
       </div>
     </div>

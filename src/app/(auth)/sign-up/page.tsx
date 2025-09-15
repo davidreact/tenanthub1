@@ -6,12 +6,23 @@ import Link from "next/link";
 import { SmtpMessage } from "../smtp-message";
 import { signUpAction } from "@/app/actions";
 import { UrlProvider } from "@/components/url-provider";
-import { getTranslation } from "@/lib/i18n";
+import { getTranslation, Language } from "@/lib/i18n";
+import { cookies } from "next/headers";
+
+async function getLanguageFromCookies(): Promise<Language> {
+  const cookieStore = await cookies();
+  const languageCookie = cookieStore.get("language")?.value as Language;
+  return languageCookie || "en";
+}
 
 export default async function Signup(props: {
   searchParams: Promise<Message>;
 }) {
-  const searchParams = await props.searchParams;
+  const [searchParams, language] = await Promise.all([
+    props.searchParams,
+    getLanguageFromCookies(),
+  ]);
+
   if ("message" in searchParams) {
     return (
       <div className="flex h-screen w-full flex-1 items-center justify-center p-4 sm:max-w-md">
@@ -20,9 +31,7 @@ export default async function Signup(props: {
     );
   }
 
-  // Default to English for server-side rendering
-  // The client-side language switcher will handle dynamic translations
-  const t = (key: string) => getTranslation(key as any, "en");
+  const t = (key: string) => getTranslation(key as any, language);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-8">

@@ -78,8 +78,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         },
       );
     } else {
-      // Save to localStorage for non-authenticated users
+      // Save to localStorage and cookies for non-authenticated users
       localStorage.setItem("language", newLanguage);
+      // Set cookie that expires in 1 year
+      document.cookie = `language=${newLanguage}; path=/; max-age=${60 * 60 * 24 * 365}`;
+    }
+
+    // Refresh the page to update server-rendered content on auth pages
+    if (typeof window !== 'undefined' &&
+        (window.location.pathname.startsWith('/sign-in') ||
+         window.location.pathname.startsWith('/sign-up') ||
+         window.location.pathname.startsWith('/forgot-password'))) {
+      window.location.reload();
     }
   };
 
