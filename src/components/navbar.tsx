@@ -66,7 +66,24 @@ export default function Navbar() {
           prefetch
           className="text-xl font-bold flex items-center gap-2 text-foreground"
         >
-          <Image src="/logo.svg" alt="Logo" width={100} height={40} />
+          <svg width="80" height="40" xmlns="http://www.w3.org/2000/svg">
+            <style type="text/css">{`
+              .navbar-logo-text {
+                font-family: 'Saira Stencil One', sans-serif;
+                font-size: 30px;
+                fill: currentColor;
+              }
+            `}</style>
+            <text
+              x="50%"
+              y="50%"
+              dominant-baseline="middle"
+              text-anchor="middle"
+              className="navbar-logo-text"
+            >
+              S
+            </text>
+          </svg>
           {t("nav.tenantPortal")}
         </Link>
         <div className="flex gap-2 items-center">

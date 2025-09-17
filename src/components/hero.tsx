@@ -17,7 +17,27 @@ export default function Hero() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
-              <Image src="/logo.svg" alt="Logo" width={200} height={64} />
+              <svg
+                width="auto"
+                height="auto"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <style type="text/css">{`
+                  .hero-logo-text {
+                    font-family: 'Saira Stencil One', sans-serif;
+                    font-size: 100px;
+                  }
+                `}</style>
+                <text
+                  x="50%"
+                  y="50%"
+                  dominant-baseline="middle"
+                  text-anchor="middle"
+                  className="hero-logo-text"
+                >
+                  SYVITY
+                </text>
+              </svg>
             </div>
 
             <h1 className="text-5xl sm:text-6xl font-bold text-foreground mb-8 tracking-tight">

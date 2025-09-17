@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_properties: {
+        Row: {
+          admin_id: string | null
+          created_at: string | null
+          id: string
+          property_id: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string | null
+          id?: string
+          property_id?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string | null
+          id?: string
+          property_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_properties_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_properties_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string | null
@@ -377,6 +413,7 @@ export type Database = {
           name: string
           property_type: string | null
           square_feet: number | null
+          square_meters: number | null
           status: string | null
           updated_at: string | null
         }
@@ -394,6 +431,7 @@ export type Database = {
           name: string
           property_type?: string | null
           square_feet?: number | null
+          square_meters?: number | null
           status?: string | null
           updated_at?: string | null
         }
@@ -411,6 +449,7 @@ export type Database = {
           name?: string
           property_type?: string | null
           square_feet?: number | null
+          square_meters?: number | null
           status?: string | null
           updated_at?: string | null
         }

@@ -13,11 +13,13 @@ const sairaStencilOne = Saira_Stencil_One({
   subsets: ["latin"],
   weight: "400",
   variable: "--font-saira-stencil-one",
+  preload: true,
 });
 
 export const metadata: Metadata = {
   title: "Syvity - Modern Property Management",
-  description: "Streamline your property management with Syvity: Complete tenant management, inventory, handovers, and secure authentication.",
+  description:
+    "Streamline your property management with Syvity: Complete tenant management, inventory, handovers, and secure authentication.",
   icons: [
     {
       rel: "icon",
@@ -34,7 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       {/* <Script src="https://api.tempo.build/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js" /> [deprecated] */}
-      <body className={`${inter.className} ${sairaStencilOne.variable} bg-background min-h-screen`}>
+      <body
+        className={`${inter.className} ${sairaStencilOne.variable} bg-background min-h-screen`}
+      >
         {/* Global background gradient applied to all pages */}
         <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-primary/5 dark:from-primary/20 dark:to-primary/10 opacity-70" />
         <ThemeProvider
@@ -45,6 +49,7 @@ export default function RootLayout({
         >
           <LanguageProvider>
             <Navbar />
+
             {children}
             <Toaster />
           </LanguageProvider>
