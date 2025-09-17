@@ -26,6 +26,9 @@ export const translations = {
     "auth.emailPlaceholder": "you@example.com",
     "auth.passwordPlaceholder": "Your password",
     "auth.fullNamePlaceholder": "John Doe",
+    "auth.forgotPasswordTitle": "Forgot Password?",
+    "auth.sendingResetLink": "Sending reset link...",
+    "auth.resetPassword": "Reset Password",
 
     // Dashboard
     "dashboard.adminDashboard": "Admin Dashboard",
