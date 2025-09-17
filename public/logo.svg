@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="120" xmlns="http://www.w3.org/2000/svg">
+  <style type="text/css"><![CDATA[
+    
+
+    .logo-text {
+      font-family: var(--font-saira-stencil-one), 'Saira Stencil One', sans-serif;
+      font-size: 96px;
+      fill: #FFFFFF;
+    }
+  ]]></style>
+
+  <!-- Background without rounded corners 
+  <rect width="100%" height="100%" fill="#48B3AF"/>-->
+
+  <!-- Logo Text centered -->
+  <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" class="logo-text">
+    SYVITY
+  </text>
+</svg>

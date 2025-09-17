@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { createClient } from "../../supabase/client";
 import { Button } from "./ui/button";
-import { Home, UserCircle } from "lucide-react";
+import { UserCircle } from "lucide-react";
+import Image from "next/image";
 import { LanguageSwitcher } from "./language-switcher";
 import { ThemeSwitcher } from "./theme-switcher";
 import NotificationsPanel from "./notifications-panel";
@@ -65,7 +66,7 @@ export default function Navbar() {
           prefetch
           className="text-xl font-bold flex items-center gap-2 text-foreground"
         >
-          <Home className="w-6 h-6" />
+          <Image src="/logo.svg" alt="Logo" width={100} height={40} />
           {t("nav.tenantPortal")}
         </Link>
         <div className="flex gap-2 items-center">

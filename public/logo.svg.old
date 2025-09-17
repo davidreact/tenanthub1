@@ -1,0 +1,13 @@
+<svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Logo icon: House with key -->
+  <g stroke="#67C090" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M35 15L27 7L19 15V30H23V19H29V30H35V15Z"/>
+    <!-- Key notch -->
+    <rect x="25" y="20" width="2" height="4" fill="#67C090"/>
+    <rect x="24" y="21" width="4" height="1" fill="#67C090"/>
+    <!-- S on door -->
+    <path d="M24.5 16C24.5 15 25.5 15 25.5 16C25.5 17 24.5 17 24.5 18" stroke="#ffffff" stroke-width="1.5" fill="none"/>
+  </g>
+  <!-- Text: Syvity -->
+  <text x="45" y="28" font-family="Inter, sans-serif" font-size="20" font-weight="bold" fill="#67C090">Syvity</text>
+</svg>

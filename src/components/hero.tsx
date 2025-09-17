@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Check, Home, FileText, Calendar } from "lucide-react";
+import { ArrowUpRight, Check, FileText, Calendar } from "lucide-react";
+import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Hero() {
@@ -16,7 +17,7 @@ export default function Hero() {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
-              <Home className="w-16 h-16 text-primary" />
+              <Image src="/logo.svg" alt="Logo" width={200} height={64} />
             </div>
 
             <h1 className="text-5xl sm:text-6xl font-bold text-foreground mb-8 tracking-tight">
