@@ -77,8 +77,8 @@ export default function Navbar() {
             <text
               x="50%"
               y="50%"
-              dominant-baseline="middle"
-              text-anchor="middle"
+              dominantBaseline="middle"
+              textAnchor="middle"
               className="navbar-logo-text"
             >
               S
