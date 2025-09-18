@@ -79,8 +79,8 @@ export function InventoryGridView({
                 <TableHead className="w-24">Condition</TableHead>
                 <TableHead className="w-20">Qty</TableHead>
                 <TableHead className="w-24">Value</TableHead>
-                <TableHead className="w-32">Notes</TableHead>
-                <TableHead className="w-32">Photos</TableHead>
+                <TableHead className="w-24">Notes</TableHead>
+                <TableHead className="w-24">Photos</TableHead>
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -102,6 +102,16 @@ export function InventoryGridView({
                     </TableCell>
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell>${item.estimated_value || 0}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEditClick(item)}
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Notes
+                      </Button>
+                    </TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"

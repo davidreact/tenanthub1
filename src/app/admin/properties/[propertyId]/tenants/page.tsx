@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Users, UserX } from "lucide-react";
+import { ArrowLeft, Users, UserX, Package } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatTranslation } from "@/lib/i18n";
+
+import { useToast } from "@/components/ui/use-toast";
 
 interface Property {
   id: string;
@@ -46,10 +48,12 @@ export default function PropertyTenants() {
     [],
   );
   const [loading, setLoading] = useState(true);
+
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
   const { t, language } = useLanguage();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (propertyId) {
@@ -66,8 +70,8 @@ export default function PropertyTenants() {
         .eq("id", propertyId)
         .single();
 
-      // Fetch tenant assignments for this property
-      const { data: tenantPropsData } = await supabase
+      // Fetch tenant properties first
+      const { data: tenantPropsData, error: tenantError } = await supabase
         .from("tenant_properties")
         .select(
           `
@@ -78,8 +82,64 @@ export default function PropertyTenants() {
         .eq("property_id", propertyId)
         .order("created_at", { ascending: false });
 
+      if (tenantError) {
+        console.error("Error fetching tenant properties:", tenantError);
+        return;
+      }
+
+      // Fetch assignment summaries for each tenant property
+      const tenantIds = tenantPropsData?.map(tp => tp.id) || [];
+      let assignmentSummaries: { [key: string]: { count: number; totalValue: number } } = {};
+
+      console.log("Tenant IDs for assignment query:", tenantIds);
+
+      if (tenantIds.length > 0) {
+        const { data: assignmentsData, error: assignmentsError } = await supabase
+          .from("inventory_assignments")
+          .select(
+            `
+            tenant_property_id,
+            inventory_items!inventory_assignments_inventory_item_id_fkey (
+              estimated_value
+            )
+          `,
+          )
+          .in("tenant_property_id", tenantIds)
+          .is("returned_date", null); // Only active assignments
+
+        console.log("Assignment query result:", { assignmentsData, assignmentsError });
+
+        if (!assignmentsError && assignmentsData) {
+          // Group assignments by tenant_property_id
+          const grouped = assignmentsData.reduce((acc: any, assignment: any) => {
+            const tenantId = assignment.tenant_property_id;
+            console.log("Processing assignment:", { tenantId, assignment });
+            if (!acc[tenantId]) {
+              acc[tenantId] = { count: 0, totalValue: 0 };
+            }
+            acc[tenantId].count += 1;
+            acc[tenantId].totalValue += assignment.inventory_items?.estimated_value || 0;
+            return acc;
+          }, {});
+
+          assignmentSummaries = grouped;
+          console.log("Final assignment summaries:", assignmentSummaries);
+        }
+      }
+
+      // Process tenant data to include assignment summaries
+      const processedTenants = (tenantPropsData || []).map((tenantProperty: any) => {
+        const summary = assignmentSummaries[tenantProperty.id] || { count: 0, totalValue: 0 };
+        return {
+          ...tenantProperty,
+          assigned_items_count: summary.count,
+          assigned_total_value: summary.totalValue,
+        };
+      });
+
+
       setProperty(propertyData);
-      setTenantProperties(tenantPropsData || []);
+      setTenantProperties(processedTenants);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -241,22 +301,32 @@ export default function PropertyTenants() {
                   </div>
                 </div>
 
-                {tenantProperty.status === "active" && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        updateTenantPropertyStatus(
-                          tenantProperty.id,
-                          "terminated",
-                        )
-                      }
-                    >
-                      <UserX className="h-4 w-4 mr-2" />
-                      {t("tenants.terminateLease")}
+                <div className="mt-4 p-3 bg-blue-50 rounded">
+                  <h4 className="font-medium text-sm mb-1">Assigned Inventory</h4>
+                  <p className="text-xs text-blue-700">
+                    {(tenantProperty as any).assigned_items_count || 0} items | ${(tenantProperty as any).assigned_total_value?.toFixed(2) || '0.00'}
+                  </p>
+                  <Link href={`/admin/properties/${propertyId}/inventory`}>
+                    <Button variant="ghost" size="sm" className="mt-1 h-auto p-0 text-xs">
+                      View & Manage Assignments
                     </Button>
-                  </div>
+                  </Link>
+                </div>
+
+                {tenantProperty.status === "active" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      updateTenantPropertyStatus(
+                        tenantProperty.id,
+                        "terminated",
+                      )
+                    }
+                  >
+                    <UserX className="h-4 w-4 mr-2" />
+                    {t("tenants.terminateLease")}
+                  </Button>
                 )}
               </CardContent>
             </Card>
@@ -282,6 +352,8 @@ export default function PropertyTenants() {
             </CardContent>
           </Card>
         )}
+
+
       </div>
     </div>
   );

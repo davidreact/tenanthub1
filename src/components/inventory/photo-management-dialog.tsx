@@ -16,6 +16,7 @@ interface InventoryPhoto {
   photo_url: string;
   caption?: string;
   inventory_item_id: string;
+  uploaded_by?: string;
 }
 
 interface PhotoManagementDialogProps {
@@ -26,6 +27,7 @@ interface PhotoManagementDialogProps {
   onUploadPhotos: (files: FileList | null) => void;
   onDeletePhoto: (photoId: string) => void;
   uploadingPhotos: boolean;
+  canDelete?: (photo: InventoryPhoto) => boolean;
 }
 
 export function PhotoManagementDialog({
@@ -36,6 +38,7 @@ export function PhotoManagementDialog({
   onUploadPhotos,
   onDeletePhoto,
   uploadingPhotos,
+  canDelete,
 }: PhotoManagementDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -87,15 +90,17 @@ export function PhotoManagementDialog({
                         alt={photo.caption || "Inventory photo"}
                         className="w-full h-32 object-cover rounded border"
                       />
-                      <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => onDeletePhoto(photo.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      {(!canDelete || canDelete(photo)) && (
+                        <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => onDeletePhoto(photo.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      )}
                       {photo.caption && (
                         <p className="text-xs text-gray-600 mt-1 truncate">
                           {photo.caption}

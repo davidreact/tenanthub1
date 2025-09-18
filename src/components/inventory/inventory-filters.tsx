@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Grid, Download, Upload, Edit } from "lucide-react";
+import { Search, Grid, Download, Upload, Edit, User } from "lucide-react";
 
 interface Property {
   id: string;
@@ -30,6 +30,7 @@ interface InventoryFiltersProps {
   onExportExcel: () => void;
   onImportExcel: () => void;
   importingCSV: boolean;
+  onManageAssignments?: () => void;
 }
 
 export function InventoryFilters({
@@ -45,6 +46,7 @@ export function InventoryFilters({
   onExportExcel,
   onImportExcel,
   importingCSV,
+  onManageAssignments,
 }: InventoryFiltersProps) {
   return (
     <Card className="mb-8">
@@ -85,6 +87,12 @@ export function InventoryFilters({
               <Upload className="h-4 w-4 mr-2" />
               {importingCSV ? "Importing..." : "Import Excel"}
             </Button>
+            {onManageAssignments && (
+              <Button variant="outline" size="sm" onClick={onManageAssignments}>
+                <User className="h-4 w-4 mr-2" />
+                Manage Assignments
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>

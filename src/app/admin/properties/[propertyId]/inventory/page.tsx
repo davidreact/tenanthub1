@@ -39,6 +39,7 @@ import {
   Download,
   Upload,
   Image as ImageIcon,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -59,6 +60,7 @@ import { BulkEditDialog } from "@/components/inventory/bulk-edit-dialog";
 import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
 import { PhotoManagementDialog } from "@/components/inventory/photo-management-dialog";
 import { InventoryStats } from "@/components/inventory/inventory-stats";
+import { AssignmentManagementDialog } from "@/components/inventory/assignment-management-dialog";
 
 interface Property {
   id: string;
@@ -112,6 +114,7 @@ export default function PropertyInventory() {
     string | null
   >(null);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -783,6 +786,14 @@ export default function PropertyInventory() {
                   <Edit className="h-4 w-4 mr-2" />
                   Bulk Edit
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAssignmentDialogOpen(true)}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Assign to Tenant
+                </Button>
                 <Button variant="outline" size="sm" onClick={exportToExcel}>
                   <Download className="h-4 w-4 mr-2" />
                   Export Excel
@@ -1052,6 +1063,19 @@ export default function PropertyInventory() {
             }
           }}
           uploadingPhotos={uploadingPhotos}
+        />
+
+        <AssignmentManagementDialog
+          isOpen={isAssignmentDialogOpen}
+          onOpenChange={setIsAssignmentDialogOpen}
+          propertyId={propertyId}
+          onAssignmentComplete={() => {
+            fetchData();
+            toast({
+              title: "Assignments Updated",
+              description: "Inventory assignments have been updated successfully.",
+            });
+          }}
         />
 
         {inventoryItems.length === 0 && (

@@ -61,11 +61,23 @@ import { BulkEditDialog } from "@/components/inventory/bulk-edit-dialog";
 import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
 import { PhotoManagementDialog } from "@/components/inventory/photo-management-dialog";
 
+
 interface Property {
   id: string;
   name: string;
   address: string;
   status: string;
+  tenants: TenantInventory[];
+}
+
+interface TenantInventory {
+  id: string;
+  tenant_property_id: string;
+  full_name: string;
+  email: string;
+  lease_status: string;
+  assigned_items: number;
+  total_value: number;
 }
 
 interface InventoryItem {
@@ -128,6 +140,7 @@ export default function AdminInventory() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
@@ -150,32 +163,101 @@ export default function AdminInventory() {
 
   const fetchData = async () => {
     try {
-      // Fetch properties
+      // Fetch properties with tenant inventory summaries
       const { data: propertiesData } = await supabase
         .from("properties")
-        .select("*")
+        .select(`
+          id,
+          name,
+          address,
+          status
+        `)
         .order("name");
 
-      // Fetch all inventory items with property info
-      const { data: inventoryData } = await supabase
-        .from("inventory_items")
-        .select(
-          `
-          *,
-          properties (name, address)
-        `,
-        )
-        .order("created_at", { ascending: false });
+      if (!propertiesData) {
+        setProperties([]);
+        setLoading(false);
+        return;
+      }
 
-      // Fetch inventory photos
-      const { data: photosData } = await supabase
-        .from("inventory_photos")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // For each property, get tenant inventory summaries
+      const propertiesWithTenants = await Promise.all(
+        propertiesData.map(async (property) => {
+          console.log(`Fetching tenants for property: ${property.name}`);
 
-      setProperties(propertiesData || []);
-      setInventoryItems(inventoryData || []);
-      setPhotos(photosData || []);
+          const { data: tenantData, error: tenantError } = await supabase
+            .from("tenant_properties")
+            .select(`
+              id,
+              tenant_id,
+              status,
+              users (
+                id,
+                full_name,
+                name,
+                email
+              )
+            `)
+            .eq("property_id", property.id)
+            .eq("status", "active");
+
+          console.log(`Tenants for ${property.name}:`, { tenantData, tenantError });
+
+          if (!tenantData || tenantData.length === 0) {
+            return { ...property, tenants: [] };
+          }
+
+          // For each tenant, get their inventory summary
+          const tenantsWithInventory = await Promise.all(
+            tenantData.map(async (tenant) => {
+              console.log(`Fetching assignments for tenant: ${tenant.users?.full_name || 'Unknown'}`);
+
+              const { data: assignments, error: assignmentError } = await supabase
+                .from("inventory_assignments")
+                .select(`
+                  id,
+                  inventory_items!inventory_assignments_inventory_item_id_fkey (
+                    estimated_value
+                  )
+                `)
+                .eq("tenant_property_id", tenant.id)
+                .is("returned_date", null);
+
+              const assignedItems = assignments?.length || 0;
+              const totalValue = assignments?.reduce(
+                (sum, assignment) => {
+                  const value = parseFloat((assignment.inventory_items as any)?.estimated_value) || 0;
+                  return sum + value;
+                },
+                0
+              ) || 0;
+
+              const tenantInfo = {
+                id: tenant.users?.id || tenant.tenant_id,
+                tenant_property_id: tenant.id,
+                full_name: tenant.users?.full_name || tenant.users?.name || "Unnamed Tenant",
+                email: tenant.users?.email || "",
+                lease_status: tenant.status,
+                assigned_items: assignedItems,
+                total_value: totalValue,
+              };
+
+              console.log(`Tenant info:`, tenantInfo);
+              return tenantInfo;
+            })
+          );
+
+          const filteredTenants = tenantsWithInventory.filter(tenant => tenant.assigned_items > 0);
+          console.log(`Final tenants with assignments for ${property.name}:`, filteredTenants);
+
+          return {
+            ...property,
+            tenants: filteredTenants
+          };
+        })
+      );
+
+      setProperties(propertiesWithTenants);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -697,141 +779,128 @@ export default function AdminInventory() {
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <Package className="h-8 w-8" />
-              {t("inventory.inventoryManagement")}
+              Inventory Overview
             </h1>
             <p className="text-muted-foreground mt-2">
-              {t("inventory.managePropertyInventories")}
+              View inventory assignments across all properties
             </p>
           </div>
         </div>
 
-        <InventoryFilters
-          t={t}
-          selectedProperty={selectedProperty}
-          setSelectedProperty={setSelectedProperty}
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          properties={properties}
-          onBulkEdit={() => setIsGridDialogOpen(true)}
-          onExportExcel={exportToExcel}
-          onImportExcel={() => csvInputRef.current?.click()}
-          importingCSV={importingCSV}
-        />
-        <input
-          type="file"
-          accept=".xlsx,.xls"
-          ref={csvInputRef}
-          onChange={handleExcelImport}
-          className="hidden"
-        />
-
-        <InventoryStats t={t} filteredItems={filteredItems} />
-
-        {/* Property Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {properties.map((property) => {
-            const propertyItems = inventoryItems.filter(
-              (item) => item.property_id === property.id,
-            );
-            const propertyValue = propertyItems.reduce(
-              (sum, item) => sum + (item.estimated_value || 0),
-              0,
-            );
-
-            return (
-              <Card
-                key={property.id}
-                className="hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    {property.name}
-                  </CardTitle>
-                  <CardDescription>{property.address}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Items:</span>
-                      <p className="font-medium">{propertyItems.length}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">
-                        {t("common.value")}:
-                      </span>
-                      <p className="font-medium">${propertyValue.toFixed(2)}</p>
-                    </div>
-                  </div>
-
-                  <Link href={`/admin/properties/${property.id}/inventory`}>
-                    <Button className="w-full">
-                      <Package className="h-4 w-4 mr-2" />
-                      {t("inventory.inventoryManagement")}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Inventory Items */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {selectedProperty === "all"
-              ? `All ${t("inventory.inventory")} Items`
-              : "Filtered Items"}
-          </h2>
-
-          {viewMode === "cards" ? (
-            <InventoryCardsView
-              t={t}
-              filteredItems={filteredItems}
-              photos={photos}
-              onPhotoClick={(itemId) => {
-                setSelectedItemForPhotos(itemId);
-                setIsPhotoDialogOpen(true);
-              }}
-              onEditClick={(item) => {
-                setSelectedItem(item);
-                setIsEditDialogOpen(true);
-              }}
-            />
-          ) : (
-            <InventoryGridView
-              t={t}
-              filteredItems={filteredItems}
-              photos={photos}
-              onPhotoClick={(itemId) => {
-                setSelectedItemForPhotos(itemId);
-                setIsPhotoDialogOpen(true);
-              }}
-              onEditClick={(item) => {
-                setSelectedItem(item);
-                setIsEditDialogOpen(true);
-              }}
-            />
-          )}
-        </div>
-
-        {filteredItems.length === 0 && (
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
-            <CardContent className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                No {t("inventory.inventory")} Items
-              </h3>
-              <p className="text-muted-foreground">
-                {searchTerm || selectedProperty !== "all"
-                  ? "No items match your current filters."
-                  : `No ${t("inventory.inventory")} items have been added yet.`}
-              </p>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">{properties.length}</div>
+              <p className="text-xs text-muted-foreground">Properties</p>
             </CardContent>
           </Card>
-        )}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">
+                {properties.reduce((sum, prop) => sum + prop.tenants.length, 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">Tenants with Inventory</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">
+                {properties.reduce((sum, prop) =>
+                  sum + prop.tenants.reduce((tSum, tenant) => tSum + tenant.assigned_items, 0), 0
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Items Assigned</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">
+                ${properties.reduce((sum, prop) =>
+                  sum + prop.tenants.reduce((tSum, tenant) => tSum + tenant.total_value, 0), 0
+                ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-muted-foreground">Total Value</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Property Inventory Overview */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">Inventory Assignments by Property</h2>
+
+          {properties.map((property) => (
+            <Card key={property.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  {property.name}
+                </CardTitle>
+                <CardDescription>{property.address}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {property.tenants.length > 0 ? (
+                  <div className="space-y-4">
+                    {property.tenants.map((tenant) => (
+                      <div
+                        key={tenant.id}
+                        className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="mb-2">
+                              <h4 className="font-medium">
+                                {tenant.full_name} ({tenant.email || 'No email'}) - {tenant.lease_status}
+                              </h4>
+                            </div>
+                            <div className="flex gap-6 text-sm mb-2">
+                              <span className="bg-blue-50 px-2 py-1 rounded">
+                                <strong className="text-blue-700">{tenant.assigned_items}</strong> items assigned
+                              </span>
+                              <span className="bg-green-50 px-2 py-1 rounded">
+                                <strong className="text-green-700">${tenant.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> total value
+                              </span>
+                            </div>
+                          </div>
+                          <Link href={`/admin/properties/${property.id}/inventory`}>
+                            <Button variant="outline" size="sm">
+                              <Package className="h-4 w-4 mr-2" />
+                              View Inventory Details
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No tenants with assigned inventory</p>
+                    <Link href={`/admin/properties/${property.id}/inventory`}>
+                      <Button variant="outline" size="sm" className="mt-2">
+                        Manage Property Inventory
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+
+          {properties.length === 0 && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  No Properties Found
+                </h3>
+                <p className="text-muted-foreground">
+                  Create properties first to manage inventory assignments.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         <BulkEditDialog
           isOpen={isGridDialogOpen}
@@ -915,6 +984,8 @@ export default function AdminInventory() {
           }}
           uploadingPhotos={uploadingPhotos}
         />
+
+
       </div>
     </div>
   );
