@@ -53,11 +53,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useRef } from "react";
+import { InventoryCardsView } from "@/components/inventory/inventory-cards-view";
+import { InventoryGridView } from "@/components/inventory/inventory-grid-view";
+import { BulkEditDialog } from "@/components/inventory/bulk-edit-dialog";
+import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
+import { PhotoManagementDialog } from "@/components/inventory/photo-management-dialog";
+import { InventoryStats } from "@/components/inventory/inventory-stats";
 
 interface Property {
   id: string;
   name: string;
   address: string;
+  status: string;
 }
 
 interface InventoryItem {
@@ -68,8 +75,8 @@ interface InventoryItem {
   condition: string;
   quantity: number;
   estimated_value: number;
-  notes: string;
-  created_at: string;
+  notes?: string;
+  created_at?: string;
 }
 
 interface GridItem {
@@ -95,7 +102,7 @@ export default function PropertyInventory() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "grid">("grid");
   const [isGridDialogOpen, setIsGridDialogOpen] = useState(false);
   const [gridItems, setGridItems] = useState<GridItem[]>([]);
   const [importingCSV, setImportingCSV] = useState(false);
@@ -130,7 +137,7 @@ export default function PropertyInventory() {
       // Fetch property details
       const { data: propertyData } = await supabase
         .from("properties")
-        .select("id, name, address")
+        .select("id, name, address, status")
         .eq("id", propertyId)
         .single();
 
@@ -733,693 +740,319 @@ export default function PropertyInventory() {
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t("common.backToProperties")}
           </Link>
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                <Package className="h-8 w-8" />
-                {t("inventory.inventory")} - {property.name}
-              </h1>
-              <p className="text-muted-foreground mt-2">{property.address}</p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={viewMode === "cards" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("cards")}
-              >
-                <Package className="h-4 w-4 mr-2" />
-                Cards
-              </Button>
-              <Button
-                variant={viewMode === "grid" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setViewMode("grid")}
-              >
-                <Grid className="h-4 w-4 mr-2" />
-                Grid
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsGridDialogOpen(true)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Bulk Edit
-              </Button>
-              <Button variant="outline" size="sm" onClick={exportToExcel}>
-                <Download className="h-4 w-4 mr-2" />
-                Export Excel
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportInventoryReport}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Full Report
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => csvInputRef.current?.click()}
-                disabled={importingCSV}
-              >
-                <Upload className="h-4 w-4 mr-2" />
-                {importingCSV ? "Importing..." : "Import Excel"}
-              </Button>
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                ref={csvInputRef}
-                onChange={handleExcelImport}
-                className="hidden"
-              />
-              <Dialog
-                open={isCreateDialogOpen}
-                onOpenChange={setIsCreateDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button onClick={() => setIsCreateDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Item
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {t("common.add")} {t("inventory.inventory")}
-                    </DialogTitle>
-                    <DialogDescription>
-                      {t("inventory.managePropertyInventories")}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      const formData = new FormData(e.currentTarget);
-                      const itemData = {
-                        name: formData.get("name") as string,
-                        description: formData.get("description") as string,
-                        location: formData.get("location") as string,
-                        condition: formData.get("condition") as string,
-                        quantity:
-                          parseInt(formData.get("quantity") as string) || 1,
-                        estimated_value:
-                          parseFloat(
-                            formData.get("estimated_value") as string,
-                          ) || 0,
-                        notes: formData.get("notes") as string,
-                      };
-
-                      createInventoryItem(itemData);
-                    }}
-                    className="space-y-4"
-                  >
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="name">{t("common.name")}</Label>
-                        <Input id="name" name="name" required />
-                      </div>
-                      <div>
-                        <Label htmlFor="location">{t("common.location")}</Label>
-                        <Input
-                          id="location"
-                          name="location"
-                          placeholder="e.g., Living Room, Kitchen"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="description">
-                        {t("common.description")}
-                      </Label>
-                      <Textarea id="description" name="description" rows={2} />
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label htmlFor="condition">
-                          {t("common.condition")}
-                        </Label>
-                        <Select name="condition" required>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select condition" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="excellent">Excellent</SelectItem>
-                            <SelectItem value="good">Good</SelectItem>
-                            <SelectItem value="fair">Fair</SelectItem>
-                            <SelectItem value="poor">Poor</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="quantity">{t("common.quantity")}</Label>
-                        <Input
-                          id="quantity"
-                          name="quantity"
-                          type="number"
-                          min="1"
-                          defaultValue="1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="estimated_value">
-                          {t("common.estimatedValue")}
-                        </Label>
-                        <Input
-                          id="estimated_value"
-                          name="estimated_value"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="notes">{t("common.notes")}</Label>
-                      <Textarea
-                        id="notes"
-                        name="notes"
-                        rows={2}
-                        placeholder="Additional notes or comments"
-                      />
-                    </div>
-
-                    <Button type="submit" className="w-full">
-                      {t("common.add")}
-                    </Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              <Package className="h-8 w-8" />
+              {t("inventory.inventory")} - {property.name}
+            </h1>
+            <p className="text-muted-foreground mt-2">{property.address}</p>
           </div>
         </div>
 
-        {/* Inventory Display */}
-        {viewMode === "cards" ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {inventoryItems.map((item) => {
-              const itemPhotos = photos.filter(
-                (photo) => photo.inventory_item_id === item.id,
-              );
-              return (
-                <Card
-                  key={item.id}
-                  className="hover:shadow-lg transition-shadow"
-                >
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{item.name}</CardTitle>
-                      <Badge className={getConditionColor(item.condition)}>
-                        {item.condition}
-                      </Badge>
-                    </div>
-                    {item.location && (
-                      <CardDescription>{item.location}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {itemPhotos.length > 0 && (
-                      <div className="grid grid-cols-2 gap-2">
-                        {itemPhotos.slice(0, 4).map((photo) => (
-                          <img
-                            key={photo.id}
-                            src={photo.photo_url}
-                            alt={photo.caption || item.name}
-                            className="w-full h-20 object-cover rounded cursor-pointer"
-                            onClick={() => {
-                              setSelectedItemForPhotos(item.id);
-                              setIsPhotoDialogOpen(true);
-                            }}
-                          />
-                        ))}
-                        {itemPhotos.length > 4 && (
-                          <div
-                            className="bg-gray-100 rounded flex items-center justify-center text-sm text-gray-600 cursor-pointer"
-                            onClick={() => {
-                              setSelectedItemForPhotos(item.id);
-                              setIsPhotoDialogOpen(true);
-                            }}
-                          >
-                            +{itemPhotos.length - 4} more
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {item.description && (
-                      <p className="text-sm text-gray-600">
-                        {item.description}
-                      </p>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-gray-500">
-                          {t("common.quantity")}:
-                        </span>
-                        <p className="font-medium">{item.quantity}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-500">
-                          {t("common.value")}:
-                        </span>
-                        <p className="font-medium">
-                          ${item.estimated_value || 0}
-                        </p>
-                      </div>
-                    </div>
-
-                    {item.notes && (
-                      <div className="bg-gray-50 p-2 rounded text-sm">
-                        <span className="text-gray-500">
-                          {t("common.notes")}:
-                        </span>
-                        <p className="text-gray-700 mt-1">{item.notes}</p>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          setSelectedItemForPhotos(item.id);
-                          setIsPhotoDialogOpen(true);
-                        }}
-                      >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        Photos ({itemPhotos.length})
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          setSelectedItem(item);
-                          setIsEditing(true);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteInventoryItem(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Condition</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Value</TableHead>
-                    <TableHead>Photos</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventoryItems.map((item) => {
-                    const itemPhotos = photos.filter(
-                      (photo) => photo.inventory_item_id === item.id,
-                    );
-                    return (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.name}
-                        </TableCell>
-                        <TableCell>{item.location}</TableCell>
-                        <TableCell>
-                          <Badge className={getConditionColor(item.condition)}>
-                            {item.condition}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>${item.estimated_value || 0}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedItemForPhotos(item.id);
-                              setIsPhotoDialogOpen(true);
-                            }}
-                          >
-                            <ImageIcon className="h-4 w-4 mr-1" />
-                            {itemPhotos.length}
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedItem(item);
-                              setIsEditDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        )}
-
-        {/* Edit Item Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Inventory Item</DialogTitle>
-              <DialogDescription>
-                Update item information and manage photos
-              </DialogDescription>
-            </DialogHeader>
-            {selectedItem && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const itemData = {
-                    name: formData.get("name") as string,
-                    description: formData.get("description") as string,
-                    location: formData.get("location") as string,
-                    condition: formData.get("condition") as string,
-                    quantity: parseInt(formData.get("quantity") as string) || 1,
-                    estimated_value:
-                      parseFloat(formData.get("estimated_value") as string) ||
-                      0,
-                    notes: formData.get("notes") as string,
-                  };
-
-                  updateInventoryItem(selectedItem.id, itemData);
-                }}
-                className="space-y-4"
-              >
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="edit-name">{t("common.name")}</Label>
-                    <Input
-                      id="edit-name"
-                      name="name"
-                      defaultValue={selectedItem.name}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-location">
-                      {t("common.location")}
-                    </Label>
-                    <Input
-                      id="edit-location"
-                      name="location"
-                      defaultValue={selectedItem.location}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="edit-description">
-                    {t("common.description")}
-                  </Label>
-                  <Textarea
-                    id="edit-description"
-                    name="description"
-                    defaultValue={selectedItem.description}
-                    rows={2}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="edit-condition">
-                      {t("common.condition")}
-                    </Label>
-                    <Select
-                      name="condition"
-                      defaultValue={selectedItem.condition}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="excellent">Excellent</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                        <SelectItem value="fair">Fair</SelectItem>
-                        <SelectItem value="poor">Poor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-quantity">
-                      {t("common.quantity")}
-                    </Label>
-                    <Input
-                      id="edit-quantity"
-                      name="quantity"
-                      type="number"
-                      min="1"
-                      defaultValue={selectedItem.quantity}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-estimated_value">
-                      {t("common.estimatedValue")}
-                    </Label>
-                    <Input
-                      id="edit-estimated_value"
-                      name="estimated_value"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={selectedItem.estimated_value}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="edit-notes">{t("common.notes")}</Label>
-                  <Textarea
-                    id="edit-notes"
-                    name="notes"
-                    defaultValue={selectedItem.notes}
-                    rows={2}
-                  />
-                </div>
-
-                {/* Photo Management Section */}
-                <div className="space-y-4">
-                  <div>
-                    <Label>Upload New Photos</Label>
-                    <Input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const files = e.target.files;
-                        if (files && files.length > 0) {
-                          setUploadingPhotos(true);
-                          try {
-                            for (const file of Array.from(files)) {
-                              await uploadPhotoForItem(selectedItem.id, file);
-                            }
-                            await fetchData();
-                            toast({
-                              title: "Photos Uploaded",
-                              description: `Successfully uploaded ${files.length} photo(s).`,
-                            });
-                          } catch (error) {
-                            toast({
-                              title: "Upload Error",
-                              description: "Failed to upload photos.",
-                              variant: "destructive",
-                            });
-                          } finally {
-                            setUploadingPhotos(false);
-                          }
-                        }
-                      }}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Current Photos</Label>
-                    <div className="grid grid-cols-3 gap-4 mt-2">
-                      {photos
-                        .filter(
-                          (photo) =>
-                            photo.inventory_item_id === selectedItem.id,
-                        )
-                        .map((photo) => (
-                          <div key={photo.id} className="relative group">
-                            <img
-                              src={photo.photo_url}
-                              alt={photo.caption || "Inventory photo"}
-                              className="w-full h-24 object-cover rounded border"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                onClick={async () => {
-                                  try {
-                                    await supabase
-                                      .from("inventory_photos")
-                                      .delete()
-                                      .eq("id", photo.id);
-                                    await fetchData();
-                                    toast({
-                                      title: "Photo Deleted",
-                                      description: "Photo has been removed.",
-                                    });
-                                  } catch (error) {
-                                    toast({
-                                      title: "Error",
-                                      description: "Failed to delete photo.",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            {photo.caption && (
-                              <p className="text-xs text-gray-600 mt-1 truncate">
-                                {photo.caption}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-
+        {/* Controls */}
+        <Card className="mb-8">
+          <CardContent className="pt-6">
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+              {/* View Mode Controls */}
+              <div className="flex gap-2">
                 <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={uploadingPhotos}
+                  variant={viewMode === "cards" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("cards")}
                 >
-                  {uploadingPhotos
-                    ? "Uploading Photos..."
-                    : t("common.saveChanges")}
+                  <Package className="h-4 w-4 mr-2" />
+                  Cards
                 </Button>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Photo Management Dialog */}
-        <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Manage Photos</DialogTitle>
-              <DialogDescription>
-                Upload new photos or view existing ones for this inventory item.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Upload New Photos</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={(e) => handlePhotoUpload(e.target.files)}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingPhotos}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {uploadingPhotos ? "Uploading..." : "Browse"}
-                  </Button>
-                </div>
+                <Button
+                  variant={viewMode === "grid" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <Grid className="h-4 w-4 mr-2" />
+                  Grid
+                </Button>
               </div>
 
-              {selectedItemForPhotos && (
-                <div>
-                  <Label>Existing Photos</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                    {photos
-                      .filter(
-                        (photo) =>
-                          photo.inventory_item_id === selectedItemForPhotos,
-                      )
-                      .map((photo) => (
-                        <div key={photo.id} className="relative group">
-                          <img
-                            src={photo.photo_url}
-                            alt={photo.caption || "Inventory photo"}
-                            className="w-full h-32 object-cover rounded border"
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={async () => {
-                                try {
-                                  await supabase
-                                    .from("inventory_photos")
-                                    .delete()
-                                    .eq("id", photo.id);
-                                  await fetchData();
-                                  toast({
-                                    title: "Photo Deleted",
-                                    description: "Photo has been removed.",
-                                  });
-                                } catch (error) {
-                                  toast({
-                                    title: "Error",
-                                    description: "Failed to delete photo.",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          {photo.caption && (
-                            <p className="text-xs text-gray-600 mt-1 truncate">
-                              {photo.caption}
-                            </p>
-                          )}
+              {/* Action Buttons */}
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsGridDialogOpen(true)}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Bulk Edit
+                </Button>
+                <Button variant="outline" size="sm" onClick={exportToExcel}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Excel
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={exportInventoryReport}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Full Report
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => csvInputRef.current?.click()}
+                  disabled={importingCSV}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  {importingCSV ? "Importing..." : "Import Excel"}
+                </Button>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  ref={csvInputRef}
+                  onChange={handleExcelImport}
+                  className="hidden"
+                />
+                <Dialog
+                  open={isCreateDialogOpen}
+                  onOpenChange={setIsCreateDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Item
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {t("common.add")} {t("inventory.inventory")}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {t("inventory.managePropertyInventories")}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        const itemData = {
+                          name: formData.get("name") as string,
+                          description: formData.get("description") as string,
+                          location: formData.get("location") as string,
+                          condition: formData.get("condition") as string,
+                          quantity:
+                            parseInt(formData.get("quantity") as string) || 1,
+                          estimated_value:
+                            parseFloat(
+                              formData.get("estimated_value") as string,
+                            ) || 0,
+                          notes: formData.get("notes") as string,
+                        };
+
+                        createInventoryItem(itemData);
+                      }}
+                      className="space-y-4"
+                    >
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="name">{t("common.name")}</Label>
+                          <Input id="name" name="name" required />
                         </div>
-                      ))}
-                  </div>
-                </div>
-              )}
+                        <div>
+                          <Label htmlFor="location">{t("common.location")}</Label>
+                          <Input
+                            id="location"
+                            name="location"
+                            placeholder="e.g., Living Room, Kitchen"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="description">
+                          {t("common.description")}
+                        </Label>
+                        <Textarea id="description" name="description" rows={2} />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <Label htmlFor="condition">
+                            {t("common.condition")}
+                          </Label>
+                          <Select name="condition" required>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select condition" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="excellent">Excellent</SelectItem>
+                              <SelectItem value="good">Good</SelectItem>
+                              <SelectItem value="fair">Fair</SelectItem>
+                              <SelectItem value="poor">Poor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="quantity">{t("common.quantity")}</Label>
+                          <Input
+                            id="quantity"
+                            name="quantity"
+                            type="number"
+                            min="1"
+                            defaultValue="1"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="estimated_value">
+                            {t("common.estimatedValue")}
+                          </Label>
+                          <Input
+                            id="estimated_value"
+                            name="estimated_value"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="notes">{t("common.notes")}</Label>
+                        <Textarea
+                          id="notes"
+                          name="notes"
+                          rows={2}
+                          placeholder="Additional notes or comments"
+                        />
+                      </div>
+
+                      <Button type="submit" className="w-full">
+                        {t("common.add")}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </CardContent>
+        </Card>
+
+        <div className="mb-8">
+        {/* Inventory Display */}
+        {viewMode === "cards" ? (
+          <InventoryCardsView
+            t={t}
+            filteredItems={inventoryItems.map(item => ({
+              ...item,
+              property_id: propertyId,
+              properties: property ? { name: property.name, address: property.address } : { name: '', address: '' }
+            }))}
+            photos={photos}
+            onPhotoClick={(itemId) => {
+              setSelectedItemForPhotos(itemId);
+              setIsPhotoDialogOpen(true);
+            }}
+            onEditClick={(item) => {
+              setSelectedItem(item);
+              setIsEditDialogOpen(true);
+            }}
+          />
+        ) : (
+          <InventoryGridView
+            t={t}
+            filteredItems={inventoryItems.map(item => ({
+              ...item,
+              property_id: propertyId,
+              properties: property ? { name: property.name, address: property.address } : { name: '', address: '' }
+            }))}
+            photos={photos}
+            onPhotoClick={(itemId) => {
+              setSelectedItemForPhotos(itemId);
+              setIsPhotoDialogOpen(true);
+            }}
+            onEditClick={(item) => {
+              setSelectedItem(item);
+              setIsEditDialogOpen(true);
+            }}
+          />
+        )}
+        </div>
+
+        <EditItemDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          selectedItem={selectedItem ? {
+            ...selectedItem,
+            property_id: propertyId,
+            properties: property ? { name: property.name, address: property.address } : { name: '', address: '' }
+          } : null}
+          photos={photos}
+          t={t}
+          onSave={(itemData) => selectedItem && updateInventoryItem(selectedItem.id, itemData)}
+          onUploadPhotos={async (files) => {
+            if (!files || !selectedItem) return;
+            setUploadingPhotos(true);
+            try {
+              for (const file of Array.from(files)) {
+                await uploadPhotoForItem(selectedItem.id, file);
+              }
+              await fetchData();
+              toast({
+                title: "Photos Uploaded",
+                description: `Successfully uploaded ${files.length} photo(s).`,
+              });
+            } catch (error) {
+              toast({
+                title: "Upload Error",
+                description: "Failed to upload photos.",
+                variant: "destructive",
+              });
+            } finally {
+              setUploadingPhotos(false);
+            }
+          }}
+          onDeletePhoto={async (photoId) => {
+            try {
+              await supabase.from("inventory_photos").delete().eq("id", photoId);
+              await fetchData();
+              toast({
+                title: "Photo Deleted",
+                description: "Photo has been removed.",
+              });
+            } catch (error) {
+              toast({
+                title: "Error",
+                description: "Failed to delete photo.",
+                variant: "destructive",
+              });
+            }
+          }}
+          uploadingPhotos={uploadingPhotos}
+        />
+
+        <PhotoManagementDialog
+          isOpen={isPhotoDialogOpen}
+          onOpenChange={setIsPhotoDialogOpen}
+          selectedItemId={selectedItemForPhotos}
+          photos={photos}
+          onUploadPhotos={handlePhotoUpload}
+          onDeletePhoto={async (photoId) => {
+            try {
+              await supabase.from("inventory_photos").delete().eq("id", photoId);
+              await fetchData();
+              toast({
+                title: "Photo Deleted",
+                description: "Photo has been removed.",
+              });
+            } catch (error) {
+              toast({
+                title: "Error",
+                description: "Failed to delete photo.",
+                variant: "destructive",
+              });
+            }
+          }}
+          uploadingPhotos={uploadingPhotos}
+        />
 
         {inventoryItems.length === 0 && (
           <Card>
@@ -1435,243 +1068,24 @@ export default function PropertyInventory() {
           </Card>
         )}
 
-        {/* Summary Stats */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                {t("common.total")} {t("inventory.inventory")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inventoryItems.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                {t("common.total")} {t("common.quantity")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {inventoryItems.reduce(
-                  (sum, item) => sum + (item.quantity || 0),
-                  0,
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                {t("common.estimatedValue")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                $
-                {inventoryItems
-                  .reduce((sum, item) => sum + (item.estimated_value || 0), 0)
-                  .toFixed(2)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <InventoryStats
+          t={t}
+          filteredItems={inventoryItems.map(item => ({
+            ...item,
+            property_id: propertyId,
+            properties: property ? { name: property.name, address: property.address } : { name: '', address: '' }
+          }))}
+        />
 
-        {/* Grid Edit Dialog */}
-        <Dialog open={isGridDialogOpen} onOpenChange={setIsGridDialogOpen}>
-          <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>Bulk Inventory Editor</DialogTitle>
-              <DialogDescription>
-                Edit multiple items at once. Upload photos directly or add rows
-                manually.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex-1 overflow-hidden">
-              <div className="mb-4 flex gap-2">
-                <Button onClick={addNewGridRow} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Row
-                </Button>
-                <Button onClick={saveGridChanges} size="sm">
-                  Save Changes
-                </Button>
-              </div>
-              <div className="overflow-auto max-h-[60vh] border rounded">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-32">Name</TableHead>
-                      <TableHead className="w-40">Description</TableHead>
-                      <TableHead className="w-24">Location</TableHead>
-                      <TableHead className="w-24">Condition</TableHead>
-                      <TableHead className="w-20">Qty</TableHead>
-                      <TableHead className="w-24">Value</TableHead>
-                      <TableHead className="w-32">Notes</TableHead>
-                      <TableHead className="w-32">Photo</TableHead>
-                      <TableHead className="w-20">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {gridItems.map((item, index) => (
-                      <TableRow
-                        key={index}
-                        className={
-                          item.isNew
-                            ? "bg-green-50"
-                            : item.isEdited
-                              ? "bg-yellow-50"
-                              : ""
-                        }
-                      >
-                        <TableCell>
-                          <Input
-                            value={item.name}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "name",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.description}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "description",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.location}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "location",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={item.condition}
-                            onValueChange={(value) =>
-                              handleGridCellChange(index, "condition", value)
-                            }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="excellent">
-                                Excellent
-                              </SelectItem>
-                              <SelectItem value="good">Good</SelectItem>
-                              <SelectItem value="fair">Fair</SelectItem>
-                              <SelectItem value="poor">Poor</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "quantity",
-                                parseInt(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.estimated_value}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "estimated_value",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.notes}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "notes",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0] || null;
-                                handleGridCellChange(index, "photo_file", file);
-                              }}
-                              className="w-full text-xs"
-                            />
-                            {item.photo_file && (
-                              <span className="text-xs text-green-600 whitespace-nowrap">
-                                ✓
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeGridRow(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className="mt-4 text-sm text-gray-600">
-                <p>
-                  <strong>Tip:</strong> Green rows are new, yellow rows are
-                  edited.
-                </p>
-                <p>
-                  <strong>Photos:</strong> Upload photos directly in the Photo
-                  column. They will be saved when you save changes.
-                </p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <BulkEditDialog
+          isOpen={isGridDialogOpen}
+          onOpenChange={setIsGridDialogOpen}
+          gridItems={gridItems}
+          setGridItems={setGridItems}
+          properties={property ? [property] : []}
+          selectedProperty={propertyId}
+          onSave={saveGridChanges}
+        />
       </div>
     </div>
   );

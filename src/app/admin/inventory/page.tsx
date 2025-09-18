@@ -117,7 +117,7 @@ export default function AdminInventory() {
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "grid">("grid");
   const [isGridDialogOpen, setIsGridDialogOpen] = useState(false);
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   const [selectedItemForPhotos, setSelectedItemForPhotos] = useState<
