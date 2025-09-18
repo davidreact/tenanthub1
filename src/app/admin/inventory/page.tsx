@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import * as XLSX from "xlsx";
 import {
   Card,
   CardContent,
@@ -258,7 +259,6 @@ export default function AdminInventory() {
 
     setImportingCSV(true);
     try {
-      const XLSX = await import("xlsx");
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
       const sheetName = workbook.SheetNames[0];
@@ -560,7 +560,6 @@ export default function AdminInventory() {
 
   const exportToExcel = async () => {
     try {
-      const XLSX = await import("xlsx");
       const headers = [
         "Name",
         "Description",

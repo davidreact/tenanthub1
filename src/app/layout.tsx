@@ -26,6 +26,7 @@ export const metadata: Metadata = {
       url: "/favicon.svg",
     },
   ],
+
 };
 
 export default function RootLayout({
@@ -35,6 +36,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&display=swap"
+        />
+      </head>
       {/* <Script src="https://api.tempo.build/proxy-asset?url=https://storage.googleapis.com/tempo-public-assets/error-handling.js" /> [deprecated] */}
       <body
         className={`${inter.className} ${sairaStencilOne.variable} bg-background min-h-screen`}

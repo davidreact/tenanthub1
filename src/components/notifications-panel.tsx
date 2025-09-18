@@ -246,7 +246,7 @@ export default function NotificationsPanel({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-96 max-h-96 overflow-hidden"
+        className="w-96 max-h-96 overflow-hidden notifications-dropdown"
         align="end"
       >
         <div className="p-4">
