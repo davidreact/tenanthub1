@@ -210,7 +210,7 @@ export default function AdminInventory() {
           // For each tenant, get their inventory summary
           const tenantsWithInventory = await Promise.all(
             tenantData.map(async (tenant) => {
-              console.log(`Fetching assignments for tenant: ${tenant.users?.full_name || 'Unknown'}`);
+console.log(`Fetching assignments for tenant: ${tenant.users?.[0]?.full_name || tenant.users?.[0]?.name || 'Unknown'}`);
 
               const { data: assignments, error: assignmentError } = await supabase
                 .from("inventory_assignments")
@@ -233,10 +233,10 @@ export default function AdminInventory() {
               ) || 0;
 
               const tenantInfo = {
-                id: tenant.users?.id || tenant.tenant_id,
+id: tenant.users?.[0]?.id || tenant.tenant_id,
                 tenant_property_id: tenant.id,
-                full_name: tenant.users?.full_name || tenant.users?.name || "Unnamed Tenant",
-                email: tenant.users?.email || "",
+full_name: tenant.users?.[0]?.full_name || tenant.users?.[0]?.name || "Unnamed Tenant",
+email: tenant.users?.[0]?.email || "",
                 lease_status: tenant.status,
                 assigned_items: assignedItems,
                 total_value: totalValue,

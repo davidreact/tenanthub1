@@ -44,7 +44,7 @@ interface TenantProperty {
     full_name: string | null;
     name: string | null;
     email: string | null;
-  } | null;
+  }[] | null;
 }
 
 interface InventoryItem {
@@ -172,8 +172,8 @@ export function AssignmentManagementDialog({
           ...item,
           selected: false,
           currentTenant: activeAssignment
-            ? activeAssignment.tenant_properties?.users?.full_name ||
-              activeAssignment.tenant_properties?.users?.name ||
+            ? activeAssignment.tenant_properties?.users?.[0]?.full_name ||
+              activeAssignment.tenant_properties?.users?.[0]?.name ||
               "Unknown Tenant"
             : undefined,
           assignedCondition: activeAssignment?.assigned_condition,
@@ -304,7 +304,7 @@ export function AssignmentManagementDialog({
                   <SelectItem key={tenant.id} value={tenant.id}>
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      {tenant.users?.full_name || tenant.users?.name || tenant.users?.email}
+                      {tenant.users?.[0]?.full_name || tenant.users?.[0]?.name || tenant.users?.[0]?.email}
                     </div>
                   </SelectItem>
                 ))}

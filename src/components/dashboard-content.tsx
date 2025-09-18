@@ -253,9 +253,9 @@ export default function DashboardContent({
                             {t("property.leaseStart")}
                           </span>
                           <p className="font-semibold">
-                            {new Date(
-                              tenantProperty.lease_start_date,
-                            ).toLocaleDateString()}
+                            {new Intl.DateTimeFormat("en-GB", { timeZone: "UTC" }).format(
+                              new Date(tenantProperty.lease_start_date)
+                            )}
                           </p>
                         </div>
                         <div>
@@ -263,9 +263,9 @@ export default function DashboardContent({
                             {t("property.leaseEnd")}
                           </span>
                           <p className="font-semibold">
-                            {new Date(
-                              tenantProperty.lease_end_date,
-                            ).toLocaleDateString()}
+                            {new Intl.DateTimeFormat("en-GB", { timeZone: "UTC" }).format(
+                              new Date(tenantProperty.lease_end_date)
+                            )}
                           </p>
                         </div>
                         <div>

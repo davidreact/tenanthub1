@@ -121,12 +121,7 @@ export async function getUserNotifications(
 
   const { data, error } = await supabase
     .from("notifications")
-    .select(
-      `
-      *,
-      admin_action_by:users!notifications_admin_action_by_fkey(full_name, name)
-    `,
-    )
+    .select("*")
     .eq("user_id", userId)
     .eq("is_admin_log", isAdminLog)
     .order("created_at", { ascending: false })
@@ -137,7 +132,38 @@ export async function getUserNotifications(
     throw error;
   }
 
-  return data;
+  // Enrich admin_action_by (string user id) with user full_name/name without relying on FK embedding
+  let result = data || [];
+
+  // Collect unique admin ids from notifications
+  const adminIds = Array.from(
+    new Set(
+      result
+        .map((n: any) => n.admin_action_by)
+        .filter(Boolean)
+    )
+  );
+
+  if (adminIds.length > 0) {
+    const { data: admins, error: usersError } = await supabase
+      .from("users")
+      .select("id, full_name, name")
+      .in("id", adminIds as string[]);
+
+    if (!usersError && admins) {
+      const userMap = new Map(
+        admins.map((u: any) => [u.id, { full_name: u.full_name, name: u.name }])
+      );
+
+      result = result.map((n: any) =>
+        n.admin_action_by
+          ? { ...n, admin_action_by: userMap.get(n.admin_action_by) || null }
+          : n
+      );
+    }
+  }
+
+  return result;
 }
 
 export async function getUnreadNotificationCount(userId: string) {

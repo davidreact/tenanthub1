@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "../../supabase/client";
+import { getUserNotifications, getUnreadNotificationCount } from "@/lib/notifications";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
@@ -80,47 +81,20 @@ export default function NotificationsPanel({
   const fetchNotifications = async () => {
     try {
       // Fetch regular notifications
-      const { data: regularNotifications } = await supabase
-        .from("notifications")
-        .select(
-          `
-          *,
-          admin_action_by:users!notifications_admin_action_by_fkey(full_name, name)
-        `,
-        )
-        .eq("user_id", userId)
-        .eq("is_admin_log", false)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const regularNotifications = await getUserNotifications(userId, false);
 
       // Fetch admin logs if user is admin
       let adminLogsData = [];
       if (isAdmin) {
-        const { data } = await supabase
-          .from("notifications")
-          .select(
-            `
-            *,
-            admin_action_by:users!notifications_admin_action_by_fkey(full_name, name)
-          `,
-          )
-          .eq("user_id", userId)
-          .eq("is_admin_log", true)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        adminLogsData = data || [];
+        adminLogsData = (await getUserNotifications(userId, true)) || [];
       }
 
       // Count unread notifications
-      const { count } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_read", false);
+      const unread = await getUnreadNotificationCount(userId);
 
       setNotifications(regularNotifications || []);
       setAdminLogs(adminLogsData);
-      setUnreadCount(count || 0);
+      setUnreadCount(unread || 0);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -201,7 +175,15 @@ export default function NotificationsPanel({
                 {notification.title}
               </CardTitle>
               <CardDescription className="text-xs text-gray-500">
-                {new Date(notification.created_at).toLocaleString()}
+                {new Intl.DateTimeFormat("en-GB", {
+                  timeZone: "UTC",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                }).format(new Date(notification.created_at))}
                 {notification.admin_action_by && (
                   <span className="ml-2">
                     by{" "}
