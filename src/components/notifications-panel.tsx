@@ -22,6 +22,7 @@ import { getUserNotifications, getUnreadNotificationCount } from "@/lib/notifica
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 interface Notification {
   id: string;
@@ -31,6 +32,8 @@ interface Notification {
   is_read: boolean;
   is_admin_log: boolean;
   created_at: string;
+  related_entity_type?: string;
+  related_entity_id?: string;
   admin_action_by?: {
     full_name?: string;
     name?: string;
@@ -52,6 +55,7 @@ export default function NotificationsPanel({
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     fetchNotifications();
@@ -156,13 +160,29 @@ export default function NotificationsPanel({
     }
   };
 
+  const navigateToTarget = (n: Notification) => {
+    let url: string | null = null;
+    if (n.related_entity_type === "message" && n.related_entity_id) {
+      url = isAdmin
+        ? `/admin/conversations?conversationId=${n.related_entity_id}`
+        : `/tenant/messages?conversationId=${n.related_entity_id}`;
+    }
+    if (url) {
+      router.push(url);
+      if (!n.is_read) {
+        markAsRead(n.id);
+      }
+    }
+  };
+
   const NotificationItem = ({
     notification,
   }: {
     notification: Notification;
   }) => (
     <Card
-      className={`mb-2 ${!notification.is_read ? "border-blue-200 bg-blue-50" : ""}`}
+      className={`mb-2 cursor-pointer ${!notification.is_read ? "border-blue-200 bg-blue-50" : ""}`}
+      onClick={() => navigateToTarget(notification)}
     >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">

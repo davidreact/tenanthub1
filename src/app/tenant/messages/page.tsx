@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -39,6 +39,8 @@ import {
   Shield,
 } from "lucide-react";
 import Link from "next/link";
+import { createAdminLogNotification } from "@/lib/notifications";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface Message {
   id: string;
@@ -63,13 +65,103 @@ export default function TenantMessages() {
     useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [propertyId, setPropertyId] = useState<string | null>(null);
   const { t } = useLanguage();
   const supabase = createClient();
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     fetchConversations();
   }, []);
+
+  // Real-time updates for selected conversation messages
+  useEffect(() => {
+    if (!selectedConversation) return;
+    const channel = supabase
+      .channel(`conversation:${selectedConversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${selectedConversation.id}`,
+        },
+        (payload) => {
+          const newMsg: any = payload.new;
+          setSelectedConversation((prev) => {
+            if (!prev) return prev;
+            const idx = (prev.messages as any[]).findIndex(
+              (m: any) =>
+                typeof m.id === "string" &&
+                (m.id as string).startsWith("temp-") &&
+                m.message === newMsg.message &&
+                m.sender_id === newMsg.sender_id
+            );
+            let nextMessages = [...prev.messages];
+            const normalized: Message = {
+              id: newMsg.id,
+              message: newMsg.message,
+              is_admin: newMsg.is_admin,
+              created_at: newMsg.created_at,
+              sender_id: newMsg.sender_id,
+            };
+            if (idx !== -1) {
+              nextMessages[idx] = normalized;
+            } else if (!prev.messages.some((m) => m.id === newMsg.id)) {
+              nextMessages.push(normalized);
+            }
+            return { ...prev, messages: nextMessages };
+          });
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === selectedConversation.id
+                ? {
+                    ...c,
+                    messages: [
+                      ...c.messages,
+                      {
+                        id: newMsg.id,
+                        message: newMsg.message,
+                        is_admin: newMsg.is_admin,
+                        created_at: newMsg.created_at,
+                        sender_id: newMsg.sender_id,
+                      } as Message,
+                    ],
+                  }
+                : c
+            )
+          );
+          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedConversation?.id, supabase]);
+
+  // Auto-scroll when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedConversation?.messages?.length]);
+
+  // Open conversation from notification deep-link (?conversationId=...)
+  useEffect(() => {
+    const targetId = searchParams.get("conversationId");
+    if (!targetId || !conversations.length) return;
+    const convo = conversations.find((c) => c.id === targetId);
+    if (convo) {
+      setSelectedConversation(convo);
+      setIsDialogOpen(true);
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+    }
+  }, [conversations, searchParams]);
 
   const fetchConversations = async () => {
     try {
@@ -147,6 +239,31 @@ export default function TenantMessages() {
         is_admin: false,
       });
 
+      // Optimistically update UI with the new conversation and initial message
+      const optimisticInitial: Message = {
+        id: `temp-${Date.now()}`,
+        message: initialMessage,
+        is_admin: false,
+        created_at: new Date().toISOString(),
+        sender_id: user.id,
+      };
+      setConversations((prev) => [{ ...conversation, messages: [optimisticInitial] }, ...prev]);
+      setSelectedConversation({ ...conversation, messages: [optimisticInitial] });
+
+      // Notify admins about new conversation
+      try {
+        await createAdminLogNotification({
+          adminUserId: user.id,
+          action: "New conversation started",
+          entityType: "message",
+          entityId: conversation.id,
+          details: { subject, priority, preview: initialMessage.slice(0, 140) },
+        });
+      } catch (e) {
+        console.warn("Failed to create admin log notification:", e);
+      }
+
+      // Ensure list stays in sync
       fetchConversations(); // Refresh the list
     } catch (error) {
       console.error("Error creating conversation:", error);
@@ -161,14 +278,48 @@ export default function TenantMessages() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      await supabase.from("messages").insert({
+      // Optimistic UI update
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMsg: Message = {
+        id: tempId,
+        message,
+        is_admin: false,
+        created_at: new Date().toISOString(),
+        sender_id: user.id,
+      };
+      setSelectedConversation((prev) =>
+        prev && prev.id === conversationId
+          ? { ...prev, messages: [...prev.messages, optimisticMsg] }
+          : prev
+      );
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversationId ? { ...c, messages: [...c.messages, optimisticMsg] } : c
+        )
+      );
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+
+      // Persist to DB
+      const { error: insertError } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         sender_id: user.id,
         message: message,
         is_admin: false,
       });
+      if (insertError) throw insertError;
 
-      fetchConversations(); // Refresh to get new message
+      // Generate admin log notification for the new tenant message
+      try {
+        await createAdminLogNotification({
+          adminUserId: user.id,
+          action: "New tenant message",
+          entityType: "message",
+          entityId: conversationId,
+          details: { preview: message.slice(0, 140) },
+        });
+      } catch (e) {
+        console.warn("Failed to create admin log notification:", e);
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
@@ -239,16 +390,16 @@ export default function TenantMessages() {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  New {t("messages.conversations")}
+                  {t("messages.newConversation")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
-                    Start New {t("messages.conversations")}
+                    {t("messages.startNewConversation")}
                   </DialogTitle>
                   <DialogDescription>
-                    Create a new conversation with the property administrator
+                    {t("messages.newConversationDescription")}
                   </DialogDescription>
                 </DialogHeader>
                 <form
@@ -270,7 +421,7 @@ export default function TenantMessages() {
                     <Input
                       id="subject"
                       name="subject"
-                      placeholder="Brief description of your issue"
+                      placeholder={t("messages.subjectPlaceholder")}
                       required
                     />
                   </div>
@@ -278,7 +429,7 @@ export default function TenantMessages() {
                     <Label htmlFor="priority">{t("common.priority")}</Label>
                     <Select name="priority" required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
+                        <SelectValue placeholder={t("messages.selectPriority")} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="low">{t("common.low")}</SelectItem>
@@ -294,13 +445,13 @@ export default function TenantMessages() {
                     <Textarea
                       id="message"
                       name="message"
-                      placeholder="Describe your issue or question in detail"
+                      placeholder={t("messages.messagePlaceholder")}
                       rows={4}
                       required
                     />
                   </div>
                   <Button type="submit" className="w-full">
-                    Start {t("messages.conversations")}
+                    {t("messages.startNewConversation")}
                   </Button>
                 </form>
               </DialogContent>
@@ -312,7 +463,7 @@ export default function TenantMessages() {
           {/* Conversations List */}
           <div className="lg:col-span-1 space-y-4">
             <h2 className="text-lg font-semibold">
-              Your {t("messages.conversations")}
+              {t("messages.yourConversations")}
             </h2>
 
             {conversations.length > 0 ? (
@@ -325,7 +476,10 @@ export default function TenantMessages() {
                         ? "ring-2 ring-blue-500 bg-blue-50"
                         : "hover:bg-gray-50"
                     }`}
-                    onClick={() => setSelectedConversation(conversation)}
+                    onClick={() => {
+                      setSelectedConversation(conversation);
+                      setIsDialogOpen(true);
+                    }}
                   >
                     <CardContent className="p-4">
                       <div className="space-y-2">
@@ -338,7 +492,7 @@ export default function TenantMessages() {
                               className={getStatusColor(conversation.status)}
                               variant="secondary"
                             >
-                              {conversation.status}
+                              {conversation.status === "open" ? t("common.open") : conversation.status === "closed" ? t("common.closed") : conversation.status === "pending" ? t("common.pending") : conversation.status}
                             </Badge>
                           </div>
                         </div>
@@ -347,7 +501,7 @@ export default function TenantMessages() {
                             className={getPriorityColor(conversation.priority)}
                             variant="outline"
                           >
-                            {conversation.priority}
+                            {conversation.priority === "high" ? t("common.high") : conversation.priority === "medium" ? t("common.medium") : conversation.priority === "low" ? t("common.low") : conversation.priority}
                           </Badge>
                           <span>
                             {new Date(
@@ -369,129 +523,99 @@ export default function TenantMessages() {
                 <CardContent className="text-center py-8">
                   <MessageSquare className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-600 text-sm">
-                    No {t("messages.conversations")} yet
+                    {t("messages.noConversationsDescription")}
                   </p>
                 </CardContent>
               </Card>
             )}
           </div>
 
-          {/* Conversation Detail */}
-          <div className="lg:col-span-2">
-            {selectedConversation ? (
-              <Card className="h-[600px] flex flex-col">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{selectedConversation.subject}</CardTitle>
-                      <CardDescription>
-                        Started{" "}
-                        {new Date(
-                          selectedConversation.created_at,
-                        ).toLocaleDateString()}
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Badge
-                        className={getPriorityColor(
-                          selectedConversation.priority,
-                        )}
-                      >
-                        {selectedConversation.priority}
-                      </Badge>
-                      <Badge
-                        className={getStatusColor(selectedConversation.status)}
-                      >
-                        {selectedConversation.status}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {/* Messages */}
-                <CardContent className="flex-1 overflow-y-auto space-y-4">
-                  {selectedConversation.messages
-                    .sort(
-                      (a, b) =>
-                        new Date(a.created_at).getTime() -
-                        new Date(b.created_at).getTime(),
-                    )
-                    .map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.is_admin ? "justify-start" : "justify-end"}`}
-                      >
-                        <div
-                          className={`max-w-[70%] rounded-lg p-3 ${
-                            message.is_admin
-                              ? "bg-gray-100 text-gray-900"
-                              : "bg-blue-600 text-white"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            {message.is_admin ? (
-                              <Shield className="h-3 w-3" />
-                            ) : (
-                              <User className="h-3 w-3" />
-                            )}
-                            <span className="text-xs opacity-75">
-                              {message.is_admin ? "Admin" : "You"}
-                            </span>
-                            <span className="text-xs opacity-75">
-                              {new Date(
-                                message.created_at,
-                              ).toLocaleTimeString()}
-                            </span>
+          {/* Conversation Detail via Dialog (match admin layout) */}
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setSelectedConversation(null);
+              // Clear query so subsequent notification clicks to the same URL re-open the dialog
+              router.replace("/tenant/messages");
+            }
+          }}>
+            <DialogContent className="w-[95vw] max-w-[1400px] h-[85vh] overflow-hidden">
+              {selectedConversation && (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>{selectedConversation.subject}</DialogTitle>
+                    <DialogDescription>
+                      {t("messages.started")}{" "}
+                      {new Date(selectedConversation.created_at).toLocaleDateString()}
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex flex-col h-[calc(85vh-140px)] gap-4">
+                    {/* Messages (admin layout: admin on right blue, tenant on left gray) */}
+                    <div className="flex-1 min-h-0 overflow-y-auto space-y-3 border rounded p-4">
+                      {selectedConversation.messages
+                        .sort(
+                          (a, b) =>
+                            new Date(a.created_at).getTime() -
+                            new Date(b.created_at).getTime(),
+                        )
+                        .map((message) => (
+                          <div
+                            key={message.id}
+                            className={`flex ${message.is_admin ? "justify-end" : "justify-start"}`}
+                          >
+                            <div
+                              className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                                message.is_admin
+                                  ? "bg-blue-500 text-white"
+                                  : "bg-gray-200 text-gray-900"
+                              }`}
+                            >
+                              <p className="text-sm">{message.message}</p>
+                              <p
+                                className={`text-xs mt-1 ${
+                                  message.is_admin ? "text-blue-100" : "text-gray-500"
+                                }`}
+                              >
+                                {message.is_admin ? t("common.admin") : t("common.you")} •{" "}
+                                {new Date(message.created_at).toLocaleString()}
+                              </p>
+                            </div>
                           </div>
-                          <p className="text-sm">{message.message}</p>
+                        ))}
+                      <div ref={messagesEndRef} />
+                    </div>
+
+                    {/* Reply Form */}
+                    {selectedConversation.status === "open" && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          if (newMessage.trim()) {
+                            sendMessage(selectedConversation.id, newMessage);
+                            setNewMessage("");
+                          }
+                        }}
+                        className="space-y-3"
+                      >
+                        <Textarea
+                          value={newMessage}
+                          onChange={(e) => setNewMessage(e.target.value)}
+                          placeholder={t("messages.typeYourMessage")}
+                          rows={3}
+                        />
+                        <div className="flex gap-2 justify-end">
+                          <Button type="submit" disabled={sending || !newMessage.trim()}>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send
+                          </Button>
                         </div>
-                      </div>
-                    ))}
-                </CardContent>
-
-                {/* Send Message */}
-                {selectedConversation.status === "open" && (
-                  <div className="p-4 border-t">
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-                        const message = formData.get("message") as string;
-
-                        if (message.trim()) {
-                          sendMessage(selectedConversation.id, message);
-                          (e.target as HTMLFormElement).reset();
-                        }
-                      }}
-                      className="flex gap-2"
-                    >
-                      <Input
-                        name="message"
-                        placeholder="Type your message..."
-                        className="flex-1"
-                        required
-                      />
-                      <Button type="submit" disabled={sending}>
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </form>
+                      </form>
+                    )}
                   </div>
-                )}
-              </Card>
-            ) : (
-              <Card className="h-[600px] flex items-center justify-center">
-                <div className="text-center">
-                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Select a {t("messages.conversations")}
-                  </h3>
-                  <p className="text-gray-600">
-                    Choose a conversation from the list to view messages
-                  </p>
-                </div>
-              </Card>
-            )}
-          </div>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

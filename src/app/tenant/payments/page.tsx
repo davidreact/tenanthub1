@@ -215,7 +215,7 @@ export default function TenantPayments() {
       <div className="min-h-screen bg-hero-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading payment history...</p>
+          <p className="mt-4 text-gray-600">{t("payments.loadingPayments")}</p>
         </div>
       </div>
     );
@@ -231,7 +231,7 @@ export default function TenantPayments() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("common.backToDashboard")}
           </Link>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <CreditCard className="h-8 w-8" />
@@ -247,37 +247,37 @@ export default function TenantPayments() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="h-5 w-5" />
-              Monthly Rent Information
+              {t("payments.monthlyRentInfoTitle")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <span className="text-gray-500 text-sm">Monthly Rent</span>
+                <span className="text-gray-500 text-sm">{t("common.monthlyRent")}</span>
                 <p className="text-2xl font-bold text-green-600">
                   ${monthlyRent}
                 </p>
               </div>
               <div>
-                <span className="text-gray-500 text-sm">Due Date</span>
-                <p className="font-semibold">1st of each month</p>
+                <span className="text-gray-500 text-sm">{t("common.dueDate")}</span>
+                <p className="font-semibold">{t("payments.dueDateInfo")}</p>
               </div>
               <div>
-                <span className="text-gray-500 text-sm">Payment Status</span>
+                <span className="text-gray-500 text-sm">{t("common.paymentStatus")}</span>
                 <div className="flex items-center gap-2 mt-1">
                   {paymentProofs.length > 0 &&
                   paymentProofs[0].status === "approved" ? (
                     <>
                       <CheckCircle className="h-4 w-4 text-green-600" />
                       <span className="text-green-600 font-medium">
-                        Current
+                        {t("common.current")}
                       </span>
                     </>
                   ) : (
                     <>
                       <Clock className="h-4 w-4 text-yellow-600" />
                       <span className="text-yellow-600 font-medium">
-                        Pending
+                        {t("common.pending")}
                       </span>
                     </>
                   )}
@@ -290,9 +290,9 @@ export default function TenantPayments() {
         {/* Upload New Payment */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Upload New Payment Proof</CardTitle>
+            <CardTitle>{t("payments.uploadNewProofTitle")}</CardTitle>
             <CardDescription>
-              Upload proof of your monthly rent payment for verification
+              {t("payments.uploadNewProofDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -303,15 +303,14 @@ export default function TenantPayments() {
                   onClick={() => setIsDialogOpen(true)}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  Upload Payment Proof
+                  {t("common.uploadProof")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Upload Payment Proof</DialogTitle>
+                  <DialogTitle>{t("payments.uploadNewProofTitle")}</DialogTitle>
                   <DialogDescription>
-                    Please provide details about your payment and upload the
-                    proof
+                    {t("payments.uploadProofDialogDescription")}
                   </DialogDescription>
                 </DialogHeader>
                 <form
@@ -330,7 +329,7 @@ export default function TenantPayments() {
                   className="space-y-4"
                 >
                   <div>
-                    <Label htmlFor="monthYear">Month & Year</Label>
+                    <Label htmlFor="monthYear">{t("common.monthYear")}</Label>
                     <Input
                       id="monthYear"
                       name="monthYear"
@@ -339,7 +338,7 @@ export default function TenantPayments() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="amount">Amount Paid</Label>
+                    <Label htmlFor="amount">{t("common.amountPaid")}</Label>
                     <Input
                       id="amount"
                       name="amount"
@@ -350,7 +349,7 @@ export default function TenantPayments() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="paymentDate">Payment Date</Label>
+                    <Label htmlFor="paymentDate">{t("common.paymentDate")}</Label>
                     <Input
                       id="paymentDate"
                       name="paymentDate"
@@ -360,7 +359,7 @@ export default function TenantPayments() {
                   </div>
                   <div>
                     <Label htmlFor="file">
-                      Payment Proof (Receipt/Screenshot)
+                      {t("common.paymentProof")}
                     </Label>
                     <Input
                       id="file"
@@ -371,7 +370,7 @@ export default function TenantPayments() {
                     />
                   </div>
                   <Button type="submit" disabled={uploading} className="w-full">
-                    {uploading ? "Uploading..." : "Upload Proof"}
+                    {uploading ? t("common.uploading") : t("common.uploadProof")}
                   </Button>
                 </form>
               </DialogContent>
@@ -381,7 +380,7 @@ export default function TenantPayments() {
 
         {/* Payment History */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Payment History</h2>
+          <h2 className="text-xl font-semibold">{t("common.paymentHistory")}</h2>
 
           {paymentProofs.length > 0 ? (
             <div className="grid gap-4">
@@ -403,20 +402,20 @@ export default function TenantPayments() {
                         <div className="flex items-center gap-2">
                           {getStatusIcon(proof.status)}
                           <Badge className={getStatusColor(proof.status)}>
-                            {proof.status}
+                            {proof.status === "approved" ? t("common.approved") : proof.status === "pending" ? t("common.pending") : proof.status === "rejected" ? t("common.rejected") : proof.status}
                           </Badge>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-500">
-                          Paid:{" "}
+                          {t("common.paymentDate")}:{" "}
                           {new Date(proof.payment_date).toLocaleDateString()}
                         </span>
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm">
-                              View Proof
+                              {t("common.viewProof")}
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
@@ -437,12 +436,12 @@ export default function TenantPayments() {
                               </div>
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div>
-                                  <span className="text-gray-500">Amount:</span>
+                                  <span className="text-gray-500">{t("common.amount")}:</span>
                                   <p className="font-medium">${proof.amount}</p>
                                 </div>
                                 <div>
                                   <span className="text-gray-500">
-                                    Payment Date:
+                                    {t("common.paymentDate")}:
                                   </span>
                                   <p className="font-medium">
                                     {new Date(
@@ -451,16 +450,16 @@ export default function TenantPayments() {
                                   </p>
                                 </div>
                                 <div>
-                                  <span className="text-gray-500">Status:</span>
+                                  <span className="text-gray-500">{t("common.status")}:</span>
                                   <Badge
                                     className={getStatusColor(proof.status)}
                                   >
-                                    {proof.status}
+                                    {proof.status === "approved" ? t("common.approved") : proof.status === "pending" ? t("common.pending") : proof.status === "rejected" ? t("common.rejected") : proof.status}
                                   </Badge>
                                 </div>
                                 <div>
                                   <span className="text-gray-500">
-                                    Uploaded:
+                                    {t("common.uploaded")}:
                                   </span>
                                   <p className="font-medium">
                                     {new Date(
@@ -472,7 +471,7 @@ export default function TenantPayments() {
                               {proof.admin_notes && (
                                 <div className="bg-blue-50 p-3 rounded-lg">
                                   <p className="font-medium text-blue-800">
-                                    Admin Notes:
+                                    {t("common.adminNotes")}:
                                   </p>
                                   <p className="text-blue-700 text-sm">
                                     {proof.admin_notes}
@@ -493,10 +492,10 @@ export default function TenantPayments() {
               <CardContent className="text-center py-12">
                 <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Payment History
+                  {t("payments.noPaymentHistoryTitle")}
                 </h3>
                 <p className="text-gray-600">
-                  Upload your first payment proof to get started.
+                  {t("payments.noPaymentHistoryDescription")}
                 </p>
               </CardContent>
             </Card>

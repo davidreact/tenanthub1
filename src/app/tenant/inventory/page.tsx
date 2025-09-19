@@ -32,6 +32,7 @@ import { PhotoManagementDialog } from "@/components/inventory/photo-management-d
 import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { useInventoryReport } from "@/components/inventory/inventory-report-generator";
+import { formatTranslation } from "@/lib/i18n";
 
 interface InventoryItem {
   id: string;
@@ -72,7 +73,7 @@ export default function TenantInventory() {
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [importingCSV, setImportingCSV] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { toast } = useToast();
   const supabase = createClient();
   const { printReport } = useInventoryReport();
@@ -435,7 +436,7 @@ export default function TenantInventory() {
       <div className="min-h-screen bg-hero-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading inventory...</p>
+          <p className="mt-4 text-gray-600">{t("inventory.loadingInventory")}</p>
         </div>
       </div>
     );
@@ -451,7 +452,7 @@ export default function TenantInventory() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("common.backToDashboard")}
           </Link>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <Package className="h-8 w-8" />
@@ -474,7 +475,7 @@ export default function TenantInventory() {
                   onClick={() => setViewMode("cards")}
                 >
                   <Package className="h-4 w-4 mr-2" />
-                  Cards
+                  {t("inventory.cardsView")}
                 </Button>
                 <Button
                   variant={viewMode === "grid" ? "default" : "outline"}
@@ -482,7 +483,7 @@ export default function TenantInventory() {
                   onClick={() => setViewMode("grid")}
                 >
                   <Grid className="h-4 w-4 mr-2" />
-                  Grid
+                  {t("inventory.gridView")}
                 </Button>
               </div>
 
@@ -494,11 +495,11 @@ export default function TenantInventory() {
                   onClick={() => printReport(inventoryItems)}
                 >
                   <FileText className="h-4 w-4 mr-2" />
-                  Print Report
+                  {t("common.printReport")}
                 </Button>
                 <Button variant="outline" size="sm" onClick={exportToExcel}>
                   <Download className="h-4 w-4 mr-2" />
-                  Export Excel
+                  {t("common.exportExcel")}
                 </Button>
                 <Button
                   variant="outline"
@@ -507,7 +508,7 @@ export default function TenantInventory() {
                   disabled={importingCSV}
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {importingCSV ? "Importing..." : "Import Excel"}
+                  {importingCSV ? t("common.importing") : t("common.importExcel")}
                 </Button>
               </div>
             </div>
@@ -561,10 +562,10 @@ export default function TenantInventory() {
             <CardContent className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Inventory Items
+                {t("inventory.noInventoryItemsTitle")}
               </h3>
               <p className="text-gray-600">
-                No inventory items found for your property.
+                {t("inventory.noInventoryItemsForProperty")}
               </p>
             </CardContent>
           </Card>
@@ -573,7 +574,7 @@ export default function TenantInventory() {
         {/* Action Buttons */}
         <div className="mt-8 flex justify-center">
           <Button size="lg" className="px-8">
-            Sign Inventory Document
+            {t("inventory.signDocument")}
           </Button>
         </div>
 
@@ -581,31 +582,31 @@ export default function TenantInventory() {
         <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Item Notes - {selectedItem?.name}</DialogTitle>
+              <DialogTitle>{formatTranslation("inventory.itemNotesTitle", language, { name: selectedItem?.name || "" })}</DialogTitle>
               <DialogDescription>
-                View admin notes and add your own notes for this item.
+                {t("inventory.itemNotesDescription")}
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-6">
               {/* Admin Notes Section */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Admin Notes</Label>
+                <Label className="text-sm font-medium text-gray-700">{t("common.adminNotes")}</Label>
                 <Textarea
                   value={notes}
                   readOnly
-                  placeholder="No admin notes available"
+                  placeholder={t("common.noAdminNotes")}
                   className="min-h-20 bg-gray-50"
                 />
               </div>
 
               {/* Tenant Notes Section */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Your Notes</Label>
+                <Label className="text-sm font-medium text-gray-700">{t("common.yourNotes")}</Label>
                 <Textarea
                   value={tenantNotes}
                   onChange={(e) => setTenantNotes(e.target.value)}
-                  placeholder="Add your notes about this item..."
+                  placeholder={t("common.addYourNotesPlaceholder")}
                   className="min-h-20"
                 />
               </div>
@@ -616,7 +617,7 @@ export default function TenantInventory() {
                   variant="outline"
                   onClick={() => setIsNotesDialogOpen(false)}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={async () => {
@@ -626,7 +627,7 @@ export default function TenantInventory() {
                     setIsNotesDialogOpen(false);
                   }}
                 >
-                  Save Notes
+                  {t("common.saveNotes")}
                 </Button>
               </div>
             </div>

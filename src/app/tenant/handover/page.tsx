@@ -121,15 +121,14 @@ export default function TenantHandover() {
       setIsDialogOpen(false);
 
       toast({
-        title: "Handover Scheduled",
-        description:
-          "Your handover appointment has been scheduled successfully.",
+        title: t("handover.scheduledTitle"),
+        description: t("handover.scheduledDescription"),
       });
     } catch (error) {
       console.error("Error scheduling handover:", error);
       toast({
-        title: "Error",
-        description: "Failed to schedule handover. Please try again.",
+        title: t("common.error"),
+        description: t("handover.scheduleErrorDescription"),
         variant: "destructive",
       });
     }
@@ -185,7 +184,7 @@ export default function TenantHandover() {
       <div className="min-h-screen bg-hero-gradient flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading handover schedule...</p>
+          <p className="mt-4 text-gray-600">{t("handover.loadingSchedule")}</p>
         </div>
       </div>
     );
@@ -201,7 +200,7 @@ export default function TenantHandover() {
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
+            {t("common.backToDashboard")}
           </Link>
           <div className="flex justify-between items-center">
             <div>
@@ -217,15 +216,14 @@ export default function TenantHandover() {
               <DialogTrigger asChild>
                 <Button onClick={() => setIsDialogOpen(true)}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Schedule Handover
+                  {t("handover.scheduleHandover")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Schedule Key Handover</DialogTitle>
+                  <DialogTitle>{t("handover.scheduleHandoverTitle")}</DialogTitle>
                   <DialogDescription>
-                    Schedule a key handover appointment with the property
-                    administrator
+                    {t("handover.scheduleHandoverDescription")}
                   </DialogDescription>
                 </DialogHeader>
                 <form
@@ -244,19 +242,19 @@ export default function TenantHandover() {
                   className="space-y-4"
                 >
                   <div>
-                    <Label htmlFor="type">Handover Type</Label>
+                    <Label htmlFor="type">{t("common.handoverType")}</Label>
                     <Select name="type" required>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select handover type" />
+                        <SelectValue placeholder={t("handover.selectHandoverType")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="move_in">Move In</SelectItem>
-                        <SelectItem value="move_out">Move Out</SelectItem>
+                        <SelectItem value="move_in">{t("common.moveIn")}</SelectItem>
+                        <SelectItem value="move_out">{t("common.moveOut")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="date">Preferred Date</Label>
+                    <Label htmlFor="date">{t("common.preferredDate")}</Label>
                     <Input
                       id="date"
                       name="date"
@@ -266,20 +264,20 @@ export default function TenantHandover() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="time">Preferred Time</Label>
+                    <Label htmlFor="time">{t("common.preferredTime")}</Label>
                     <Input id="time" name="time" type="time" required />
                   </div>
                   <div>
-                    <Label htmlFor="notes">Additional Notes (Optional)</Label>
+                    <Label htmlFor="notes">{t("common.additionalNotes")}</Label>
                     <Textarea
                       id="notes"
                       name="notes"
-                      placeholder="Any special requirements or notes for the handover"
+                      placeholder={t("common.addYourNotesPlaceholder")}
                       rows={3}
                     />
                   </div>
                   <Button type="submit" className="w-full">
-                    Schedule Handover
+                    {t("handover.scheduleHandover")}
                   </Button>
                 </form>
               </DialogContent>
@@ -290,33 +288,33 @@ export default function TenantHandover() {
         {/* Handover Information */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Key Handover Information</CardTitle>
+            <CardTitle>{t("handover.infoTitle")}</CardTitle>
             <CardDescription>
-              Important information about key handover procedures
+              {t("handover.infoDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold text-green-800 mb-2">
-                  Move-In Handover
+                  {t("handover.moveInInfoTitle")}
                 </h3>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Receive property keys and access cards</li>
-                  <li>• Complete property inspection</li>
-                  <li>• Sign inventory checklist</li>
-                  <li>• Get emergency contact information</li>
+                  <li>• {t("handover.moveInInfo1")}</li>
+                  <li>• {t("handover.moveInInfo2")}</li>
+                  <li>• {t("handover.moveInInfo3")}</li>
+                  <li>• {t("handover.moveInInfo4")}</li>
                 </ul>
               </div>
               <div>
                 <h3 className="font-semibold text-orange-800 mb-2">
-                  Move-Out Handover
+                  {t("handover.moveOutInfoTitle")}
                 </h3>
                 <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Return all keys and access cards</li>
-                  <li>• Final property inspection</li>
-                  <li>• Settle any outstanding payments</li>
-                  <li>• Receive deposit refund information</li>
+                  <li>• {t("handover.moveOutInfo1")}</li>
+                  <li>• {t("handover.moveOutInfo2")}</li>
+                  <li>• {t("handover.moveOutInfo3")}</li>
+                  <li>• {t("handover.moveOutInfo4")}</li>
                 </ul>
               </div>
             </div>
@@ -325,7 +323,7 @@ export default function TenantHandover() {
 
         {/* Scheduled Handovers */}
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Your Handover Schedule</h2>
+          <h2 className="text-xl font-semibold">{t("handover.yourScheduleTitle")}</h2>
 
           {handovers.length > 0 ? (
             <div className="grid gap-4">
@@ -340,14 +338,14 @@ export default function TenantHandover() {
                             <Badge
                               className={getTypeColor(handover.handover_type)}
                             >
-                              {handover.handover_type.replace("_", " ")}
+                              {handover.handover_type === "move_in" ? t("common.moveIn") : handover.handover_type === "move_out" ? t("common.moveOut") : handover.handover_type}
                             </Badge>
                             <div className="flex items-center gap-2">
                               {getStatusIcon(handover.status)}
                               <Badge
                                 className={getStatusColor(handover.status)}
                               >
-                                {handover.status}
+                                {handover.status === "completed" ? t("common.completed") : handover.status === "scheduled" ? t("common.scheduled") : handover.status === "cancelled" ? t("common.cancelled") : handover.status}
                               </Badge>
                             </div>
                           </div>
@@ -374,7 +372,7 @@ export default function TenantHandover() {
 
                         <div className="text-right">
                           <p className="text-sm text-gray-500">
-                            Requested:{" "}
+                            {t("common.requested")}:{" "}
                             {new Date(handover.created_at).toLocaleDateString()}
                           </p>
                           {handover.status === "scheduled" && (
@@ -383,7 +381,7 @@ export default function TenantHandover() {
                               size="sm"
                               className="mt-2"
                             >
-                              Modify Request
+                              {t("common.modifyRequest")}
                             </Button>
                           )}
                         </div>
@@ -398,10 +396,10 @@ export default function TenantHandover() {
               <CardContent className="text-center py-12">
                 <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  No Handovers Scheduled
+                  {t("handover.noHandoversTitle")}
                 </h3>
                 <p className="text-gray-600">
-                  Schedule your first key handover appointment.
+                  {t("handover.noHandoversDescription")}
                 </p>
               </CardContent>
             </Card>
@@ -411,17 +409,16 @@ export default function TenantHandover() {
         {/* Contact Information */}
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>Need Help?</CardTitle>
+            <CardTitle>{t("common.needHelp")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-gray-600 mb-4">
-              If you need to reschedule or have questions about the handover
-              process, please contact the property administrator.
+              {t("handover.helpDescription")}
             </p>
             <Link href="/tenant/messages">
               <Button variant="outline">
                 <Calendar className="h-4 w-4 mr-2" />
-                Contact Administrator
+                {t("common.contactAdministrator")}
               </Button>
             </Link>
           </CardContent>
