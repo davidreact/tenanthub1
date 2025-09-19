@@ -71,7 +71,7 @@ interface Property {
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -83,7 +83,7 @@ interface InventoryItem {
 
 interface GridItem {
   id?: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -170,7 +170,7 @@ export default function PropertyInventory() {
   const initializeGridData = () => {
     const gridData = inventoryItems.map((item) => ({
       id: item.id,
-      name: item.name,
+      item: item.item,
       description: item.description || "",
       location: item.location || "",
       condition: item.condition || "good",
@@ -217,7 +217,7 @@ export default function PropertyInventory() {
       dataRows.forEach((row, index) => {
         if (row.length >= 6 && row[0]) {
           const newItem: GridItem = {
-            name: String(row[0] || `Item ${index + 1}`),
+            item: String(row[0] || `Item ${index + 1}`),
             description: String(row[1] || ""),
             location: String(row[2] || ""),
             condition: ["excellent", "good", "fair", "poor"].includes(
@@ -285,7 +285,7 @@ export default function PropertyInventory() {
 
   const addNewGridRow = () => {
     const newItem: GridItem = {
-      name: "",
+      item: "",
       description: "",
       location: "",
       condition: "good",
@@ -306,19 +306,19 @@ export default function PropertyInventory() {
   const saveGridChanges = async () => {
     try {
       const itemsToInsert = gridItems.filter(
-        (item) => item.isNew && item.name.trim(),
+        (item) => item.isNew && item.item.trim(),
       );
       const itemsToUpdate = gridItems.filter(
         (item) => item.isEdited && item.id,
       );
-
+  
       // Insert new items
       if (itemsToInsert.length > 0) {
         const { data: insertedItems, error: insertError } = await supabase
           .from("inventory_items")
           .insert(
             itemsToInsert.map((item) => ({
-              name: item.name,
+              item: item.item,
               description: item.description,
               location: item.location,
               condition: item.condition,
@@ -329,28 +329,28 @@ export default function PropertyInventory() {
             })),
           )
           .select();
-
+  
         if (insertError) throw insertError;
-
+  
         // Handle photo uploads for new items
         if (insertedItems) {
           for (let i = 0; i < itemsToInsert.length; i++) {
             const item = itemsToInsert[i];
             const insertedItem = insertedItems[i];
-
+  
             if (item.photo_file && insertedItem) {
               await uploadPhotoForItem(insertedItem.id, item.photo_file);
             }
           }
         }
       }
-
+  
       // Update existing items
       for (const item of itemsToUpdate) {
         const { error: updateError } = await supabase
           .from("inventory_items")
           .update({
-            name: item.name,
+            item: item.item,
             description: item.description,
             location: item.location,
             condition: item.condition,
@@ -360,18 +360,18 @@ export default function PropertyInventory() {
             property_id: item.property_id,
           })
           .eq("id", item.id);
-
+  
         if (updateError) throw updateError;
-
+  
         // Handle photo uploads for updated items
         if (item.photo_file && item.id) {
           await uploadPhotoForItem(item.id, item.photo_file);
         }
       }
-
+  
       await fetchData();
       setIsGridDialogOpen(false);
-
+  
       toast({
         title: "Changes Saved",
         description: `Updated ${itemsToUpdate.length} items and added ${itemsToInsert.length} new items.`,
@@ -450,17 +450,17 @@ export default function PropertyInventory() {
     try {
       const XLSX = await import("xlsx");
       const headers = [
-        "Name",
-        "Description",
-        "Location",
-        "Condition",
-        "Quantity",
-        "Estimated Value",
-        "Notes",
+        t("common.item"),
+        t("common.description"),
+        t("common.location"),
+        t("common.condition"),
+        t("common.quantity"),
+        t("common.estimatedValue"),
+        t("common.notes"),
         "Photo Count",
         "Photo URLs",
       ];
-
+  
       const data = [
         headers,
         ...inventoryItems.map((item) => {
@@ -468,7 +468,7 @@ export default function PropertyInventory() {
             (photo) => photo.inventory_item_id === item.id,
           );
           return [
-            item.name,
+            item.item,
             item.description || "",
             item.location || "",
             item.condition,
@@ -480,14 +480,14 @@ export default function PropertyInventory() {
           ];
         }),
       ];
-
+  
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
-
+  
       const fileName = `inventory-${property?.name || "property"}-${new Date().toISOString().split("T")[0]}.xlsx`;
       XLSX.writeFile(workbook, fileName);
-
+  
       toast({
         title: "Export Complete",
         description: "Inventory exported to Excel successfully.",
@@ -549,13 +549,13 @@ export default function PropertyInventory() {
         [""],
         ["INVENTORY ITEMS:"],
         [
-          "Name",
-          "Description",
-          "Location",
-          "Condition",
-          "Quantity",
-          "Estimated Value",
-          "Notes",
+          t("common.item"),
+          t("common.description"),
+          t("common.location"),
+          t("common.condition"),
+          t("common.quantity"),
+          t("common.estimatedValue"),
+          t("common.notes"),
           "Photo Count",
           "Photo URLs",
         ],
@@ -564,7 +564,7 @@ export default function PropertyInventory() {
             (photo) => photo.inventory_item_id === item.id,
           );
           return [
-            item.name,
+            item.item,
             item.description || "",
             item.location || "",
             item.condition,
@@ -846,7 +846,7 @@ export default function PropertyInventory() {
                         e.preventDefault();
                         const formData = new FormData(e.currentTarget);
                         const itemData = {
-                          name: formData.get("name") as string,
+                          item: formData.get("item") as string,
                           description: formData.get("description") as string,
                           location: formData.get("location") as string,
                           condition: formData.get("condition") as string,
@@ -865,8 +865,8 @@ export default function PropertyInventory() {
                     >
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="name">{t("common.name")}</Label>
-                          <Input id="name" name="name" required />
+                          <Label htmlFor="item">{t("common.item")}</Label>
+                          <Input id="item" name="item" required />
                         </div>
                         <div>
                           <Label htmlFor="location">{t("common.location")}</Label>

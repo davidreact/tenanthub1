@@ -20,7 +20,7 @@ import { Trash2 } from "lucide-react";
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -81,7 +81,7 @@ export function EditItemDialog({
             e.preventDefault();
             const formData = new FormData(e.currentTarget);
             const itemData = {
-              name: formData.get("name") as string,
+              item: formData.get("item") as string,
               description: formData.get("description") as string,
               location: formData.get("location") as string,
               condition: formData.get("condition") as string,
@@ -97,11 +97,11 @@ export function EditItemDialog({
         >
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="edit-name">{t("common.name")}</Label>
+              <Label htmlFor="edit-item">{t("common.item")}</Label>
               <Input
-                id="edit-name"
-                name="name"
-                defaultValue={selectedItem.name}
+                id="edit-item"
+                name="item"
+                defaultValue={selectedItem.item}
                 required
               />
             </div>

@@ -34,7 +34,7 @@ interface Property {
 
 interface GridItem {
   id?: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -88,7 +88,7 @@ export function BulkEditDialog({
 
   const addNewGridRow = () => {
     const newItem: GridItem = {
-      name: "",
+      item: "",
       description: "",
       location: "",
       condition: "good",
@@ -121,7 +121,7 @@ export function BulkEditDialog({
       const columns = row.split("\t");
       if (columns.length >= 6) {
         const newItem: GridItem = {
-          name: columns[0] || `Item ${index + 1}`,
+          item: columns[0] || `Item ${index + 1}`,
           description: columns[1] || "",
           location: columns[2] || "",
           condition: ["excellent", "good", "fair", "poor"].includes(
@@ -176,7 +176,7 @@ export function BulkEditDialog({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-32">Name</TableHead>
+                  <TableHead className="w-32">ITEM</TableHead>
                   <TableHead className="w-40">Description</TableHead>
                   <TableHead className="w-24">Location</TableHead>
                   <TableHead className="w-32">Property</TableHead>
@@ -202,11 +202,11 @@ export function BulkEditDialog({
                   >
                     <TableCell>
                       <Input
-                        value={item.name}
+                        value={item.item}
                         onChange={(e) =>
                           handleGridCellChange(
                             index,
-                            "name",
+                            "item",
                             e.target.value,
                           )
                         }

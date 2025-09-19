@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;

@@ -106,7 +106,7 @@ export type Database = {
           estimated_value: number | null
           id: string
           location: string | null
-          name: string
+          item: string
           notes: string | null
           property_id: string | null
           quantity: number | null
@@ -119,7 +119,7 @@ export type Database = {
           estimated_value?: number | null
           id?: string
           location?: string | null
-          name: string
+          item: string
           notes?: string | null
           property_id?: string | null
           quantity?: number | null
@@ -132,7 +132,7 @@ export type Database = {
           estimated_value?: number | null
           id?: string
           location?: string | null
-          name?: string
+          item?: string
           notes?: string | null
           property_id?: string | null
           quantity?: number | null

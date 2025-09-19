@@ -36,7 +36,7 @@ import { formatTranslation } from "@/lib/i18n";
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   condition: string;
   location: string;
@@ -116,12 +116,15 @@ export default function TenantInventory() {
         .is("returned_date", null)
         .order("assigned_date", { ascending: false });
 
-      const formattedItems = items?.map(item => ({
-        ...item.inventory_items,
-        assigned_date: item.assigned_date,
-        assigned_condition: item.assigned_condition,
-        assignment_notes: item.assignment_notes
-      })) || [];
+      const formattedItems = items?.map(item => {
+        if (!item.inventory_items) return null;
+        return {
+          ...item.inventory_items,
+          assigned_date: item.assigned_date,
+          assigned_condition: item.assigned_condition,
+          assignment_notes: item.assignment_notes
+        };
+      }).filter(Boolean) || [];
 
       setInventoryItems(formattedItems);
     } catch (error) {
@@ -238,7 +241,7 @@ export default function TenantInventory() {
       dataRows.forEach((row) => {
         if (row.length >= 2 && row[0]) {
           importedItems.push({
-            name: String(row[0] || ""),
+            item: String(row[0] || ""),
             description: String(row[1] || ""),
             location: String(row[2] || ""),
             condition: ["excellent", "good", "fair", "poor"].includes(
@@ -315,7 +318,7 @@ export default function TenantInventory() {
   const exportToExcel = async () => {
     try {
       const headers = [
-        "Name",
+        "ITEM",
         "Description",
         "Location",
         "Condition",
@@ -325,11 +328,11 @@ export default function TenantInventory() {
         "Assigned Date",
         "Photo Count",
       ];
-
+  
       const data = [
         headers,
         ...inventoryItems.map((item) => [
-          item.name,
+          item.item,
           item.description || "",
           item.location || "",
           item.condition,
@@ -582,7 +585,7 @@ export default function TenantInventory() {
         <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{formatTranslation("inventory.itemNotesTitle", language, { name: selectedItem?.name || "" })}</DialogTitle>
+              <DialogTitle>{formatTranslation("inventory.itemNotesTitle", language, { name: selectedItem?.item || "" })}</DialogTitle>
               <DialogDescription>
                 {t("inventory.itemNotesDescription")}
               </DialogDescription>

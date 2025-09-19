@@ -82,7 +82,7 @@ interface TenantInventory {
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -106,7 +106,7 @@ interface InventoryPhoto {
 
 interface GridItem {
   id?: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -267,24 +267,24 @@ email: tenant.users?.[0]?.email || "",
 
   const filterItems = () => {
     let filtered = inventoryItems;
-
+  
     // Filter by property
     if (selectedProperty !== "all") {
       filtered = filtered.filter(
         (item) => item.property_id === selectedProperty,
       );
     }
-
+  
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (item) =>
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.location?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
-
+  
     setFilteredItems(filtered);
   };
 
@@ -317,7 +317,7 @@ email: tenant.users?.[0]?.email || "",
   const initializeGridData = () => {
     const gridData = inventoryItems.map((item) => ({
       id: item.id,
-      name: item.name,
+      item: item.item,
       description: item.description || "",
       location: item.location || "",
       condition: item.condition || "good",
@@ -371,7 +371,7 @@ email: tenant.users?.[0]?.email || "",
       dataRows.forEach((row, index) => {
         if (row.length >= 6 && row[0]) {
           const newItem: GridItem = {
-            name: String(row[0] || `Item ${index + 1}`),
+            item: String(row[0] || `Item ${index + 1}`),
             description: String(row[1] || ""),
             location: String(row[2] || ""),
             condition: ["excellent", "good", "fair", "poor"].includes(
@@ -435,7 +435,7 @@ email: tenant.users?.[0]?.email || "",
       const columns = row.split("\t");
       if (columns.length >= 6) {
         const newItem: GridItem = {
-          name: columns[0] || `Item ${index + 1}`,
+          item: columns[0] || `Item ${index + 1}`,
           description: columns[1] || "",
           location: columns[2] || "",
           condition: ["excellent", "good", "fair", "poor"].includes(
@@ -486,7 +486,7 @@ email: tenant.users?.[0]?.email || "",
 
   const addNewGridRow = () => {
     const newItem: GridItem = {
-      name: "",
+      item: "",
       description: "",
       location: "",
       condition: "good",
@@ -509,19 +509,19 @@ email: tenant.users?.[0]?.email || "",
   const saveGridChanges = async () => {
     try {
       const itemsToInsert = gridItems.filter(
-        (item) => item.isNew && item.name.trim(),
+        (item) => item.isNew && item.item.trim(),
       );
       const itemsToUpdate = gridItems.filter(
         (item) => item.isEdited && item.id,
       );
-
+  
       // Insert new items
       if (itemsToInsert.length > 0) {
         const { data: insertedItems, error: insertError } = await supabase
           .from("inventory_items")
           .insert(
             itemsToInsert.map((item) => ({
-              name: item.name,
+              item: item.item,
               description: item.description,
               location: item.location,
               condition: item.condition,
@@ -532,28 +532,28 @@ email: tenant.users?.[0]?.email || "",
             })),
           )
           .select();
-
+  
         if (insertError) throw insertError;
-
+  
         // Handle photo uploads for new items
         if (insertedItems) {
           for (let i = 0; i < itemsToInsert.length; i++) {
             const item = itemsToInsert[i];
             const insertedItem = insertedItems[i];
-
+  
             if (item.photo_file && insertedItem) {
               await uploadPhotoForItem(insertedItem.id, item.photo_file);
             }
           }
         }
       }
-
+  
       // Update existing items
       for (const item of itemsToUpdate) {
         const { error: updateError } = await supabase
           .from("inventory_items")
           .update({
-            name: item.name,
+            item: item.item,
             description: item.description,
             location: item.location,
             condition: item.condition,
@@ -563,18 +563,18 @@ email: tenant.users?.[0]?.email || "",
             property_id: item.property_id,
           })
           .eq("id", item.id);
-
+  
         if (updateError) throw updateError;
-
+  
         // Handle photo uploads for updated items
         if (item.photo_file && item.id) {
           await uploadPhotoForItem(item.id, item.photo_file);
         }
       }
-
+  
       await fetchData();
       setIsGridDialogOpen(false);
-
+  
       toast({
         title: "Changes Saved",
         description: `Updated ${itemsToUpdate.length} items and added ${itemsToInsert.length} new items.`,
@@ -649,7 +649,7 @@ email: tenant.users?.[0]?.email || "",
   const exportToExcel = async () => {
     try {
       const headers = [
-        "Name",
+        "ITEM",
         "Description",
         "Location",
         "Property",
@@ -660,7 +660,7 @@ email: tenant.users?.[0]?.email || "",
         "Photo Count",
         "Photo URLs",
       ];
-
+  
       const data = [
         headers,
         ...filteredItems.map((item) => {
@@ -668,7 +668,7 @@ email: tenant.users?.[0]?.email || "",
             (photo) => photo.inventory_item_id === item.id,
           );
           return [
-            item.name,
+            item.item,
             item.description || "",
             item.location || "",
             item.properties.name,
@@ -681,14 +681,14 @@ email: tenant.users?.[0]?.email || "",
           ];
         }),
       ];
-
+  
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
-
+  
       const fileName = `inventory-${selectedProperty === "all" ? "all-properties" : "filtered"}-${new Date().toISOString().split("T")[0]}.xlsx`;
       XLSX.writeFile(workbook, fileName);
-
+  
       toast({
         title: "Export Complete",
         description: "Inventory exported to Excel successfully.",
@@ -844,7 +844,7 @@ email: tenant.users?.[0]?.email || "",
                     {property.tenants.map((tenant) => (
                       <div
                         key={tenant.id}
-                        className="border rounded-lg p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
+                        className="border rounded-lg p-4 bg-muted transition-colors hover:bg-muted/80"
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
@@ -854,10 +854,10 @@ email: tenant.users?.[0]?.email || "",
                               </h4>
                             </div>
                             <div className="flex gap-6 text-sm mb-2">
-                              <span className="bg-blue-50 px-2 py-1 rounded">
+                              <span className="bg-muted px-2 py-1 rounded">
                                 <strong className="text-blue-700">{tenant.assigned_items}</strong> items assigned
                               </span>
-                              <span className="bg-green-50 px-2 py-1 rounded">
+                              <span className="bg-muted px-2 py-1 rounded">
                                 <strong className="text-green-700">${tenant.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> total value
                               </span>
                             </div>

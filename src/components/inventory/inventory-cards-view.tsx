@@ -5,7 +5,7 @@ import { Image as ImageIcon, Edit } from "lucide-react";
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -70,7 +70,7 @@ export function InventoryCardsView({
           >
             <CardHeader>
               <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{item.name}</CardTitle>
+                <CardTitle className="text-lg">{item.item}</CardTitle>
                 <Badge className={getConditionColor(item.condition)}>
                   {item.condition}
                 </Badge>
@@ -86,7 +86,7 @@ export function InventoryCardsView({
                     <img
                       key={photo.id}
                       src={photo.photo_url}
-                      alt={photo.caption || item.name}
+                      alt={photo.caption || item.item}
                       className="w-full h-20 object-cover rounded cursor-pointer"
                       onClick={() => onPhotoClick(item.id)}
                     />

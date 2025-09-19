@@ -49,7 +49,7 @@ interface TenantProperty {
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -155,7 +155,7 @@ export function AssignmentManagementDialog({
           )
         `)
         .eq("property_id", propertyId || "")
-        .order("name");
+        .order("item");
 
       if (error) {
         console.error("Query error:", error);
@@ -397,7 +397,7 @@ export function AssignmentManagementDialog({
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <Package className="h-4 w-4" />
-                                <span className="font-medium">{item.name}</span>
+                                <span className="font-medium">{item.item}</span>
                                 <Badge className={getConditionColor(item.condition)}>
                                   {item.condition}
                                 </Badge>

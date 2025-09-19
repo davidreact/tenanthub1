@@ -2,7 +2,7 @@ import { createClient } from "../../../supabase/client";
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   condition: string;
   location: string;
@@ -163,7 +163,7 @@ export class InventoryReportGenerator {
             label,
             photo_url: p.photo_url,
             caption: p.caption,
-            itemName: item.name,
+            itemName: item.item,
             itemId: item.id
           });
         });
@@ -609,7 +609,7 @@ export class InventoryReportGenerator {
     return `
       <div class="item-card">
         <div class="item-header">
-          <h3 class="item-title">${item.name}</h3>
+          <h3 class="item-title">${item.item}</h3>
           <div class="condition-badge condition-${item.condition.toLowerCase()}">
             ${item.condition.charAt(0).toUpperCase() + item.condition.slice(1)}
           </div>

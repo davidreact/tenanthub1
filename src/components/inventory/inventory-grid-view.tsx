@@ -13,7 +13,7 @@ import { Image as ImageIcon, Edit } from "lucide-react";
 
 interface InventoryItem {
   id: string;
-  name: string;
+  item: string;
   description: string;
   location: string;
   condition: string;
@@ -72,16 +72,13 @@ export function InventoryGridView({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-32">Name</TableHead>
-                <TableHead className="w-40">Description</TableHead>
-                <TableHead className="w-24">Location</TableHead>
-                <TableHead className="w-32">Property</TableHead>
-                <TableHead className="w-24">Condition</TableHead>
-                <TableHead className="w-20">Qty</TableHead>
-                <TableHead className="w-24">Value</TableHead>
-                <TableHead className="w-24">Notes</TableHead>
-                <TableHead className="w-24">Photos</TableHead>
-                <TableHead className="w-20">Actions</TableHead>
+                <TableHead className="w-32">{t("common.item")}</TableHead>
+                <TableHead className="w-40">{t("common.description")}</TableHead>
+                <TableHead className="w-20">{t("common.quantity")}</TableHead>
+                <TableHead className="w-24">{t("common.condition")}</TableHead>
+                <TableHead className="w-24">{t("common.notes")}</TableHead>
+                <TableHead className="w-24">{t("common.photos")}</TableHead>
+                <TableHead className="w-20">{t("common.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -91,17 +88,14 @@ export function InventoryGridView({
                 );
                 return (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell className="font-medium">{item.item}</TableCell>
                     <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.location}</TableCell>
-                    <TableCell>{item.properties.name}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
                     <TableCell>
                       <Badge className={getConditionColor(item.condition)}>
                         {item.condition}
                       </Badge>
                     </TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>${item.estimated_value || 0}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -109,7 +103,7 @@ export function InventoryGridView({
                         onClick={() => onEditClick(item)}
                       >
                         <Edit className="h-4 w-4 mr-1" />
-                        Notes
+                        {t("common.notes")}
                       </Button>
                     </TableCell>
                     <TableCell>
