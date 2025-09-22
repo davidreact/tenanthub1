@@ -44,7 +44,7 @@ interface TenantProperty {
     full_name: string | null;
     name: string | null;
     email: string | null;
-  }[] | null;
+  } | null;
 }
 
 interface InventoryItem {
@@ -101,7 +101,7 @@ export function AssignmentManagementDialog({
     setLoading(true);
     try {
       // Fetch tenants for the property
-      const { data: tenantData } = await supabase
+      const { data: tenantData, error: tenantError } = await supabase
         .from("tenant_properties")
         .select(`
           id,
@@ -110,7 +110,7 @@ export function AssignmentManagementDialog({
           lease_start_date,
           lease_end_date,
           status,
-          users!inner (
+          users (
             id,
             full_name,
             name,
@@ -172,8 +172,8 @@ export function AssignmentManagementDialog({
           ...item,
           selected: false,
           currentTenant: activeAssignment
-            ? activeAssignment.tenant_properties?.users?.[0]?.full_name ||
-              activeAssignment.tenant_properties?.users?.[0]?.name ||
+            ? activeAssignment.tenant_properties?.users?.full_name ||
+              activeAssignment.tenant_properties?.users?.name ||
               "Unknown Tenant"
             : undefined,
           assignedCondition: activeAssignment?.assigned_condition,
@@ -300,14 +300,23 @@ export function AssignmentManagementDialog({
                 <SelectValue placeholder="Choose a tenant..." />
               </SelectTrigger>
               <SelectContent>
-                {tenants.map((tenant) => (
-                  <SelectItem key={tenant.id} value={tenant.id}>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      {tenant.users?.[0]?.full_name || tenant.users?.[0]?.name || tenant.users?.[0]?.email}
-                    </div>
-                  </SelectItem>
-                ))}
+                {tenants.map((tenant) => {
+                  const tenantName = tenant.users?.full_name || tenant.users?.name;
+                  const tenantEmail = tenant.users?.email;
+                  const displayText = tenantName && tenantEmail
+                    ? `${tenantName} (${tenantEmail})`
+                    : tenantName || tenantEmail || `Tenant ID: ${tenant.id}`;
+
+
+                  return (
+                    <SelectItem key={tenant.id} value={tenant.id}>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        {displayText}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>

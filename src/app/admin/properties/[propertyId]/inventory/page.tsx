@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "../../../../../../supabase/client";
+import { useInventoryData } from "@/hooks/useInventoryData";
+import { useInventoryActions } from "@/hooks/useInventoryActions";
+import { generateInventoryReport } from "@/utils/inventory/pdfGenerator";
+import { exportToExcel, exportInventoryReport } from "@/utils/inventory/excelExporter";
 import {
   Card,
   CardContent,
@@ -89,7 +93,7 @@ interface GridItem {
   condition: string;
   quantity: number;
   estimated_value: number;
-  notes: string;
+  notes?: string;
   property_id: string;
   photo_file?: File | null;
   isNew?: boolean;
@@ -97,9 +101,6 @@ interface GridItem {
 }
 
 export default function PropertyInventory() {
-  const [property, setProperty] = useState<Property | null>(null);
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -107,13 +108,10 @@ export default function PropertyInventory() {
   const [viewMode, setViewMode] = useState<"cards" | "grid">("grid");
   const [isGridDialogOpen, setIsGridDialogOpen] = useState(false);
   const [gridItems, setGridItems] = useState<GridItem[]>([]);
-  const [importingCSV, setImportingCSV] = useState(false);
-  const [photos, setPhotos] = useState<any[]>([]);
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   const [selectedItemForPhotos, setSelectedItemForPhotos] = useState<
     string | null
   >(null);
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -121,11 +119,24 @@ export default function PropertyInventory() {
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
+
+  // Use custom hooks
+  const { property, inventoryItems, photos, loading, refetch } = useInventoryData(propertyId);
+  const {
+    uploadingPhotos,
+    importingCSV,
+    createInventoryItem,
+    updateInventoryItem,
+    deleteInventoryItem,
+    handlePhotoUpload,
+    saveGridChanges,
+    handleExcelImport,
+  } = useInventoryActions();
   const { t } = useLanguage();
 
   useEffect(() => {
     if (propertyId) {
-      fetchData();
+      refetch();
     }
   }, [propertyId]);
 
@@ -135,37 +146,91 @@ export default function PropertyInventory() {
     }
   }, [inventoryItems, viewMode]);
 
-  const fetchData = async () => {
-    try {
-      // Fetch property details
-      const { data: propertyData } = await supabase
-        .from("properties")
-        .select("id, name, address, status")
-        .eq("id", propertyId)
-        .single();
+  // Wrapper functions for event handlers
+  const handleExcelImportWrapper = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-      // Fetch inventory items for this property
-      const { data: inventoryData } = await supabase
-        .from("inventory_items")
-        .select("*")
-        .eq("property_id", propertyId)
-        .order("created_at", { ascending: false });
+    // Ensure grid is initialized with current inventory data
+    const currentGridItems = gridItems.length === 0
+      ? inventoryItems.map((item) => ({
+          id: item.id,
+          item: item.item,
+          description: item.description || "",
+          location: item.location || "",
+          condition: item.condition || "good",
+          quantity: item.quantity || 1,
+          estimated_value: item.estimated_value || 0,
+          notes: item.notes || "",
+          property_id: propertyId,
+          isNew: false,
+          isEdited: false,
+        }))
+      : [...gridItems];
 
-      // Fetch inventory photos
-      const { data: photosData } = await supabase
-        .from("inventory_photos")
-        .select("*")
-        .order("created_at", { ascending: false });
+    await handleExcelImport(file, propertyId, inventoryItems, (importedItems) => {
+      const updatedGrid = [...currentGridItems];
 
-      setProperty(propertyData);
-      setInventoryItems(inventoryData || []);
-      setPhotos(photosData || []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
+      importedItems.forEach((importedItem) => {
+        if (importedItem.isNew) {
+          // Add new item
+          updatedGrid.push(importedItem);
+        } else if (importedItem.id && importedItem.isEdited) {
+          // Update existing item
+          const existingIndex = updatedGrid.findIndex(item => item.id === importedItem.id);
+          if (existingIndex >= 0) {
+            // Update existing item
+            updatedGrid[existingIndex] = { ...updatedGrid[existingIndex], ...importedItem };
+          } else {
+            // Item doesn't exist in grid, add it
+            updatedGrid.push(importedItem);
+          }
+        }
+      });
+
+      setGridItems(updatedGrid);
+    });
+
+    if (csvInputRef.current) {
+      csvInputRef.current.value = "";
     }
   };
+
+  const handlePhotoUploadWrapper = async (files: FileList | null) => {
+    await handlePhotoUpload(files, selectedItemForPhotos);
+    setIsPhotoDialogOpen(false);
+    setSelectedItemForPhotos(null);
+  };
+
+  const handleSaveGridChanges = async () => {
+    await saveGridChanges(gridItems, propertyId, () => {
+      refetch();
+      setIsGridDialogOpen(false);
+    });
+  };
+
+  const handleExportToExcel = async () => {
+    await exportToExcel(inventoryItems, photos, property, toast);
+  };
+
+  const handleExportInventoryReport = async () => {
+    await exportInventoryReport(property, inventoryItems, photos, toast);
+  };
+
+
+  const handleGeneratePDF = async () => {
+    // Fetch tenant data for PDF
+    const { data: tenantData } = await supabase
+      .from("tenant_properties")
+      .select(`
+        *,
+        users (full_name, name, email, telephone_number)
+      `)
+      .eq("property_id", propertyId);
+
+    await generateInventoryReport(property, inventoryItems, tenantData, photos);
+  };
+
 
   const initializeGridData = () => {
     const gridData = inventoryItems.map((item) => ({
@@ -184,85 +249,6 @@ export default function PropertyInventory() {
     setGridItems(gridData);
   };
 
-  const handleExcelImport = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setImportingCSV(true);
-    try {
-      const XLSX = await import("xlsx");
-      const arrayBuffer = await file.arrayBuffer();
-      const workbook = XLSX.read(arrayBuffer, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-      }) as any[][];
-
-      if (jsonData.length === 0) {
-        toast({
-          title: "Error",
-          description: "Excel file is empty.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Skip header row if it exists
-      const dataRows = jsonData.slice(1);
-      const newItems: GridItem[] = [];
-
-      dataRows.forEach((row, index) => {
-        if (row.length >= 6 && row[0]) {
-          const newItem: GridItem = {
-            item: String(row[0] || `Item ${index + 1}`),
-            description: String(row[1] || ""),
-            location: String(row[2] || ""),
-            condition: ["excellent", "good", "fair", "poor"].includes(
-              String(row[3])?.toLowerCase(),
-            )
-              ? String(row[3]).toLowerCase()
-              : "good",
-            quantity: parseInt(String(row[4])) || 1,
-            estimated_value: parseFloat(String(row[5])) || 0,
-            notes: String(row[6] || ""),
-            property_id: propertyId,
-            isNew: true,
-            isEdited: false,
-          };
-          newItems.push(newItem);
-        }
-      });
-
-      if (newItems.length > 0) {
-        setGridItems((prev) => [...prev, ...newItems]);
-        toast({
-          title: "Excel Imported",
-          description: `Added ${newItems.length} items from Excel file.`,
-        });
-      } else {
-        toast({
-          title: "No Data",
-          description: "No valid items found in Excel file.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error importing Excel:", error);
-      toast({
-        title: "Import Error",
-        description: "Failed to import Excel file. Please check the format.",
-        variant: "destructive",
-      });
-    } finally {
-      setImportingCSV(false);
-      if (csvInputRef.current) {
-        csvInputRef.current.value = "";
-      }
-    }
-  };
 
   const handleGridCellChange = (
     index: number,
@@ -303,384 +289,13 @@ export default function PropertyInventory() {
     setGridItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const saveGridChanges = async () => {
-    try {
-      const itemsToInsert = gridItems.filter(
-        (item) => item.isNew && item.item.trim(),
-      );
-      const itemsToUpdate = gridItems.filter(
-        (item) => item.isEdited && item.id,
-      );
-  
-      // Insert new items
-      if (itemsToInsert.length > 0) {
-        const { data: insertedItems, error: insertError } = await supabase
-          .from("inventory_items")
-          .insert(
-            itemsToInsert.map((item) => ({
-              item: item.item,
-              description: item.description,
-              location: item.location,
-              condition: item.condition,
-              quantity: item.quantity,
-              estimated_value: item.estimated_value,
-              notes: item.notes,
-              property_id: item.property_id,
-            })),
-          )
-          .select();
-  
-        if (insertError) throw insertError;
-  
-        // Handle photo uploads for new items
-        if (insertedItems) {
-          for (let i = 0; i < itemsToInsert.length; i++) {
-            const item = itemsToInsert[i];
-            const insertedItem = insertedItems[i];
-  
-            if (item.photo_file && insertedItem) {
-              await uploadPhotoForItem(insertedItem.id, item.photo_file);
-            }
-          }
-        }
-      }
-  
-      // Update existing items
-      for (const item of itemsToUpdate) {
-        const { error: updateError } = await supabase
-          .from("inventory_items")
-          .update({
-            item: item.item,
-            description: item.description,
-            location: item.location,
-            condition: item.condition,
-            quantity: item.quantity,
-            estimated_value: item.estimated_value,
-            notes: item.notes,
-            property_id: item.property_id,
-          })
-          .eq("id", item.id);
-  
-        if (updateError) throw updateError;
-  
-        // Handle photo uploads for updated items
-        if (item.photo_file && item.id) {
-          await uploadPhotoForItem(item.id, item.photo_file);
-        }
-      }
-  
-      await fetchData();
-      setIsGridDialogOpen(false);
-  
-      toast({
-        title: "Changes Saved",
-        description: `Updated ${itemsToUpdate.length} items and added ${itemsToInsert.length} new items.`,
-      });
-    } catch (error) {
-      console.error("Error saving grid changes:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save changes. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
-  const uploadPhotoForItem = async (itemId: string, file: File) => {
-    try {
-      const fileExt = file.name.split(".").pop();
-      const timestamp = Date.now();
-      const fileName = `inventory-${itemId}-${timestamp}.${fileExt}`;
-      const filePath = `inventory/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("photos")
-        .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
 
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("photos").getPublicUrl(filePath);
 
-      const { error: dbError } = await supabase
-        .from("inventory_photos")
-        .insert({
-          inventory_item_id: itemId,
-          photo_url: publicUrl,
-          caption: `${file.name} (${fileName})`,
-        });
 
-      if (dbError) throw dbError;
-    } catch (error) {
-      console.error("Error uploading photo:", error);
-      throw error;
-    }
-  };
 
-  const handlePhotoUpload = async (files: FileList | null) => {
-    if (!files || !selectedItemForPhotos) return;
-
-    setUploadingPhotos(true);
-    try {
-      for (const file of Array.from(files)) {
-        await uploadPhotoForItem(selectedItemForPhotos, file);
-      }
-
-      await fetchData();
-      toast({
-        title: "Photos Uploaded",
-        description: `Successfully uploaded ${files.length} photo(s).`,
-      });
-    } catch (error) {
-      console.error("Error uploading photos:", error);
-      toast({
-        title: "Upload Error",
-        description: "Failed to upload photos. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingPhotos(false);
-      setIsPhotoDialogOpen(false);
-      setSelectedItemForPhotos(null);
-    }
-  };
-
-  const exportToExcel = async () => {
-    try {
-      const XLSX = await import("xlsx");
-      const headers = [
-        t("common.item"),
-        t("common.description"),
-        t("common.location"),
-        t("common.condition"),
-        t("common.quantity"),
-        t("common.estimatedValue"),
-        t("common.notes"),
-        "Photo Count",
-        "Photo URLs",
-      ];
-  
-      const data = [
-        headers,
-        ...inventoryItems.map((item) => {
-          const itemPhotos = photos.filter(
-            (photo) => photo.inventory_item_id === item.id,
-          );
-          return [
-            item.item,
-            item.description || "",
-            item.location || "",
-            item.condition,
-            item.quantity,
-            item.estimated_value || 0,
-            item.notes || "",
-            itemPhotos.length,
-            itemPhotos.map((photo) => photo.photo_url).join("; "),
-          ];
-        }),
-      ];
-  
-      const worksheet = XLSX.utils.aoa_to_sheet(data);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
-  
-      const fileName = `inventory-${property?.name || "property"}-${new Date().toISOString().split("T")[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-  
-      toast({
-        title: "Export Complete",
-        description: "Inventory exported to Excel successfully.",
-      });
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      toast({
-        title: "Export Error",
-        description: "Failed to export to Excel. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const exportInventoryReport = async () => {
-    try {
-      const XLSX = await import("xlsx");
-
-      // Fetch tenant information for this property
-      const { data: tenantData } = await supabase
-        .from("tenant_properties")
-        .select(
-          `
-          *,
-          users (full_name, name, email, telephone_number)
-        `,
-        )
-        .eq("property_id", propertyId);
-
-      // Fetch inventory photos
-      const { data: photosData } = await supabase
-        .from("inventory_photos")
-        .select("*")
-        .in(
-          "inventory_item_id",
-          inventoryItems.map((item) => item.id),
-        );
-
-      // Create comprehensive report data
-      const reportData = [
-        ["PROPERTY INVENTORY REPORT"],
-        [""],
-        ["Property Information:"],
-        ["Property Name:", property?.name || ""],
-        ["Address:", property?.address || ""],
-        ["Report Date:", new Date().toLocaleDateString()],
-        [""],
-        ["Current Tenants:"],
-        ...(tenantData || []).map((tenant) => [
-          "Tenant:",
-          tenant.users?.[0]?.full_name || tenant.users?.[0]?.name || "N/A",
-          "Email:",
-          tenant.users?.[0]?.email || "N/A",
-          "Phone:",
-          tenant.users?.[0]?.telephone_number || "N/A",
-          "Lease:",
-          `${tenant.lease_start_date} to ${tenant.lease_end_date}`,
-        ]),
-        [""],
-        ["INVENTORY ITEMS:"],
-        [
-          t("common.item"),
-          t("common.description"),
-          t("common.location"),
-          t("common.condition"),
-          t("common.quantity"),
-          t("common.estimatedValue"),
-          t("common.notes"),
-          "Photo Count",
-          "Photo URLs",
-        ],
-        ...inventoryItems.map((item) => {
-          const itemPhotos = (photosData || []).filter(
-            (photo) => photo.inventory_item_id === item.id,
-          );
-          return [
-            item.item,
-            item.description || "",
-            item.location || "",
-            item.condition,
-            item.quantity,
-            item.estimated_value || 0,
-            item.notes || "",
-            itemPhotos.length,
-            itemPhotos.map((photo) => photo.photo_url).join("; "),
-          ];
-        }),
-        [""],
-        ["SUMMARY:"],
-        ["Total Items:", inventoryItems.length],
-        [
-          "Total Quantity:",
-          inventoryItems.reduce((sum, item) => sum + (item.quantity || 0), 0),
-        ],
-        [
-          "Total Estimated Value:",
-          `${inventoryItems.reduce((sum, item) => sum + (item.estimated_value || 0), 0).toFixed(2)}`,
-        ],
-        ["Total Photos:", (photosData || []).length],
-      ];
-
-      const worksheet = XLSX.utils.aoa_to_sheet(reportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory Report");
-
-      const fileName = `inventory-report-${property?.name?.replace(/[^a-zA-Z0-9]/g, "-") || "property"}-${new Date().toISOString().split("T")[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-
-      toast({
-        title: "Report Generated",
-        description: "Comprehensive inventory report exported successfully.",
-      });
-    } catch (error) {
-      console.error("Error generating inventory report:", error);
-      toast({
-        title: "Report Error",
-        description: "Failed to generate inventory report. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const createInventoryItem = async (itemData: Partial<InventoryItem>) => {
-    try {
-      await supabase
-        .from("inventory_items")
-        .insert({ ...itemData, property_id: propertyId });
-
-      fetchData(); // Refresh the list
-      setIsCreateDialogOpen(false);
-
-      toast({
-        title: "Item Added",
-        description: "Inventory item has been created successfully.",
-      });
-    } catch (error) {
-      console.error("Error creating inventory item:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create inventory item. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateInventoryItem = async (
-    id: string,
-    itemData: Partial<InventoryItem>,
-  ) => {
-    try {
-      await supabase.from("inventory_items").update(itemData).eq("id", id);
-
-      fetchData(); // Refresh the list
-      setIsEditing(false);
-      setSelectedItem(null);
-      setIsEditDialogOpen(false);
-
-      toast({
-        title: "Item Updated",
-        description: "Inventory item has been updated successfully.",
-      });
-    } catch (error) {
-      console.error("Error updating inventory item:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update inventory item. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const deleteInventoryItem = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this inventory item?"))
-      return;
-
-    try {
-      await supabase.from("inventory_items").delete().eq("id", id);
-
-      fetchData(); // Refresh the list
-
-      toast({
-        title: "Item Deleted",
-        description: "Inventory item has been deleted successfully.",
-      });
-    } catch (error) {
-      console.error("Error deleting inventory item:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete inventory item. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const getConditionColor = (condition: string) => {
     switch (condition) {
@@ -703,7 +318,7 @@ export default function PropertyInventory() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">
-            {t("inventory.loadingInventory")}
+            {t?.("inventory.loadingInventory") || "Loading inventory..."}
           </p>
         </div>
       </div>
@@ -794,17 +409,17 @@ export default function PropertyInventory() {
                   <Users className="h-4 w-4 mr-2" />
                   Assign to Tenant
                 </Button>
-                <Button variant="outline" size="sm" onClick={exportToExcel}>
+                <Button variant="outline" size="sm" onClick={handleExportToExcel}>
                   <Download className="h-4 w-4 mr-2" />
                   Export Excel
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={exportInventoryReport}
+                  onClick={handleGeneratePDF}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  Full Report
+                  PDF Report
                 </Button>
                 <Button
                   variant="outline"
@@ -819,7 +434,7 @@ export default function PropertyInventory() {
                   type="file"
                   accept=".xlsx,.xls"
                   ref={csvInputRef}
-                  onChange={handleExcelImport}
+                  onChange={handleExcelImportWrapper}
                   className="hidden"
                 />
                 <Dialog
@@ -838,7 +453,7 @@ export default function PropertyInventory() {
                         {t("common.add")} {t("inventory.inventory")}
                       </DialogTitle>
                       <DialogDescription>
-                        {t("inventory.managePropertyInventories")}
+                        {t?.("inventory.managePropertyInventories") || "Manage property inventories"}
                       </DialogDescription>
                     </DialogHeader>
                     <form
@@ -1001,30 +616,13 @@ export default function PropertyInventory() {
           onSave={(itemData) => selectedItem && updateInventoryItem(selectedItem.id, itemData)}
           onUploadPhotos={async (files) => {
             if (!files || !selectedItem) return;
-            setUploadingPhotos(true);
-            try {
-              for (const file of Array.from(files)) {
-                await uploadPhotoForItem(selectedItem.id, file);
-              }
-              await fetchData();
-              toast({
-                title: "Photos Uploaded",
-                description: `Successfully uploaded ${files.length} photo(s).`,
-              });
-            } catch (error) {
-              toast({
-                title: "Upload Error",
-                description: "Failed to upload photos.",
-                variant: "destructive",
-              });
-            } finally {
-              setUploadingPhotos(false);
-            }
+            await handlePhotoUpload(files, selectedItem.id);
+            refetch();
           }}
           onDeletePhoto={async (photoId) => {
             try {
               await supabase.from("inventory_photos").delete().eq("id", photoId);
-              await fetchData();
+              refetch();
               toast({
                 title: "Photo Deleted",
                 description: "Photo has been removed.",
@@ -1045,11 +643,11 @@ export default function PropertyInventory() {
           onOpenChange={setIsPhotoDialogOpen}
           selectedItemId={selectedItemForPhotos}
           photos={photos}
-          onUploadPhotos={handlePhotoUpload}
+          onUploadPhotos={handlePhotoUploadWrapper}
           onDeletePhoto={async (photoId) => {
             try {
               await supabase.from("inventory_photos").delete().eq("id", photoId);
-              await fetchData();
+              refetch();
               toast({
                 title: "Photo Deleted",
                 description: "Photo has been removed.",
@@ -1070,7 +668,7 @@ export default function PropertyInventory() {
           onOpenChange={setIsAssignmentDialogOpen}
           propertyId={propertyId}
           onAssignmentComplete={() => {
-            fetchData();
+            refetch();
             toast({
               title: "Assignments Updated",
               description: "Inventory assignments have been updated successfully.",
@@ -1108,7 +706,7 @@ export default function PropertyInventory() {
           setGridItems={setGridItems}
           properties={property ? [property] : []}
           selectedProperty={propertyId}
-          onSave={saveGridChanges}
+          onSave={handleSaveGridChanges}
         />
       </div>
     </div>

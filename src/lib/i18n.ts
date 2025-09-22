@@ -396,6 +396,8 @@ export const translations = {
     "common.exportExcel": "Export Excel",
     "common.importExcel": "Import Excel",
     "common.importing": "Importing...",
+    "common.excelImportedSuccessfully": "Excel Imported Successfully",
+    "common.clickBulkEditToSave": "Click 'Bulk Edit' then 'Save Changes' to apply updates",
   },
   es: {
     // Navigation
@@ -795,6 +797,8 @@ export const translations = {
     "common.exportExcel": "Exportar Excel",
     "common.importExcel": "Importar Excel",
     "common.importing": "Importando...",
+    "common.excelImportedSuccessfully": "Excel Importado Exitosamente",
+    "common.clickBulkEditToSave": "Haz clic en 'Edición Masiva' luego 'Guardar Cambios' para aplicar las actualizaciones",
   },
   fr: {
     // Navigation
@@ -1194,6 +1198,8 @@ export const translations = {
     "common.exportExcel": "Exporter Excel",
     "common.importExcel": "Importer Excel",
     "common.importing": "Importation...",
+    "common.excelImportedSuccessfully": "Excel Importé avec Succès",
+    "common.clickBulkEditToSave": "Cliquez sur 'Édition en Masse' puis 'Sauvegarder les Modifications' pour appliquer les mises à jour",
   },
 };
 

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatTranslation } from "@/lib/i18n";
+import { formatCurrency } from "@/lib/utils";
 
 import { useToast } from "@/components/ui/use-toast";
 
@@ -301,13 +302,13 @@ export default function PropertyTenants() {
                   </div>
                 </div>
 
-                <div className="mt-4 p-3 bg-blue-50 rounded">
-                  <h4 className="font-medium text-sm mb-1">Assigned Inventory</h4>
-                  <p className="text-xs text-blue-700">
-                    {(tenantProperty as any).assigned_items_count || 0} items | ${(tenantProperty as any).assigned_total_value?.toFixed(2) || '0.00'}
+                <div className="mt-4 p-4 bg-muted/50 rounded border">
+                  <h4 className="font-medium text-base mb-2 text-foreground">Assigned Inventory</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {(tenantProperty as any).assigned_items_count || 0} items | {formatCurrency((tenantProperty as any).assigned_total_value || 0)}
                   </p>
                   <Link href={`/admin/properties/${propertyId}/inventory`}>
-                    <Button variant="ghost" size="sm" className="mt-1 h-auto p-0 text-xs">
+                    <Button variant="outline" size="default" className="mt-3">
                       View & Manage Assignments
                     </Button>
                   </Link>
