@@ -2,24 +2,7 @@ import { useState } from "react";
 import { createClient } from "../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { getTranslation } from "../lib/i18n";
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  notes?: string;
-  property_id: string;
-}
-
-interface GridItem extends InventoryItem {
-  photo_file?: File | null;
-  isNew?: boolean;
-  isEdited?: boolean;
-}
+import { InventoryItem, GridItem } from "@/types/inventory";
 
 export const useInventoryActions = () => {
   const [uploadingPhotos, setUploadingPhotos] = useState(false);

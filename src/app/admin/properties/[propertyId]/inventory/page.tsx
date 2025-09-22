@@ -65,40 +65,7 @@ import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
 import { PhotoManagementDialog } from "@/components/inventory/photo-management-dialog";
 import { InventoryStats } from "@/components/inventory/inventory-stats";
 import { AssignmentManagementDialog } from "@/components/inventory/assignment-management-dialog";
-
-interface Property {
-  id: string;
-  name: string;
-  address: string;
-  status: string;
-}
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  notes?: string;
-  created_at?: string;
-}
-
-interface GridItem {
-  id?: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  notes?: string;
-  property_id: string;
-  photo_file?: File | null;
-  isNew?: boolean;
-  isEdited?: boolean;
-}
+import { Property, InventoryItem, GridItem } from "@/types/inventory";
 
 export default function PropertyInventory() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);

@@ -33,32 +33,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Label } from "@/components/ui/label";
 import { useInventoryReport } from "@/components/inventory/inventory-report-generator";
 import { formatTranslation } from "@/lib/i18n";
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  condition: string;
-  location: string;
-  quantity: number;
-  estimated_value: number;
-  property_id: string;
-  notes?: string;
-  created_at?: string;
-  properties: {
-    name: string;
-    address: string;
-  };
-  assigned_date?: string;
-  assigned_condition?: string;
-  assignment_notes?: string;
-  inventory_photos?: Array<{
-    id: string;
-    photo_url: string;
-    caption: string;
-    uploaded_by?: string;
-  }>;
-}
+import { InventoryItem } from "@/types/inventory";
 
 export default function TenantInventory() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);

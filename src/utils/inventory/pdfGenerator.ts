@@ -1,22 +1,5 @@
 import { jsPDF } from "jspdf";
-
-interface Property {
-  id: string;
-  name: string;
-  address: string;
-  status: string;
-}
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  notes?: string;
-}
+import { Property, InventoryItem } from "@/types/inventory";
 
 interface Tenant {
   users?: {

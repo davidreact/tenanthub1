@@ -5,6 +5,7 @@ import Script from "next/script";
 import { TempoInit } from "@/components/tempo-init";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { LanguageModalWrapper } from "@/components/language-modal-wrapper";
 import { Toaster } from "@/components/ui/toaster";
 import Navbar from "@/components/navbar";
 
@@ -55,11 +56,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
-            <Navbar />
+             <LanguageModalWrapper />
+             <Navbar />
 
-            {children}
-            <Toaster />
-          </LanguageProvider>
+             {children}
+             <Toaster />
+           </LanguageProvider>
         </ThemeProvider>
         <TempoInit />
       </body>

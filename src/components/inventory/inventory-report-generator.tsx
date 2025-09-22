@@ -1,29 +1,5 @@
 import { createClient } from "../../../supabase/client";
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  condition: string;
-  location: string;
-  quantity: number;
-  estimated_value: number;
-  property_id: string;
-  notes?: string;
-  created_at?: string;
-  properties: {
-    name: string;
-    address: string;
-  };
-  assigned_date?: string;
-  assigned_condition?: string;
-  assignment_notes?: string;
-  inventory_photos?: Array<{
-    id: string;
-    photo_url: string;
-    caption: string;
-  }>;
-}
+import { InventoryItem } from "@/types/inventory";
 
 interface TenantProperty {
   id: string;

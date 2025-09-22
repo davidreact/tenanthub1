@@ -107,6 +107,22 @@ export const translations = {
     "inventory.noInventoryItemsDescription":
       "Add your first inventory item to get started.",
 
+    // Admin Inventory
+    "adminInventory.inventoryOverview": "Inventory Overview",
+    "adminInventory.viewAssignmentsDescription": "View inventory assignments across all properties",
+    "adminInventory.assignmentsByProperty": "Inventory Assignments by Property",
+    "adminInventory.properties": "Properties",
+    "adminInventory.tenantsWithInventory": "Tenants with Inventory",
+    "adminInventory.itemsAssigned": "Items Assigned",
+    "adminInventory.totalValue": "Total Value",
+    "adminInventory.itemsAssignedText": "items assigned",
+    "adminInventory.totalValueText": "total value",
+    "adminInventory.noTenantsWithInventory": "No tenants with assigned inventory",
+    "adminInventory.managePropertyInventory": "Manage Property Inventory",
+    "adminInventory.viewInventoryDetails": "View Inventory Details",
+    "adminInventory.noPropertiesFound": "No Properties Found",
+    "adminInventory.createPropertiesFirst": "Create properties first to manage inventory assignments.",
+
     // Messages
     "messages.conversations": "Conversations",
     "messages.messages": "Messages",
@@ -799,6 +815,22 @@ export const translations = {
     "common.importing": "Importando...",
     "common.excelImportedSuccessfully": "Excel Importado Exitosamente",
     "common.clickBulkEditToSave": "Haz clic en 'Edición Masiva' luego 'Guardar Cambios' para aplicar las actualizaciones",
+
+    // Admin Inventory
+    "adminInventory.inventoryOverview": "Resumen de Inventario",
+    "adminInventory.viewAssignmentsDescription": "Ver asignaciones de inventario en todas las propiedades",
+    "adminInventory.assignmentsByProperty": "Asignaciones de Inventario por Propiedad",
+    "adminInventory.properties": "Propiedades",
+    "adminInventory.tenantsWithInventory": "Inquilinos con Inventario",
+    "adminInventory.itemsAssigned": "Artículos Asignados",
+    "adminInventory.totalValue": "Valor Total",
+    "adminInventory.itemsAssignedText": "artículos asignados",
+    "adminInventory.totalValueText": "valor total",
+    "adminInventory.noTenantsWithInventory": "No hay inquilinos con inventario asignado",
+    "adminInventory.managePropertyInventory": "Gestionar Inventario de Propiedad",
+    "adminInventory.viewInventoryDetails": "Ver Detalles del Inventario",
+    "adminInventory.noPropertiesFound": "No se Encontraron Propiedades",
+    "adminInventory.createPropertiesFirst": "Crea propiedades primero para gestionar asignaciones de inventario.",
   },
   fr: {
     // Navigation
@@ -1200,6 +1232,22 @@ export const translations = {
     "common.importing": "Importation...",
     "common.excelImportedSuccessfully": "Excel Importé avec Succès",
     "common.clickBulkEditToSave": "Cliquez sur 'Édition en Masse' puis 'Sauvegarder les Modifications' pour appliquer les mises à jour",
+
+    // Admin Inventory
+    "adminInventory.inventoryOverview": "Aperçu de l'Inventaire",
+    "adminInventory.viewAssignmentsDescription": "Voir les assignations d'inventaire sur toutes les propriétés",
+    "adminInventory.assignmentsByProperty": "Assignations d'Inventaire par Propriété",
+    "adminInventory.properties": "Propriétés",
+    "adminInventory.tenantsWithInventory": "Locataires avec Inventaire",
+    "adminInventory.itemsAssigned": "Articles Assignés",
+    "adminInventory.totalValue": "Valeur Totale",
+    "adminInventory.itemsAssignedText": "articles assignés",
+    "adminInventory.totalValueText": "valeur totale",
+    "adminInventory.noTenantsWithInventory": "Aucun locataire avec inventaire assigné",
+    "adminInventory.managePropertyInventory": "Gérer l'Inventaire de Propriété",
+    "adminInventory.viewInventoryDetails": "Voir les Détails de l'Inventaire",
+    "adminInventory.noPropertiesFound": "Aucune Propriété Trouvée",
+    "adminInventory.createPropertiesFirst": "Créez des propriétés d'abord pour gérer les assignations d'inventaire.",
   },
 };
 

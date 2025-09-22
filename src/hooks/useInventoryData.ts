@@ -1,27 +1,9 @@
 import { useState, useEffect } from "react";
 import { createClient } from "../../supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { Property, InventoryItem } from "@/types/inventory";
 
-interface Property {
-  id: string;
-  name: string;
-  address: string;
-  status: string;
-}
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  notes?: string;
-  created_at?: string;
-}
-
-export const useInventoryData = (propertyId: string) => {
+export const useInventoryData = (propertyId?: string) => {
   const [property, setProperty] = useState<Property | null>(null);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [photos, setPhotos] = useState<any[]>([]);

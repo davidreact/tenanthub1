@@ -2,30 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Edit } from "lucide-react";
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  property_id: string;
-  notes?: string;
-  created_at?: string;
-  properties: {
-    name: string;
-    address: string;
-  };
-}
-
-interface InventoryPhoto {
-  id: string;
-  photo_url: string;
-  caption?: string;
-  inventory_item_id: string;
-}
+import { InventoryItem, InventoryPhoto } from "@/types/inventory";
 
 interface InventoryCardsViewProps {
   t: any;
@@ -76,7 +53,7 @@ export function InventoryCardsView({
                 </Badge>
               </div>
               <CardDescription>
-                {item.properties.name} • {item.location}
+                {item.properties?.name || 'Unknown Property'} • {item.location}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -1,21 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  property_id: string;
-  notes?: string;
-  created_at?: string;
-  properties: {
-    name: string;
-    address: string;
-  };
-}
+import { InventoryItem } from "@/types/inventory";
 
 interface InventoryStatsProps {
   t: any;

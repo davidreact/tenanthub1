@@ -60,65 +60,7 @@ import { InventoryGridView } from "@/components/inventory/inventory-grid-view";
 import { BulkEditDialog } from "@/components/inventory/bulk-edit-dialog";
 import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
 import { PhotoManagementDialog } from "@/components/inventory/photo-management-dialog";
-
-
-interface Property {
-  id: string;
-  name: string;
-  address: string;
-  status: string;
-  tenants: TenantInventory[];
-}
-
-interface TenantInventory {
-  id: string;
-  tenant_property_id: string;
-  full_name: string;
-  email: string;
-  lease_status: string;
-  assigned_items: number;
-  total_value: number;
-}
-
-interface InventoryItem {
-  id: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  property_id: string;
-  notes?: string;
-  created_at?: string;
-  properties: {
-    name: string;
-    address: string;
-  };
-}
-
-interface InventoryPhoto {
-  id: string;
-  photo_url: string;
-  caption?: string;
-  inventory_item_id: string;
-}
-
-interface GridItem {
-  id?: string;
-  item: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  notes: string;
-  property_id: string;
-  photo_references?: string;
-  photo_file?: File | null;
-  isNew?: boolean;
-  isEdited?: boolean;
-}
+import { Property, TenantInventory, InventoryItem, InventoryPhoto, GridItem } from "@/types/inventory";
 
 export default function AdminInventory() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -210,7 +152,9 @@ export default function AdminInventory() {
           // For each tenant, get their inventory summary
           const tenantsWithInventory = await Promise.all(
             tenantData.map(async (tenant) => {
-console.log(`Fetching assignments for tenant: ${tenant.users?.[0]?.full_name || tenant.users?.[0]?.name || 'Unknown'}`);
+              // tenant.users is expected to be an object from the Supabase join
+              const user = tenant.users as any;
+console.log(`Fetching assignments for tenant: ${user?.full_name || user?.name || 'Unknown'}`);
 
               const { data: assignments, error: assignmentError } = await supabase
                 .from("inventory_assignments")
@@ -233,10 +177,10 @@ console.log(`Fetching assignments for tenant: ${tenant.users?.[0]?.full_name || 
               ) || 0;
 
               const tenantInfo = {
-id: tenant.users?.[0]?.id || tenant.tenant_id,
+id: user?.id || tenant.tenant_id,
                 tenant_property_id: tenant.id,
-full_name: tenant.users?.[0]?.full_name || tenant.users?.[0]?.name || "Unnamed Tenant",
-email: tenant.users?.[0]?.email || "",
+full_name: user?.full_name || user?.name || "Unnamed Tenant",
+email: user?.email || "",
                 lease_status: tenant.status,
                 assigned_items: assignedItems,
                 total_value: totalValue,
@@ -671,7 +615,7 @@ email: tenant.users?.[0]?.email || "",
             item.item,
             item.description || "",
             item.location || "",
-            item.properties.name,
+            item.properties?.name || "Unknown Property",
             item.condition,
             item.quantity,
             item.estimated_value || 0,
@@ -778,12 +722,12 @@ email: tenant.users?.[0]?.email || "",
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Package className="h-8 w-8" />
-              Inventory Overview
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              View inventory assignments across all properties
-            </p>
+                <Package className="h-8 w-8" />
+                {t("adminInventory.inventoryOverview")}
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {t("adminInventory.viewAssignmentsDescription")}
+              </p>
           </div>
         </div>
 
@@ -792,42 +736,42 @@ email: tenant.users?.[0]?.email || "",
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">{properties.length}</div>
-              <p className="text-xs text-muted-foreground">Properties</p>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.properties")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">
-                {properties.reduce((sum, prop) => sum + prop.tenants.length, 0)}
+                {properties.reduce((sum, prop) => sum + (prop.tenants?.length || 0), 0)}
               </div>
-              <p className="text-xs text-muted-foreground">Tenants with Inventory</p>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.tenantsWithInventory")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">
                 {properties.reduce((sum, prop) =>
-                  sum + prop.tenants.reduce((tSum, tenant) => tSum + tenant.assigned_items, 0), 0
+                  sum + (prop.tenants?.reduce((tSum, tenant) => tSum + tenant.assigned_items, 0) || 0), 0
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">Items Assigned</p>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.itemsAssigned")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <div className="text-2xl font-bold">
                 ${properties.reduce((sum, prop) =>
-                  sum + prop.tenants.reduce((tSum, tenant) => tSum + tenant.total_value, 0), 0
+                  sum + (prop.tenants?.reduce((tSum, tenant) => tSum + tenant.total_value, 0) || 0), 0
                 ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-              <p className="text-xs text-muted-foreground">Total Value</p>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.totalValue")}</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Property Inventory Overview */}
         <div className="space-y-6">
-          <h2 className="text-xl font-semibold">Inventory Assignments by Property</h2>
+          <h2 className="text-xl font-semibold">{t("adminInventory.assignmentsByProperty")}</h2>
 
           {properties.map((property) => (
             <Card key={property.id} className="hover:shadow-lg transition-shadow">
@@ -839,9 +783,9 @@ email: tenant.users?.[0]?.email || "",
                 <CardDescription>{property.address}</CardDescription>
               </CardHeader>
               <CardContent>
-                {property.tenants.length > 0 ? (
+                {(property.tenants?.length || 0) > 0 ? (
                   <div className="space-y-4">
-                    {property.tenants.map((tenant) => (
+                    {property.tenants?.map((tenant) => (
                       <div
                         key={tenant.id}
                         className="border rounded-lg p-4 bg-muted transition-colors hover:bg-muted/80"
@@ -855,17 +799,17 @@ email: tenant.users?.[0]?.email || "",
                             </div>
                             <div className="flex gap-6 text-sm mb-2">
                               <span className="bg-muted px-2 py-1 rounded">
-                                <strong className="text-blue-700">{tenant.assigned_items}</strong> items assigned
+                                <strong className="text-blue-700">{tenant.assigned_items}</strong> {t("adminInventory.itemsAssignedText")}
                               </span>
                               <span className="bg-muted px-2 py-1 rounded">
-                                <strong className="text-green-700">${tenant.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> total value
+                                <strong className="text-green-700">${tenant.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> {t("adminInventory.totalValueText")}
                               </span>
                             </div>
                           </div>
                           <Link href={`/admin/properties/${property.id}/inventory`}>
                             <Button variant="outline" size="sm">
                               <Package className="h-4 w-4 mr-2" />
-                              View Inventory Details
+                              {t("adminInventory.viewInventoryDetails")}
                             </Button>
                           </Link>
                         </div>
@@ -875,10 +819,10 @@ email: tenant.users?.[0]?.email || "",
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>No tenants with assigned inventory</p>
+                    <p>{t("adminInventory.noTenantsWithInventory")}</p>
                     <Link href={`/admin/properties/${property.id}/inventory`}>
                       <Button variant="outline" size="sm" className="mt-2">
-                        Manage Property Inventory
+                        {t("adminInventory.managePropertyInventory")}
                       </Button>
                     </Link>
                   </div>
@@ -892,10 +836,10 @@ email: tenant.users?.[0]?.email || "",
               <CardContent className="text-center py-12">
                 <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-foreground mb-2">
-                  No Properties Found
+                  {t("adminInventory.noPropertiesFound")}
                 </h3>
                 <p className="text-muted-foreground">
-                  Create properties first to manage inventory assignments.
+                  {t("adminInventory.createPropertiesFirst")}
                 </p>
               </CardContent>
             </Card>
