@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -24,6 +24,8 @@ import {
 import { ArrowLeft, MessageSquare, Send, User } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
+import { useSearchParams, useRouter } from "next/navigation";
+import { createTenantNotification } from "@/lib/notifications";
 
 interface Message {
   id: string;
@@ -39,6 +41,7 @@ interface Message {
 
 interface Conversation {
   id: string;
+  tenant_id: string;
   subject: string;
   status: string;
   priority: string;
@@ -66,10 +69,98 @@ export default function AdminConversations() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchConversations();
   }, []);
+
+  // Open specific conversation from deep link (?conversationId=...)
+  useEffect(() => {
+    const targetId = searchParams.get("conversationId");
+    if (!targetId || !conversations.length) return;
+    const convo = conversations.find((c) => c.id === targetId);
+    if (convo) {
+      setSelectedConversation(convo);
+      setIsDialogOpen(true);
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+    }
+  }, [conversations, searchParams, setIsDialogOpen]);
+
+  // Realtime updates for selected conversation
+  useEffect(() => {
+    if (!selectedConversation) return;
+    const channel = supabase
+      .channel(`admin-convo:${selectedConversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${selectedConversation.id}`,
+        },
+        (payload) => {
+          const newMsg: any = payload.new;
+          setSelectedConversation((prev) => {
+            if (!prev) return prev;
+            const idx = (prev.messages as any[]).findIndex(
+              (m: any) =>
+                typeof m.id === "string" &&
+                (m.id as string).startsWith("temp-") &&
+                m.message === newMsg.message &&
+                m.sender_id === newMsg.sender_id
+            );
+            const normalized: Message = {
+              id: newMsg.id,
+              message: newMsg.message,
+              is_admin: newMsg.is_admin,
+              created_at: newMsg.created_at,
+              sender_id: newMsg.sender_id,
+              users: prev.users, // keep tenant user context for display
+            };
+            let nextMessages = [...prev.messages];
+            if (idx !== -1) nextMessages[idx] = normalized;
+            else if (!prev.messages.some((m) => m.id === newMsg.id)) nextMessages.push(normalized);
+            return { ...prev, messages: nextMessages };
+          });
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === selectedConversation.id
+                ? {
+                    ...c,
+                    messages: [
+                      ...c.messages,
+                      {
+                        id: newMsg.id,
+                        message: newMsg.message,
+                        is_admin: newMsg.is_admin,
+                        created_at: newMsg.created_at,
+                        sender_id: newMsg.sender_id,
+                        users: c.users,
+                      } as Message,
+                    ],
+                    updated_at: new Date().toISOString(),
+                  }
+                : c
+            )
+          );
+          setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 0);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedConversation?.id, supabase]);
+
+  // Auto-scroll on message changes
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedConversation?.messages?.length]);
 
   const fetchConversations = async () => {
     try {
@@ -101,13 +192,39 @@ export default function AdminConversations() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
-      await supabase.from("messages").insert({
+      // Optimistic UI
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMsg: Message = {
+        id: tempId,
+        message,
+        is_admin: true,
+        created_at: new Date().toISOString(),
+        sender_id: user.id,
+        users: { full_name: "Admin", name: "Admin" },
+      };
+      setSelectedConversation((prev) =>
+        prev && prev.id === conversationId
+          ? { ...prev, messages: [...prev.messages, optimisticMsg] }
+          : prev
+      );
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversationId
+            ? { ...c, messages: [...c.messages, optimisticMsg], updated_at: new Date().toISOString() }
+            : c
+        )
+      );
+
+      // Persist to DB
+      const { error: insertError } = await supabase.from("messages").insert({
         conversation_id: conversationId,
         message,
-        sender_id: user?.id,
+        sender_id: user.id,
         is_admin: true,
       });
+      if (insertError) throw insertError;
 
       // Update conversation updated_at
       await supabase
@@ -115,9 +232,25 @@ export default function AdminConversations() {
         .update({ updated_at: new Date().toISOString() })
         .eq("id", conversationId);
 
-      setNewMessage("");
-      fetchConversations(); // Refresh conversations
+      // Notify tenant about new admin message
+      const convo = selectedConversation || conversations.find((c) => c.id === conversationId);
+      const tenantId = (convo as any)?.tenant_id;
+      if (tenantId) {
+        try {
+          await createTenantNotification({
+            tenantId,
+            title: "New message from admin",
+            message: message.length > 140 ? message.slice(0, 140) + "…" : message,
+            type: "info",
+            entityType: "message",
+            entityId: conversationId,
+          });
+        } catch (e) {
+          console.warn("Failed to create tenant notification:", e);
+        }
+      }
 
+      setNewMessage("");
       toast({
         title: "Message Sent",
         description: "Your message has been sent successfully.",
@@ -260,7 +393,17 @@ export default function AdminConversations() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <Dialog
+                    open={isDialogOpen && selectedConversation?.id === conversation.id}
+                    onOpenChange={(open) => {
+                      setIsDialogOpen(open);
+                      if (!open) {
+                        setSelectedConversation(null);
+                        // Clear query so subsequent notification clicks to the same URL re-open the dialog
+                        router.replace("/admin/conversations");
+                      }
+                    }}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -274,7 +417,7 @@ export default function AdminConversations() {
                         View Messages
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
+                    <DialogContent className="w-[95vw] max-w-[1400px] h-[85vh] overflow-hidden">
                       <DialogHeader>
                         <DialogTitle>{conversation.subject}</DialogTitle>
                         <DialogDescription>
@@ -284,9 +427,9 @@ export default function AdminConversations() {
                         </DialogDescription>
                       </DialogHeader>
                       {selectedConversation && (
-                        <div className="space-y-4">
+                        <div className="flex flex-col h-[calc(85vh-140px)] gap-4">
                           {/* Messages */}
-                          <div className="max-h-96 overflow-y-auto space-y-3 border rounded p-4">
+                          <div className="flex-1 min-h-0 overflow-y-auto space-y-3 border rounded p-4">
                             {selectedConversation.messages?.map((message) => (
                               <div
                                 key={message.id}
@@ -320,6 +463,7 @@ export default function AdminConversations() {
                                 </div>
                               </div>
                             ))}
+                            <div ref={messagesEndRef} />
                           </div>
 
                           {/* Reply Form */}

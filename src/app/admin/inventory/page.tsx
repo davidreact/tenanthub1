@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import * as XLSX from "xlsx";
 import {
   Card,
   CardContent,
@@ -34,7 +35,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -53,53 +53,14 @@ import {
   Plus,
 } from "lucide-react";
 import Link from "next/link";
-
-interface Property {
-  id: string;
-  name: string;
-  address: string;
-  status: string;
-}
-
-interface InventoryItem {
-  id: string;
-  name: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  property_id: string;
-  notes?: string;
-  created_at?: string;
-  properties: {
-    name: string;
-    address: string;
-  };
-}
-
-interface InventoryPhoto {
-  id: string;
-  photo_url: string;
-  caption?: string;
-  inventory_item_id: string;
-}
-
-interface GridItem {
-  id?: string;
-  name: string;
-  description: string;
-  location: string;
-  condition: string;
-  quantity: number;
-  estimated_value: number;
-  notes: string;
-  property_id: string;
-  photo_references?: string;
-  photo_file?: File | null;
-  isNew?: boolean;
-  isEdited?: boolean;
-}
+import { InventoryFilters } from "@/components/inventory/inventory-filters";
+import { InventoryStats } from "@/components/inventory/inventory-stats";
+import { InventoryCardsView } from "@/components/inventory/inventory-cards-view";
+import { InventoryGridView } from "@/components/inventory/inventory-grid-view";
+import { BulkEditDialog } from "@/components/inventory/bulk-edit-dialog";
+import { EditItemDialog } from "@/components/inventory/edit-item-dialog";
+import { PhotoManagementDialog } from "@/components/inventory/photo-management-dialog";
+import { Property, TenantInventory, InventoryItem, InventoryPhoto, GridItem } from "@/types/inventory";
 
 export default function AdminInventory() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -110,7 +71,7 @@ export default function AdminInventory() {
   const [loading, setLoading] = useState(true);
   const [selectedProperty, setSelectedProperty] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState<"cards" | "grid">("cards");
+  const [viewMode, setViewMode] = useState<"cards" | "grid">("grid");
   const [isGridDialogOpen, setIsGridDialogOpen] = useState(false);
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
   const [selectedItemForPhotos, setSelectedItemForPhotos] = useState<
@@ -121,6 +82,7 @@ export default function AdminInventory() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const { t } = useLanguage();
@@ -143,32 +105,103 @@ export default function AdminInventory() {
 
   const fetchData = async () => {
     try {
-      // Fetch properties
+      // Fetch properties with tenant inventory summaries
       const { data: propertiesData } = await supabase
         .from("properties")
-        .select("*")
+        .select(`
+          id,
+          name,
+          address,
+          status
+        `)
         .order("name");
 
-      // Fetch all inventory items with property info
-      const { data: inventoryData } = await supabase
-        .from("inventory_items")
-        .select(
-          `
-          *,
-          properties (name, address)
-        `,
-        )
-        .order("created_at", { ascending: false });
+      if (!propertiesData) {
+        setProperties([]);
+        setLoading(false);
+        return;
+      }
 
-      // Fetch inventory photos
-      const { data: photosData } = await supabase
-        .from("inventory_photos")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // For each property, get tenant inventory summaries
+      const propertiesWithTenants = await Promise.all(
+        propertiesData.map(async (property) => {
+          console.log(`Fetching tenants for property: ${property.name}`);
 
-      setProperties(propertiesData || []);
-      setInventoryItems(inventoryData || []);
-      setPhotos(photosData || []);
+          const { data: tenantData, error: tenantError } = await supabase
+            .from("tenant_properties")
+            .select(`
+              id,
+              tenant_id,
+              status,
+              users (
+                id,
+                full_name,
+                name,
+                email
+              )
+            `)
+            .eq("property_id", property.id)
+            .eq("status", "active");
+
+          console.log(`Tenants for ${property.name}:`, { tenantData, tenantError });
+
+          if (!tenantData || tenantData.length === 0) {
+            return { ...property, tenants: [] };
+          }
+
+          // For each tenant, get their inventory summary
+          const tenantsWithInventory = await Promise.all(
+            tenantData.map(async (tenant) => {
+              // tenant.users is expected to be an object from the Supabase join
+              const user = tenant.users as any;
+console.log(`Fetching assignments for tenant: ${user?.full_name || user?.name || 'Unknown'}`);
+
+              const { data: assignments, error: assignmentError } = await supabase
+                .from("inventory_assignments")
+                .select(`
+                  id,
+                  inventory_items!inventory_assignments_inventory_item_id_fkey (
+                    estimated_value
+                  )
+                `)
+                .eq("tenant_property_id", tenant.id)
+                .is("returned_date", null);
+
+              const assignedItems = assignments?.length || 0;
+              const totalValue = assignments?.reduce(
+                (sum, assignment) => {
+                  const value = parseFloat((assignment.inventory_items as any)?.estimated_value) || 0;
+                  return sum + value;
+                },
+                0
+              ) || 0;
+
+              const tenantInfo = {
+id: user?.id || tenant.tenant_id,
+                tenant_property_id: tenant.id,
+full_name: user?.full_name || user?.name || "Unnamed Tenant",
+email: user?.email || "",
+                lease_status: tenant.status,
+                assigned_items: assignedItems,
+                total_value: totalValue,
+              };
+
+              console.log(`Tenant info:`, tenantInfo);
+              return tenantInfo;
+            })
+          );
+
+          const filteredTenants = tenantsWithInventory.filter(tenant => tenant.assigned_items > 0);
+          console.log(`Final tenants with assignments for ${property.name}:`, filteredTenants);
+
+          return {
+            ...property,
+            tenants: filteredTenants
+          };
+        })
+      );
+
+      setProperties(propertiesWithTenants);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -178,24 +211,24 @@ export default function AdminInventory() {
 
   const filterItems = () => {
     let filtered = inventoryItems;
-
+  
     // Filter by property
     if (selectedProperty !== "all") {
       filtered = filtered.filter(
         (item) => item.property_id === selectedProperty,
       );
     }
-
+  
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (item) =>
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.item.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           item.location?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
-
+  
     setFilteredItems(filtered);
   };
 
@@ -228,7 +261,7 @@ export default function AdminInventory() {
   const initializeGridData = () => {
     const gridData = inventoryItems.map((item) => ({
       id: item.id,
-      name: item.name,
+      item: item.item,
       description: item.description || "",
       location: item.location || "",
       condition: item.condition || "good",
@@ -258,7 +291,6 @@ export default function AdminInventory() {
 
     setImportingCSV(true);
     try {
-      const XLSX = await import("xlsx");
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: "array" });
       const sheetName = workbook.SheetNames[0];
@@ -283,7 +315,7 @@ export default function AdminInventory() {
       dataRows.forEach((row, index) => {
         if (row.length >= 6 && row[0]) {
           const newItem: GridItem = {
-            name: String(row[0] || `Item ${index + 1}`),
+            item: String(row[0] || `Item ${index + 1}`),
             description: String(row[1] || ""),
             location: String(row[2] || ""),
             condition: ["excellent", "good", "fair", "poor"].includes(
@@ -347,7 +379,7 @@ export default function AdminInventory() {
       const columns = row.split("\t");
       if (columns.length >= 6) {
         const newItem: GridItem = {
-          name: columns[0] || `Item ${index + 1}`,
+          item: columns[0] || `Item ${index + 1}`,
           description: columns[1] || "",
           location: columns[2] || "",
           condition: ["excellent", "good", "fair", "poor"].includes(
@@ -398,7 +430,7 @@ export default function AdminInventory() {
 
   const addNewGridRow = () => {
     const newItem: GridItem = {
-      name: "",
+      item: "",
       description: "",
       location: "",
       condition: "good",
@@ -421,19 +453,19 @@ export default function AdminInventory() {
   const saveGridChanges = async () => {
     try {
       const itemsToInsert = gridItems.filter(
-        (item) => item.isNew && item.name.trim(),
+        (item) => item.isNew && item.item.trim(),
       );
       const itemsToUpdate = gridItems.filter(
         (item) => item.isEdited && item.id,
       );
-
+  
       // Insert new items
       if (itemsToInsert.length > 0) {
         const { data: insertedItems, error: insertError } = await supabase
           .from("inventory_items")
           .insert(
             itemsToInsert.map((item) => ({
-              name: item.name,
+              item: item.item,
               description: item.description,
               location: item.location,
               condition: item.condition,
@@ -444,28 +476,28 @@ export default function AdminInventory() {
             })),
           )
           .select();
-
+  
         if (insertError) throw insertError;
-
+  
         // Handle photo uploads for new items
         if (insertedItems) {
           for (let i = 0; i < itemsToInsert.length; i++) {
             const item = itemsToInsert[i];
             const insertedItem = insertedItems[i];
-
+  
             if (item.photo_file && insertedItem) {
               await uploadPhotoForItem(insertedItem.id, item.photo_file);
             }
           }
         }
       }
-
+  
       // Update existing items
       for (const item of itemsToUpdate) {
         const { error: updateError } = await supabase
           .from("inventory_items")
           .update({
-            name: item.name,
+            item: item.item,
             description: item.description,
             location: item.location,
             condition: item.condition,
@@ -475,18 +507,18 @@ export default function AdminInventory() {
             property_id: item.property_id,
           })
           .eq("id", item.id);
-
+  
         if (updateError) throw updateError;
-
+  
         // Handle photo uploads for updated items
         if (item.photo_file && item.id) {
           await uploadPhotoForItem(item.id, item.photo_file);
         }
       }
-
+  
       await fetchData();
       setIsGridDialogOpen(false);
-
+  
       toast({
         title: "Changes Saved",
         description: `Updated ${itemsToUpdate.length} items and added ${itemsToInsert.length} new items.`,
@@ -560,9 +592,8 @@ export default function AdminInventory() {
 
   const exportToExcel = async () => {
     try {
-      const XLSX = await import("xlsx");
       const headers = [
-        "Name",
+        "ITEM",
         "Description",
         "Location",
         "Property",
@@ -573,7 +604,7 @@ export default function AdminInventory() {
         "Photo Count",
         "Photo URLs",
       ];
-
+  
       const data = [
         headers,
         ...filteredItems.map((item) => {
@@ -581,10 +612,10 @@ export default function AdminInventory() {
             (photo) => photo.inventory_item_id === item.id,
           );
           return [
-            item.name,
+            item.item,
             item.description || "",
             item.location || "",
-            item.properties.name,
+            item.properties?.name || "Unknown Property",
             item.condition,
             item.quantity,
             item.estimated_value || 0,
@@ -594,14 +625,14 @@ export default function AdminInventory() {
           ];
         }),
       ];
-
+  
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Inventory");
-
+  
       const fileName = `inventory-${selectedProperty === "all" ? "all-properties" : "filtered"}-${new Date().toISOString().split("T")[0]}.xlsx`;
       XLSX.writeFile(workbook, fileName);
-
+  
       toast({
         title: "Export Complete",
         description: "Inventory exported to Excel successfully.",
@@ -691,934 +722,214 @@ export default function AdminInventory() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Package className="h-8 w-8" />
-              {t("inventory.inventoryManagement")}
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              {t("inventory.managePropertyInventories")}
-            </p>
+                <Package className="h-8 w-8" />
+                {t("adminInventory.inventoryOverview")}
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {t("adminInventory.viewAssignmentsDescription")}
+              </p>
           </div>
         </div>
 
-        {/* Filters and Controls */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>{t("common.filter")}</CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "cards" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("cards")}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  Cards
-                </Button>
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="h-4 w-4 mr-2" />
-                  Grid
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsGridDialogOpen(true)}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Bulk Edit
-                </Button>
-                <Button variant="outline" size="sm" onClick={exportToExcel}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Excel
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => csvInputRef.current?.click()}
-                  disabled={importingCSV}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {importingCSV ? "Importing..." : "Import Excel"}
-                </Button>
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  ref={csvInputRef}
-                  onChange={handleExcelImport}
-                  className="hidden"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("common.property")}
-                </label>
-                <Select
-                  value={selectedProperty}
-                  onValueChange={setSelectedProperty}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      All {t("common.property")}
-                    </SelectItem>
-                    {properties.map((property) => (
-                      <SelectItem key={property.id} value={property.id}>
-                        {property.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  {t("common.search")} Items
-                </label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder={`${t("common.search")} by ${t("common.name")}, ${t("common.description")}, or ${t("common.location")}...`}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Summary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Total Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{filteredItems.length}</div>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">{properties.length}</div>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.properties")}</p>
             </CardContent>
           </Card>
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                Total {t("common.quantity")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{getTotalQuantity()}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                {t("common.estimatedValue")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="text-2xl font-bold">
-                ${getTotalValue().toFixed(2)}
+                {properties.reduce((sum, prop) => sum + (prop.tenants?.length || 0), 0)}
               </div>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.tenantsWithInventory")}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">
+                {properties.reduce((sum, prop) =>
+                  sum + (prop.tenants?.reduce((tSum, tenant) => tSum + tenant.assigned_items, 0) || 0), 0
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.itemsAssigned")}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-2xl font-bold">
+                ${properties.reduce((sum, prop) =>
+                  sum + (prop.tenants?.reduce((tSum, tenant) => tSum + tenant.total_value, 0) || 0), 0
+                ).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </div>
+              <p className="text-xs text-muted-foreground">{t("adminInventory.totalValue")}</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Property Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {properties.map((property) => {
-            const propertyItems = inventoryItems.filter(
-              (item) => item.property_id === property.id,
-            );
-            const propertyValue = propertyItems.reduce(
-              (sum, item) => sum + (item.estimated_value || 0),
-              0,
-            );
+        {/* Property Inventory Overview */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold">{t("adminInventory.assignmentsByProperty")}</h2>
 
-            return (
-              <Card
-                key={property.id}
-                className="hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    {property.name}
-                  </CardTitle>
-                  <CardDescription>{property.address}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Items:</span>
-                      <p className="font-medium">{propertyItems.length}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">
-                        {t("common.value")}:
-                      </span>
-                      <p className="font-medium">${propertyValue.toFixed(2)}</p>
-                    </div>
-                  </div>
-
-                  <Link href={`/admin/properties/${property.id}/inventory`}>
-                    <Button className="w-full">
-                      <Package className="h-4 w-4 mr-2" />
-                      {t("inventory.inventoryManagement")}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Inventory Items */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {selectedProperty === "all"
-              ? `All ${t("inventory.inventory")} Items`
-              : "Filtered Items"}
-          </h2>
-
-          {viewMode === "cards" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredItems.map((item) => {
-                const itemPhotos = photos.filter(
-                  (photo) => photo.inventory_item_id === item.id,
-                );
-                return (
-                  <Card
-                    key={item.id}
-                    className="hover:shadow-lg transition-shadow"
-                  >
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg">{item.name}</CardTitle>
-                        <Badge className={getConditionColor(item.condition)}>
-                          {item.condition}
-                        </Badge>
-                      </div>
-                      <CardDescription>
-                        {item.properties.name} • {item.location}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {itemPhotos.length > 0 && (
-                        <div className="grid grid-cols-2 gap-2">
-                          {itemPhotos.slice(0, 4).map((photo) => (
-                            <img
-                              key={photo.id}
-                              src={photo.photo_url}
-                              alt={photo.caption || item.name}
-                              className="w-full h-20 object-cover rounded cursor-pointer"
-                              onClick={() => {
-                                setSelectedItemForPhotos(item.id);
-                                setIsPhotoDialogOpen(true);
-                              }}
-                            />
-                          ))}
-                          {itemPhotos.length > 4 && (
-                            <div
-                              className="bg-gray-100 rounded flex items-center justify-center text-sm text-gray-600 cursor-pointer"
-                              onClick={() => {
-                                setSelectedItemForPhotos(item.id);
-                                setIsPhotoDialogOpen(true);
-                              }}
-                            >
-                              +{itemPhotos.length - 4} more
+          {properties.map((property) => (
+            <Card key={property.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  {property.name}
+                </CardTitle>
+                <CardDescription>{property.address}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {(property.tenants?.length || 0) > 0 ? (
+                  <div className="space-y-4">
+                    {property.tenants?.map((tenant) => (
+                      <div
+                        key={tenant.id}
+                        className="border rounded-lg p-4 bg-muted transition-colors hover:bg-muted/80"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="mb-2">
+                              <h4 className="font-medium">
+                                {tenant.full_name} ({tenant.email || 'No email'}) - {tenant.lease_status}
+                              </h4>
                             </div>
-                          )}
-                        </div>
-                      )}
-
-                      {item.description && (
-                        <p className="text-sm text-gray-600">
-                          {item.description}
-                        </p>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">
-                            {t("common.quantity")}:
-                          </span>
-                          <p className="font-medium">{item.quantity}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500">
-                            {t("common.value")}:
-                          </span>
-                          <p className="font-medium">
-                            ${item.estimated_value || 0}
-                          </p>
+                            <div className="flex gap-6 text-sm mb-2">
+                              <span className="bg-muted px-2 py-1 rounded">
+                                <strong className="text-blue-700">{tenant.assigned_items}</strong> {t("adminInventory.itemsAssignedText")}
+                              </span>
+                              <span className="bg-muted px-2 py-1 rounded">
+                                <strong className="text-green-700">${tenant.total_value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong> {t("adminInventory.totalValueText")}
+                              </span>
+                            </div>
+                          </div>
+                          <Link href={`/admin/properties/${property.id}/inventory`}>
+                            <Button variant="outline" size="sm">
+                              <Package className="h-4 w-4 mr-2" />
+                              {t("adminInventory.viewInventoryDetails")}
+                            </Button>
+                          </Link>
                         </div>
                       </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>{t("adminInventory.noTenantsWithInventory")}</p>
+                    <Link href={`/admin/properties/${property.id}/inventory`}>
+                      <Button variant="outline" size="sm" className="mt-2">
+                        {t("adminInventory.managePropertyInventory")}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => {
-                            setSelectedItemForPhotos(item.id);
-                            setIsPhotoDialogOpen(true);
-                          }}
-                        >
-                          <ImageIcon className="h-4 w-4 mr-2" />
-                          Photos ({itemPhotos.length})
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedItem(item);
-                            setIsEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                          Edit
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
+          {properties.length === 0 && (
             <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-32">Name</TableHead>
-                        <TableHead className="w-40">Description</TableHead>
-                        <TableHead className="w-24">Location</TableHead>
-                        <TableHead className="w-32">Property</TableHead>
-                        <TableHead className="w-24">Condition</TableHead>
-                        <TableHead className="w-20">Qty</TableHead>
-                        <TableHead className="w-24">Value</TableHead>
-                        <TableHead className="w-32">Notes</TableHead>
-                        <TableHead className="w-32">Photos</TableHead>
-                        <TableHead className="w-20">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredItems.map((item) => {
-                        const itemPhotos = photos.filter(
-                          (photo) => photo.inventory_item_id === item.id,
-                        );
-                        return (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium">
-                              {item.name}
-                            </TableCell>
-                            <TableCell>{item.description}</TableCell>
-                            <TableCell>{item.location}</TableCell>
-                            <TableCell>{item.properties.name}</TableCell>
-                            <TableCell>
-                              <Badge
-                                className={getConditionColor(item.condition)}
-                              >
-                                {item.condition}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>${item.estimated_value || 0}</TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedItemForPhotos(item.id);
-                                  setIsPhotoDialogOpen(true);
-                                }}
-                              >
-                                <ImageIcon className="h-4 w-4 mr-1" />
-                                {itemPhotos.length}
-                              </Button>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setSelectedItem(item);
-                                  setIsEditDialogOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+              <CardContent className="text-center py-12">
+                <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  {t("adminInventory.noPropertiesFound")}
+                </h3>
+                <p className="text-muted-foreground">
+                  {t("adminInventory.createPropertiesFirst")}
+                </p>
               </CardContent>
             </Card>
           )}
         </div>
 
-        {filteredItems.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                No {t("inventory.inventory")} Items
-              </h3>
-              <p className="text-muted-foreground">
-                {searchTerm || selectedProperty !== "all"
-                  ? "No items match your current filters."
-                  : `No ${t("inventory.inventory")} items have been added yet.`}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+        <BulkEditDialog
+          isOpen={isGridDialogOpen}
+          onOpenChange={setIsGridDialogOpen}
+          gridItems={gridItems}
+          setGridItems={setGridItems}
+          properties={properties}
+          selectedProperty={selectedProperty}
+          onSave={saveGridChanges}
+        />
 
-        {/* Grid Edit Dialog */}
-        <Dialog open={isGridDialogOpen} onOpenChange={setIsGridDialogOpen}>
-          <DialogContent className="max-w-7xl max-h-[90vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>Bulk Inventory Editor</DialogTitle>
-              <DialogDescription>
-                Edit multiple items at once. Paste from Excel (Ctrl+V) or add
-                rows manually. Expected columns: Name, Description, Location,
-                Condition, Quantity, Value, Notes, Photo References
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex-1 overflow-hidden">
-              <div className="mb-4 flex gap-2">
-                <Button onClick={addNewGridRow} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Row
-                </Button>
-                <Button onClick={saveGridChanges} size="sm">
-                  Save Changes
-                </Button>
-              </div>
-              <div
-                className="overflow-auto max-h-[60vh] border rounded"
-                onPaste={handlePasteFromExcel}
-                tabIndex={0}
-              >
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-32">Name</TableHead>
-                      <TableHead className="w-40">Description</TableHead>
-                      <TableHead className="w-24">Location</TableHead>
-                      <TableHead className="w-32">Property</TableHead>
-                      <TableHead className="w-24">Condition</TableHead>
-                      <TableHead className="w-20">Qty</TableHead>
-                      <TableHead className="w-24">Value</TableHead>
-                      <TableHead className="w-32">Notes</TableHead>
-                      <TableHead className="w-32">Photo</TableHead>
-                      <TableHead className="w-20">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {gridItems.map((item, index) => (
-                      <TableRow
-                        key={index}
-                        className={
-                          item.isNew
-                            ? "bg-green-50"
-                            : item.isEdited
-                              ? "bg-yellow-50"
-                              : ""
-                        }
-                      >
-                        <TableCell>
-                          <Input
-                            value={item.name}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "name",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.description}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "description",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.location}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "location",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={item.property_id}
-                            onValueChange={(value) =>
-                              handleGridCellChange(index, "property_id", value)
-                            }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select property" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {properties.map((property) => (
-                                <SelectItem
-                                  key={property.id}
-                                  value={property.id}
-                                >
-                                  {property.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={item.condition}
-                            onValueChange={(value) =>
-                              handleGridCellChange(index, "condition", value)
-                            }
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="excellent">
-                                Excellent
-                              </SelectItem>
-                              <SelectItem value="good">Good</SelectItem>
-                              <SelectItem value="fair">Fair</SelectItem>
-                              <SelectItem value="poor">Poor</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "quantity",
-                                parseInt(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.estimated_value}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "estimated_value",
-                                parseFloat(e.target.value) || 0,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={item.notes}
-                            onChange={(e) =>
-                              handleGridCellChange(
-                                index,
-                                "notes",
-                                e.target.value,
-                              )
-                            }
-                            className="w-full"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0] || null;
-                                handleGridCellChange(index, "photo_file", file);
-                              }}
-                              className="w-full text-xs"
-                            />
-                            {item.photo_file && (
-                              <span className="text-xs text-green-600 whitespace-nowrap">
-                                ✓
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeGridRow(index)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-              <div className="mt-4 text-sm text-gray-600">
-                <p>
-                  <strong>Tip:</strong> Copy data from Excel and paste here
-                  (Ctrl+V). Green rows are new, yellow rows are edited.
-                </p>
-                <p>
-                  <strong>Photos:</strong> Upload photos directly in the Photo
-                  column. They will be saved when you save changes.
-                </p>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <EditItemDialog
+          isOpen={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          selectedItem={selectedItem}
+          photos={photos}
+          t={t}
+          onSave={(itemData) => selectedItem && updateInventoryItem(selectedItem.id, itemData)}
+          onUploadPhotos={async (files) => {
+            if (!files || !selectedItem) return;
+            setUploadingPhotos(true);
+            try {
+              for (const file of Array.from(files)) {
+                await uploadPhotoForItem(selectedItem.id, file);
+              }
+              await fetchData();
+              toast({
+                title: "Photos Uploaded",
+                description: `Successfully uploaded ${files.length} photo(s).`,
+              });
+            } catch (error) {
+              toast({
+                title: "Upload Error",
+                description: "Failed to upload photos.",
+                variant: "destructive",
+              });
+            } finally {
+              setUploadingPhotos(false);
+            }
+          }}
+          onDeletePhoto={async (photoId) => {
+            try {
+              await supabase.from("inventory_photos").delete().eq("id", photoId);
+              await fetchData();
+              toast({
+                title: "Photo Deleted",
+                description: "Photo has been removed.",
+              });
+            } catch (error) {
+              toast({
+                title: "Error",
+                description: "Failed to delete photo.",
+                variant: "destructive",
+              });
+            }
+          }}
+          uploadingPhotos={uploadingPhotos}
+        />
 
-        {/* Edit Item Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Inventory Item</DialogTitle>
-              <DialogDescription>
-                Update item information and manage photos
-              </DialogDescription>
-            </DialogHeader>
-            {selectedItem && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const itemData = {
-                    name: formData.get("name") as string,
-                    description: formData.get("description") as string,
-                    location: formData.get("location") as string,
-                    condition: formData.get("condition") as string,
-                    quantity: parseInt(formData.get("quantity") as string) || 1,
-                    estimated_value:
-                      parseFloat(formData.get("estimated_value") as string) ||
-                      0,
-                    notes: formData.get("notes") as string,
-                  };
+        <PhotoManagementDialog
+          isOpen={isPhotoDialogOpen}
+          onOpenChange={setIsPhotoDialogOpen}
+          selectedItemId={selectedItemForPhotos}
+          photos={photos}
+          onUploadPhotos={handlePhotoUpload}
+          onDeletePhoto={async (photoId) => {
+            try {
+              await supabase.from("inventory_photos").delete().eq("id", photoId);
+              await fetchData();
+              toast({
+                title: "Photo Deleted",
+                description: "Photo has been removed.",
+              });
+            } catch (error) {
+              toast({
+                title: "Error",
+                description: "Failed to delete photo.",
+                variant: "destructive",
+              });
+            }
+          }}
+          uploadingPhotos={uploadingPhotos}
+        />
 
-                  updateInventoryItem(selectedItem.id, itemData);
-                }}
-                className="space-y-4"
-              >
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="edit-name">{t("common.name")}</Label>
-                    <Input
-                      id="edit-name"
-                      name="name"
-                      defaultValue={selectedItem.name}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-location">
-                      {t("common.location")}
-                    </Label>
-                    <Input
-                      id="edit-location"
-                      name="location"
-                      defaultValue={selectedItem.location}
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <Label htmlFor="edit-description">
-                    {t("common.description")}
-                  </Label>
-                  <Textarea
-                    id="edit-description"
-                    name="description"
-                    defaultValue={selectedItem.description}
-                    rows={2}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="edit-condition">
-                      {t("common.condition")}
-                    </Label>
-                    <Select
-                      name="condition"
-                      defaultValue={selectedItem.condition}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="excellent">Excellent</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                        <SelectItem value="fair">Fair</SelectItem>
-                        <SelectItem value="poor">Poor</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-quantity">
-                      {t("common.quantity")}
-                    </Label>
-                    <Input
-                      id="edit-quantity"
-                      name="quantity"
-                      type="number"
-                      min="1"
-                      defaultValue={selectedItem.quantity}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="edit-estimated_value">
-                      {t("common.estimatedValue")}
-                    </Label>
-                    <Input
-                      id="edit-estimated_value"
-                      name="estimated_value"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={selectedItem.estimated_value}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="edit-notes">{t("common.notes")}</Label>
-                  <Textarea
-                    id="edit-notes"
-                    name="notes"
-                    defaultValue={selectedItem.notes}
-                    rows={2}
-                  />
-                </div>
-
-                {/* Photo Management Section */}
-                <div className="space-y-4">
-                  <div>
-                    <Label>Upload New Photos</Label>
-                    <Input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={async (e) => {
-                        const files = e.target.files;
-                        if (files && files.length > 0) {
-                          setUploadingPhotos(true);
-                          try {
-                            for (const file of Array.from(files)) {
-                              await uploadPhotoForItem(selectedItem.id, file);
-                            }
-                            await fetchData();
-                            toast({
-                              title: "Photos Uploaded",
-                              description: `Successfully uploaded ${files.length} photo(s).`,
-                            });
-                          } catch (error) {
-                            toast({
-                              title: "Upload Error",
-                              description: "Failed to upload photos.",
-                              variant: "destructive",
-                            });
-                          } finally {
-                            setUploadingPhotos(false);
-                          }
-                        }
-                      }}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  <div>
-                    <Label>Current Photos</Label>
-                    <div className="grid grid-cols-3 gap-4 mt-2">
-                      {photos
-                        .filter(
-                          (photo) =>
-                            photo.inventory_item_id === selectedItem.id,
-                        )
-                        .map((photo) => (
-                          <div key={photo.id} className="relative group">
-                            <img
-                              src={photo.photo_url}
-                              alt={photo.caption || "Inventory photo"}
-                              className="w-full h-24 object-cover rounded border"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="sm"
-                                onClick={async () => {
-                                  try {
-                                    await supabase
-                                      .from("inventory_photos")
-                                      .delete()
-                                      .eq("id", photo.id);
-                                    await fetchData();
-                                    toast({
-                                      title: "Photo Deleted",
-                                      description: "Photo has been removed.",
-                                    });
-                                  } catch (error) {
-                                    toast({
-                                      title: "Error",
-                                      description: "Failed to delete photo.",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            {photo.caption && (
-                              <p className="text-xs text-gray-600 mt-1 truncate">
-                                {photo.caption}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={uploadingPhotos}
-                >
-                  {uploadingPhotos
-                    ? "Uploading Photos..."
-                    : t("common.saveChanges")}
-                </Button>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Photo Management Dialog */}
-        <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>Manage Photos</DialogTitle>
-              <DialogDescription>
-                Upload new photos or view existing ones for this inventory item.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Upload New Photos</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={(e) => handlePhotoUpload(e.target.files)}
-                    className="flex-1"
-                  />
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingPhotos}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    {uploadingPhotos ? "Uploading..." : "Browse"}
-                  </Button>
-                </div>
-              </div>
-
-              {selectedItemForPhotos && (
-                <div>
-                  <Label>Existing Photos</Label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
-                    {photos
-                      .filter(
-                        (photo) =>
-                          photo.inventory_item_id === selectedItemForPhotos,
-                      )
-                      .map((photo) => (
-                        <div key={photo.id} className="relative group">
-                          <img
-                            src={photo.photo_url}
-                            alt={photo.caption || "Inventory photo"}
-                            className="w-full h-32 object-cover rounded border"
-                          />
-                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded flex items-center justify-center">
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={async () => {
-                                try {
-                                  await supabase
-                                    .from("inventory_photos")
-                                    .delete()
-                                    .eq("id", photo.id);
-                                  await fetchData();
-                                  toast({
-                                    title: "Photo Deleted",
-                                    description: "Photo has been removed.",
-                                  });
-                                } catch (error) {
-                                  toast({
-                                    title: "Error",
-                                    description: "Failed to delete photo.",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          {photo.caption && (
-                            <p className="text-xs text-gray-600 mt-1 truncate">
-                              {photo.caption}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

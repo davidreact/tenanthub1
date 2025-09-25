@@ -18,8 +18,8 @@ export default function Hero() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="flex justify-center mb-6">
               <svg
-                width="auto"
-                height="auto"
+                width="400"
+                height="120"
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <style type="text/css">{`
@@ -31,8 +31,8 @@ export default function Hero() {
                 <text
                   x="50%"
                   y="50%"
-                  dominant-baseline="middle"
-                  text-anchor="middle"
+                  dominantBaseline="middle"
+                  textAnchor="middle"
                   className="hero-logo-text"
                 >
                   SYVITY

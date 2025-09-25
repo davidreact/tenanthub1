@@ -18,9 +18,11 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { createClient } from "../../supabase/client";
+import { getUserNotifications, getUnreadNotificationCount } from "@/lib/notifications";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "@/components/ui/use-toast";
+import { useRouter } from "next/navigation";
 
 interface Notification {
   id: string;
@@ -30,6 +32,8 @@ interface Notification {
   is_read: boolean;
   is_admin_log: boolean;
   created_at: string;
+  related_entity_type?: string;
+  related_entity_id?: string;
   admin_action_by?: {
     full_name?: string;
     name?: string;
@@ -51,6 +55,7 @@ export default function NotificationsPanel({
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     fetchNotifications();
@@ -80,47 +85,20 @@ export default function NotificationsPanel({
   const fetchNotifications = async () => {
     try {
       // Fetch regular notifications
-      const { data: regularNotifications } = await supabase
-        .from("notifications")
-        .select(
-          `
-          *,
-          admin_action_by:users!notifications_admin_action_by_fkey(full_name, name)
-        `,
-        )
-        .eq("user_id", userId)
-        .eq("is_admin_log", false)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      const regularNotifications = await getUserNotifications(userId, false);
 
       // Fetch admin logs if user is admin
       let adminLogsData = [];
       if (isAdmin) {
-        const { data } = await supabase
-          .from("notifications")
-          .select(
-            `
-            *,
-            admin_action_by:users!notifications_admin_action_by_fkey(full_name, name)
-          `,
-          )
-          .eq("user_id", userId)
-          .eq("is_admin_log", true)
-          .order("created_at", { ascending: false })
-          .limit(20);
-        adminLogsData = data || [];
+        adminLogsData = (await getUserNotifications(userId, true)) || [];
       }
 
       // Count unread notifications
-      const { count } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_read", false);
+      const unread = await getUnreadNotificationCount(userId);
 
       setNotifications(regularNotifications || []);
       setAdminLogs(adminLogsData);
-      setUnreadCount(count || 0);
+      setUnreadCount(unread || 0);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
@@ -182,15 +160,31 @@ export default function NotificationsPanel({
     }
   };
 
+  const navigateToTarget = (n: Notification) => {
+    let url: string | null = null;
+    if (n.related_entity_type === "message" && n.related_entity_id) {
+      url = isAdmin
+        ? `/admin/conversations?conversationId=${n.related_entity_id}`
+        : `/tenant/messages?conversationId=${n.related_entity_id}`;
+    }
+    if (url) {
+      router.push(url);
+      if (!n.is_read) {
+        markAsRead(n.id);
+      }
+    }
+  };
+
   const NotificationItem = ({
     notification,
   }: {
     notification: Notification;
   }) => (
     <Card
-      className={`mb-2 ${!notification.is_read ? "border-blue-200 bg-blue-50" : ""}`}
+      className={`mb-2 cursor-pointer transition-colors duration-200 hover:bg-gray-100 hover:border-gray-300 dark:hover:bg-gray-800 dark:hover:border-gray-600 ${!notification.is_read ? "border-blue-200 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700" : ""}`}
+      onClick={() => navigateToTarget(notification)}
     >
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-1 pt-4">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2">
             <span className="text-lg">
@@ -200,8 +194,16 @@ export default function NotificationsPanel({
               <CardTitle className="text-sm font-medium">
                 {notification.title}
               </CardTitle>
-              <CardDescription className="text-xs text-gray-500">
-                {new Date(notification.created_at).toLocaleString()}
+              <CardDescription className="text-xs">
+                {new Intl.DateTimeFormat("en-GB", {
+                  timeZone: "UTC",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                }).format(new Date(notification.created_at))}
                 {notification.admin_action_by && (
                   <span className="ml-2">
                     by{" "}
@@ -214,18 +216,18 @@ export default function NotificationsPanel({
           </div>
           {!notification.is_read && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => markAsRead(notification.id)}
               className="h-6 w-6 p-0"
             >
-              <Check className="h-3 w-3" />
+              <Check className="h-4 w-3" />
             </Button>
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <p className="text-sm text-gray-700">{notification.message}</p>
+      <CardContent className="pb-4 pt-0">
+        <p className="text-sm dark:text-gray-300 text-gray-900">{notification.message}</p>
       </CardContent>
     </Card>
   );
@@ -246,7 +248,7 @@ export default function NotificationsPanel({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-96 max-h-96 overflow-hidden"
+        className="w-full max-w-sm sm:max-w-md md:max-w-lg max-h-[70vh] overflow-hidden notifications-dropdown !bg-[hsl(var(--notifications-bg))]"
         align="end"
       >
         <div className="p-4">
@@ -266,19 +268,25 @@ export default function NotificationsPanel({
           </div>
 
           {isAdmin ? (
-            <Tabs defaultValue="notifications" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="notifications">
+            <Tabs defaultValue="notifications" className="w-full h-full">
+              <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 gap-1 h-auto min-h-[3rem]">
+                <TabsTrigger
+                  value="notifications"
+                  className="min-w-0 w-full h-full whitespace-normal break-words text-center px-2 py-2 text-xs sm:text-sm leading-tight flex items-center justify-center"
+                >
                   {t("notifications.userNotifications")}
                 </TabsTrigger>
-                <TabsTrigger value="logs">
+                <TabsTrigger
+                  value="logs"
+                  className="min-w-0 w-full h-full whitespace-normal break-words text-center px-2 py-2 text-xs sm:text-sm leading-tight flex items-center justify-center"
+                >
                   {t("notifications.adminLogs")}
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent
                 value="notifications"
-                className="max-h-64 overflow-y-auto mt-4"
+                className="max-h-[calc(70vh-8rem)] overflow-y-auto mt-4"
               >
                 {loading ? (
                   <div className="text-center py-4">{t("common.loading")}</div>
@@ -298,7 +306,7 @@ export default function NotificationsPanel({
 
               <TabsContent
                 value="logs"
-                className="max-h-64 overflow-y-auto mt-4"
+                className="max-h-[calc(70vh-8rem)] overflow-y-auto mt-4"
               >
                 {loading ? (
                   <div className="text-center py-4">{t("common.loading")}</div>
@@ -314,7 +322,7 @@ export default function NotificationsPanel({
               </TabsContent>
             </Tabs>
           ) : (
-            <div className="max-h-64 overflow-y-auto">
+            <div className="max-h-[calc(70vh-8rem)] overflow-y-auto">
               {loading ? (
                 <div className="text-center py-4">{t("common.loading")}</div>
               ) : notifications.length === 0 ? (
