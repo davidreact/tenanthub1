@@ -49,6 +49,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCSRF } from "@/hooks/useCSRF";
 import {
   Table,
   TableBody,
@@ -86,6 +87,7 @@ export default function PropertyInventory() {
   const params = useParams();
   const propertyId = params.propertyId as string;
   const supabase = createClient();
+  const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
 
   // Use custom hooks
   const { property, inventoryItems, photos, loading, refetch } = useInventoryData(propertyId);
@@ -314,17 +316,10 @@ export default function PropertyInventory() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-gradient">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/admin/properties"
-            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("common.backToProperties")}
-          </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <Package className="h-8 w-8" />
@@ -426,6 +421,14 @@ export default function PropertyInventory() {
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
+                        if (!csrfToken) {
+                          toast({
+                            title: t("common.error"),
+                            description: "Security token missing. Please refresh and try again.",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
                         const formData = new FormData(e.currentTarget);
                         const itemData = {
                           item: formData.get("item") as string,
@@ -439,6 +442,7 @@ export default function PropertyInventory() {
                               formData.get("estimated_value") as string,
                             ) || 0,
                           notes: formData.get("notes") as string,
+                          csrfToken,
                         };
 
                         createInventoryItem(itemData);
@@ -603,6 +607,7 @@ export default function PropertyInventory() {
             }
           }}
           uploadingPhotos={uploadingPhotos}
+          csrfToken={csrfToken}
         />
 
         <PhotoManagementDialog

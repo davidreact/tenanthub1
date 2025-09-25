@@ -43,6 +43,7 @@ import { createTenantAction } from "../../actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormMessage } from "@/components/form-message";
 import { useToast } from "@/components/ui/use-toast";
+import { useCSRF } from "@/hooks/useCSRF";
 
 interface User {
   id: string;
@@ -88,6 +89,7 @@ export default function AdminTenants() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const supabase = createClient();
+  const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -169,22 +171,28 @@ export default function AdminTenants() {
     leaseStart: string,
     leaseEnd: string,
     monthlyRent: number,
+    csrfToken: string,
   ) => {
     try {
-      await supabase.from("tenant_properties").insert({
-        tenant_id: tenantId,
-        property_id: propertyId,
-        lease_start_date: leaseStart,
-        lease_end_date: leaseEnd,
-        monthly_rent: monthlyRent,
-        status: "active",
+      const response = await fetch("/api/admin/assign-property", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tenantId,
+          propertyId,
+          leaseStart,
+          leaseEnd,
+          monthlyRent,
+          csrfToken,
+        }),
       });
 
-      // Update property status to occupied
-      await supabase
-        .from("properties")
-        .update({ status: "occupied" })
-        .eq("id", propertyId);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to assign property");
+      }
 
       fetchData(); // Refresh the list
       setIsAssignDialogOpen(false);
@@ -197,7 +205,7 @@ export default function AdminTenants() {
       console.error("Error assigning property:", error);
       toast({
         title: t("common.error"),
-        description: "Failed to assign property. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to assign property. Please try again.",
         variant: "destructive",
       });
     }
@@ -440,6 +448,15 @@ export default function AdminTenants() {
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
+                              if (!csrfToken) {
+                                toast({
+                                  title: t("common.error"),
+                                  description: "Security token missing. Please refresh and try again.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
+
                               const formData = new FormData(e.currentTarget);
                               const propertyId = formData.get(
                                 "propertyId",
@@ -461,6 +478,7 @@ export default function AdminTenants() {
                                   leaseStart,
                                   leaseEnd,
                                   monthlyRent,
+                                  csrfToken,
                                 );
                               }
                             }}

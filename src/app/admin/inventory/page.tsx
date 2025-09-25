@@ -39,6 +39,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { useCSRF } from "@/hooks/useCSRF";
 import {
   ArrowLeft,
   Package,
@@ -88,6 +89,7 @@ export default function AdminInventory() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const supabase = createClient();
+  const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
 
   useEffect(() => {
     fetchData();
@@ -567,10 +569,25 @@ email: user?.email || "",
 
   const updateInventoryItem = async (
     id: string,
-    itemData: Partial<InventoryItem>,
+    itemData: any,
   ) => {
     try {
-      await supabase.from("inventory_items").update(itemData).eq("id", id);
+      const response = await fetch("/api/admin/update-inventory-item", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          ...itemData,
+          csrfToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update inventory item");
+      }
 
       fetchData(); // Refresh the list
       setSelectedItem(null);
@@ -584,7 +601,7 @@ email: user?.email || "",
       console.error("Error updating inventory item:", error);
       toast({
         title: "Error",
-        description: "Failed to update inventory item. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update inventory item. Please try again.",
         variant: "destructive",
       });
     }
@@ -709,7 +726,7 @@ email: user?.email || "",
   }
 
   return (
-    <div className="min-h-screen bg-hero-gradient">
+    <div className="min-h-screen ">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -862,6 +879,7 @@ email: user?.email || "",
           selectedItem={selectedItem}
           photos={photos}
           t={t}
+          csrfToken={csrfToken}
           onSave={(itemData) => selectedItem && updateInventoryItem(selectedItem.id, itemData)}
           onUploadPhotos={async (files) => {
             if (!files || !selectedItem) return;

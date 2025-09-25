@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "supabase/server";
+import Breadcrumb from "@/components/breadcrumb";
 
 export default async function AdminLayout({
   children,
@@ -15,5 +16,27 @@ export default async function AdminLayout({
     redirect("/sign-in");
   }
 
-  return <>{children}</>;
+  // Fetch user role from database
+  const { data: userData, error } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (error || !userData || userData.role !== "admin") {
+    redirect("/dashboard"); // or unauthorized page
+  }
+
+  return (
+    <div className="min-h-screen bg-hero-gradient">
+      <div className="container mx-auto px-4 py-4">
+        <div className="mb-4">
+          <Breadcrumb />
+        </div>
+        <div>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -25,6 +25,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useCSRF } from "@/hooks/useCSRF";
 
 interface Property {
   id: string;
@@ -72,6 +73,7 @@ export default function PropertyConversations() {
   const propertyId = params.propertyId as string;
   const supabase = createClient();
   const { t } = useLanguage();
+  const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
 
   useEffect(() => {
     if (propertyId) {
@@ -113,24 +115,24 @@ export default function PropertyConversations() {
     }
   };
 
-  const sendMessage = async (conversationId: string, message: string) => {
+  const sendMessage = async (conversationId: string, message: string, csrfToken: string) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        message,
-        sender_id: user?.id,
-        is_admin: true,
+      const response = await fetch("/api/admin/send-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          conversationId,
+          message,
+          csrfToken,
+        }),
       });
 
-      // Update conversation updated_at
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send message");
+      }
 
       setNewMessage("");
       fetchData(); // Refresh conversations
@@ -143,7 +145,7 @@ export default function PropertyConversations() {
       console.error("Error sending message:", error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive",
       });
     }
@@ -236,7 +238,7 @@ export default function PropertyConversations() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-gradient">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -403,10 +405,19 @@ export default function PropertyConversations() {
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
+                              if (!csrfToken) {
+                                toast({
+                                  title: t("common.error"),
+                                  description: "Security token missing. Please refresh and try again.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
                               if (newMessage.trim()) {
                                 sendMessage(
                                   selectedConversation.id,
                                   newMessage,
+                                  csrfToken,
                                 );
                               }
                             }}

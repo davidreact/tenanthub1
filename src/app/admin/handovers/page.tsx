@@ -24,6 +24,7 @@ import {
 import { ArrowLeft, Calendar, Check, X, Clock } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
+import { useCSRF } from "@/hooks/useCSRF";
 
 interface KeyHandover {
   id: string;
@@ -56,6 +57,7 @@ export default function AdminHandovers() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const supabase = createClient();
+  const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
 
   useEffect(() => {
     fetchHandovers();
@@ -88,21 +90,26 @@ export default function AdminHandovers() {
     handoverId: string,
     status: string,
     notes?: string,
+    csrfToken?: string,
   ) => {
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      await supabase
-        .from("key_handovers")
-        .update({
+      const response = await fetch("/api/admin/update-handover", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          handoverId,
           status,
-          notes: notes || null,
-          completed_by: status === "completed" ? user?.id : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", handoverId);
+          notes,
+          csrfToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update handover status");
+      }
 
       fetchHandovers(); // Refresh the list
       setSelectedHandover(null);
@@ -116,7 +123,7 @@ export default function AdminHandovers() {
       console.error("Error updating handover status:", error);
       toast({
         title: t("common.error"),
-        description: "Failed to update handover status. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update handover status. Please try again.",
         variant: "destructive",
       });
     }
@@ -382,6 +389,14 @@ export default function AdminHandovers() {
                             <form
                               onSubmit={(e) => {
                                 e.preventDefault();
+                                if (!csrfToken) {
+                                  toast({
+                                    title: t("common.error"),
+                                    description: "Security token missing. Please refresh and try again.",
+                                    variant: "destructive",
+                                  });
+                                  return;
+                                }
                                 const formData = new FormData(e.currentTarget);
                                 const action = formData.get("action") as string;
                                 const notes = formData.get("notes") as string;
@@ -390,6 +405,7 @@ export default function AdminHandovers() {
                                   selectedHandover.id,
                                   action,
                                   notes,
+                                  csrfToken,
                                 );
                               }}
                               className="space-y-4"

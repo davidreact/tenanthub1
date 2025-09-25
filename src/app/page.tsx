@@ -18,7 +18,7 @@ export default function Home() {
   const { t } = useLanguage();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted">
+    <div className="min-h-screen bg-hero-gradient">
       <Hero />
       {/* Features Section */}
       <section className="py-24 bg-background">

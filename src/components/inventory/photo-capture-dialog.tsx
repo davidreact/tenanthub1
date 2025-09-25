@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Camera, Upload, X, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
+import { FileUploadRestrictions } from "@/components/FileUploadRestrictions";
 
 interface PhotoCaptureDialogProps {
   isOpen: boolean;
@@ -169,6 +170,8 @@ export function PhotoCaptureDialog({
               Upload Photos
             </Button>
           </div>
+
+          <FileUploadRestrictions className="mb-4" />
 
           {/* Hidden File Inputs */}
           <input

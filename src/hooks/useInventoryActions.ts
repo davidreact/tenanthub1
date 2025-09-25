@@ -10,15 +10,27 @@ export const useInventoryActions = () => {
   const { toast } = useToast();
   const supabase = createClient();
 
-  const createInventoryItem = async (itemData: Partial<InventoryItem>) => {
+  const createInventoryItem = async (itemData: Partial<InventoryItem> & { csrfToken?: string }) => {
     try {
-      const { data, error } = await supabase
-        .from("inventory_items")
-        .insert(itemData)
-        .select()
-        .single();
+      const { csrfToken, ...dataToSend } = itemData;
 
-      if (error) throw error;
+      const response = await fetch("/api/admin/create-inventory-item", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...dataToSend,
+          csrfToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create inventory item");
+      }
+
+      const data = await response.json();
 
       toast({
         title: "Item Added",
@@ -30,23 +42,35 @@ export const useInventoryActions = () => {
       console.error("Error creating inventory item:", error);
       toast({
         title: "Error",
-        description: "Failed to create inventory item. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create inventory item. Please try again.",
         variant: "destructive",
       });
       throw error;
     }
   };
 
-  const updateInventoryItem = async (id: string, itemData: Partial<InventoryItem>) => {
+  const updateInventoryItem = async (id: string, itemData: Partial<InventoryItem> & { csrfToken?: string }) => {
     try {
-      const { data, error } = await supabase
-        .from("inventory_items")
-        .update(itemData)
-        .eq("id", id)
-        .select()
-        .single();
+      const { csrfToken, ...dataToSend } = itemData;
 
-      if (error) throw error;
+      const response = await fetch("/api/admin/update-inventory-item", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          ...dataToSend,
+          csrfToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update inventory item");
+      }
+
+      const data = await response.json();
 
       toast({
         title: "Item Updated",
@@ -58,7 +82,7 @@ export const useInventoryActions = () => {
       console.error("Error updating inventory item:", error);
       toast({
         title: "Error",
-        description: "Failed to update inventory item. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to update inventory item. Please try again.",
         variant: "destructive",
       });
       throw error;

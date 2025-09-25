@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { useSearchParams, useRouter } from "next/navigation";
 import { createTenantNotification } from "@/lib/notifications";
+import { useCSRF } from "@/hooks/useCSRF";
 
 interface Message {
   id: string;
@@ -72,6 +73,7 @@ export default function AdminConversations() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
 
   useEffect(() => {
     fetchConversations();
@@ -187,7 +189,7 @@ export default function AdminConversations() {
     }
   };
 
-  const sendMessage = async (conversationId: string, message: string) => {
+  const sendMessage = async (conversationId: string, message: string, csrfToken: string) => {
     try {
       const {
         data: { user },
@@ -217,20 +219,23 @@ export default function AdminConversations() {
         )
       );
 
-      // Persist to DB
-      const { error: insertError } = await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        message,
-        sender_id: user.id,
-        is_admin: true,
+      // Send via API with CSRF protection
+      const response = await fetch("/api/admin/send-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          conversationId,
+          message,
+          csrfToken,
+        }),
       });
-      if (insertError) throw insertError;
 
-      // Update conversation updated_at
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send message");
+      }
 
       // Notify tenant about new admin message
       const convo = selectedConversation || conversations.find((c) => c.id === conversationId);
@@ -259,7 +264,7 @@ export default function AdminConversations() {
       console.error("Error sending message:", error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive",
       });
     }
@@ -470,10 +475,19 @@ export default function AdminConversations() {
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
+                              if (!csrfToken) {
+                                toast({
+                                  title: t("common.error"),
+                                  description: "Security token missing. Please refresh and try again.",
+                                  variant: "destructive",
+                                });
+                                return;
+                              }
                               if (newMessage.trim()) {
                                 sendMessage(
                                   selectedConversation.id,
                                   newMessage,
+                                  csrfToken,
                                 );
                               }
                             }}

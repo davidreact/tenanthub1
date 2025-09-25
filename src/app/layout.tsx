@@ -47,8 +47,6 @@ export default function RootLayout({
       <body
         className={`${inter.className} ${sairaStencilOne.variable} bg-background min-h-screen`}
       >
-        {/* Global background gradient applied to all pages */}
-        <div className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-br from-primary/10 via-background to-primary/5 dark:from-primary/20 dark:to-primary/10 opacity-70" />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

@@ -24,6 +24,7 @@ import {
 import { ArrowLeft, CreditCard, Check, X, Eye } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
+import { SecurePaymentUpdate } from "@/components/SecurePaymentUpdate";
 
 interface PaymentProof {
   id: string;
@@ -85,41 +86,6 @@ export default function AdminPayments() {
     }
   };
 
-  const updatePaymentStatus = async (
-    paymentId: string,
-    status: string,
-    notes?: string,
-  ) => {
-    try {
-      await supabase
-        .from("payment_proofs")
-        .update({
-          status,
-          admin_notes: notes || null,
-          verified_by:
-            status === "approved"
-              ? (await supabase.auth.getUser()).data.user?.id
-              : null,
-        })
-        .eq("id", paymentId);
-
-      fetchPayments(); // Refresh the list
-      setSelectedPayment(null);
-      setIsDialogOpen(false);
-
-      toast({
-        title: "Payment Updated",
-        description: `Payment has been ${status} successfully.`,
-      });
-    } catch (error) {
-      console.error("Error updating payment status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update payment status. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -303,82 +269,28 @@ export default function AdminPayments() {
                           </div>
 
                           {selectedPayment.status === "pending" && (
-                            <form
-                              onSubmit={(e) => {
-                                e.preventDefault();
-                                const formData = new FormData(e.currentTarget);
-                                const action = formData.get("action") as string;
-                                const notes = formData.get("notes") as string;
-
-                                updatePaymentStatus(
-                                  selectedPayment.id,
-                                  action,
-                                  notes,
-                                );
+                            <SecurePaymentUpdate
+                              paymentId={selectedPayment.id}
+                              onSuccess={() => {
+                                fetchPayments();
+                                setSelectedPayment(null);
+                                setIsDialogOpen(false);
+                                toast({
+                                  title: t("common.success"),
+                                  description: "Payment status updated successfully.",
+                                });
                               }}
-                              className="space-y-4"
-                            >
-                              <div>
-                                <label className="block text-sm font-medium mb-2">
-                                  {t("common.adminNotes")}:
-                                </label>
-                                <Textarea
-                                  name="notes"
-                                  placeholder={t("common.addNotes")}
-                                />
-                              </div>
-
-                              <div className="flex gap-2">
-                                <Button
-                                  type="submit"
-                                  name="action"
-                                  value="approved"
-                                  className="flex-1"
-                                >
-                                  <Check className="h-4 w-4 mr-2" />
-                                  {t("common.approve")}
-                                </Button>
-                                <Button
-                                  type="submit"
-                                  name="action"
-                                  value="rejected"
-                                  variant="destructive"
-                                  className="flex-1"
-                                >
-                                  <X className="h-4 w-4 mr-2" />
-                                  {t("common.reject")}
-                                </Button>
-                              </div>
-                            </form>
+                              onCancel={() => {
+                                setSelectedPayment(null);
+                                setIsDialogOpen(false);
+                              }}
+                            />
                           )}
                         </div>
                       )}
                     </DialogContent>
                   </Dialog>
 
-                  {payment.status === "pending" && (
-                    <>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          updatePaymentStatus(payment.id, "approved")
-                        }
-                      >
-                        <Check className="h-4 w-4 mr-2" />
-                        {t("common.approve")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() =>
-                          updatePaymentStatus(payment.id, "rejected")
-                        }
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        {t("common.reject")}
-                      </Button>
-                    </>
-                  )}
                 </div>
               </CardContent>
             </Card>

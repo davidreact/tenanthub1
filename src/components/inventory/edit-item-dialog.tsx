@@ -29,6 +29,7 @@ interface EditItemDialogProps {
   onUploadPhotos: (files: FileList | null) => void;
   onDeletePhoto: (photoId: string) => void;
   uploadingPhotos: boolean;
+  csrfToken?: string;
 }
 
 export function EditItemDialog({
@@ -41,6 +42,7 @@ export function EditItemDialog({
   onUploadPhotos,
   onDeletePhoto,
   uploadingPhotos,
+  csrfToken,
 }: EditItemDialogProps) {
   if (!selectedItem) return null;
 
@@ -56,6 +58,10 @@ export function EditItemDialog({
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (!csrfToken) {
+              alert("Security token missing. Please refresh and try again.");
+              return;
+            }
             const formData = new FormData(e.currentTarget);
             const itemData = {
               item: formData.get("item") as string,
@@ -66,6 +72,7 @@ export function EditItemDialog({
               estimated_value:
                 parseFloat(formData.get("estimated_value") as string) || 0,
               notes: formData.get("notes") as string,
+              csrfToken,
             };
 
             onSave(itemData);

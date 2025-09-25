@@ -421,77 +421,91 @@ export default function TenantInventory() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-gradient">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("common.backToDashboard")}
-          </Link>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-            <Package className="h-8 w-8" />
-            {t("inventory.inventory")}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {t("inventory.viewManageProperty")}
-          </p>
+    <div className="p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center text-primary hover:text-primary/80 mb-6 transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          {t("common.backToDashboard")}
+        </Link>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="p-3 bg-blue-100 rounded-xl">
+            <Package className="h-10 w-10 text-blue-600" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold text-foreground">
+              {t("inventory.inventory")}
+            </h1>
+            <p className="text-muted-foreground text-lg mt-1">
+              {t("inventory.viewManageProperty")}
+            </p>
+          </div>
         </div>
+      </div>
 
-        {/* Controls */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-              {/* View Mode Controls */}
-              <div className="flex gap-2">
-                <Button
-                  variant={viewMode === "cards" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("cards")}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  {t("inventory.cardsView")}
-                </Button>
-                <Button
-                  variant={viewMode === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                >
-                  <Grid className="h-4 w-4 mr-2" />
-                  {t("inventory.gridView")}
-                </Button>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => printReport(inventoryItems)}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  {t("common.printReport")}
-                </Button>
-                <Button variant="outline" size="sm" onClick={exportToExcel}>
-                  <Download className="h-4 w-4 mr-2" />
-                  {t("common.exportExcel")}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => csvInputRef.current?.click()}
-                  disabled={importingCSV}
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {importingCSV ? t("common.importing") : t("common.importExcel")}
-                </Button>
-              </div>
+      {/* Controls */}
+      <Card className="mb-8 bg-gradient-to-r from-card via-card to-blue-500/5 border-0 shadow-lg">
+        <CardContent className="pt-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            {/* View Mode Controls */}
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "cards" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("cards")}
+                className={viewMode === "cards" ? "bg-blue-600 hover:bg-blue-700 shadow-md" : "hover:bg-blue-50 hover:border-blue-200"}
+              >
+                <Package className="h-4 w-4 mr-2" />
+                {t("inventory.cardsView")}
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                className={viewMode === "grid" ? "bg-blue-600 hover:bg-blue-700 shadow-md" : "hover:bg-blue-50 hover:border-blue-200"}
+              >
+                <Grid className="h-4 w-4 mr-2" />
+                {t("inventory.gridView")}
+              </Button>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => printReport(inventoryItems)}
+                className="hover:bg-green-50 hover:border-green-200 hover:text-green-700 transition-colors"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {t("common.printReport")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToExcel}
+                className="hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-700 transition-colors"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t("common.exportExcel")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => csvInputRef.current?.click()}
+                disabled={importingCSV}
+                className="hover:bg-purple-50 hover:border-purple-200 hover:text-purple-700 transition-colors disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {importingCSV ? t("common.importing") : t("common.importExcel")}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
         <input
           type="file"
           accept=".xlsx,.xls"
@@ -535,26 +549,31 @@ export default function TenantInventory() {
           />
         )}
 
-        {inventoryItems.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {t("inventory.noInventoryItemsTitle")}
-              </h3>
-              <p className="text-gray-600">
-                {t("inventory.noInventoryItemsForProperty")}
-              </p>
-            </CardContent>
-          </Card>
-        )}
+      {inventoryItems.length === 0 && (
+        <Card className="bg-gradient-to-br from-card via-card to-blue-500/5 border-0 shadow-lg">
+          <CardContent className="text-center py-16">
+            <div className="p-4 bg-blue-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+              <Package className="h-12 w-12 text-blue-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-3">
+              {t("inventory.noInventoryItemsTitle")}
+            </h3>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              {t("inventory.noInventoryItemsForProperty")}
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex justify-center">
-          <Button size="lg" className="px-8">
-            {t("inventory.signDocument")}
-          </Button>
-        </div>
+      {/* Action Buttons */}
+      <div className="mt-8 flex justify-center">
+        <Button
+          size="lg"
+          className="px-8 bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+        >
+          {t("inventory.signDocument")}
+        </Button>
+      </div>
 
         {/* Combined Notes Dialog */}
         <Dialog open={isNotesDialogOpen} onOpenChange={setIsNotesDialogOpen}>
@@ -594,6 +613,7 @@ export default function TenantInventory() {
                 <Button
                   variant="outline"
                   onClick={() => setIsNotesDialogOpen(false)}
+                  className="hover:bg-gray-50 transition-colors"
                 >
                   {t("common.cancel")}
                 </Button>
@@ -604,6 +624,7 @@ export default function TenantInventory() {
                     }
                     setIsNotesDialogOpen(false);
                   }}
+                  className="bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
                 >
                   {t("common.saveNotes")}
                 </Button>
@@ -612,35 +633,33 @@ export default function TenantInventory() {
           </DialogContent>
         </Dialog>
 
-        <PhotoManagementDialog
-          isOpen={isPhotoDialogOpen}
-          onOpenChange={setIsPhotoDialogOpen}
-          selectedItemId={selectedItemForPhotos}
-          photos={inventoryItems.flatMap(item =>
-            (item.inventory_photos || []).map(photo => ({
-              ...photo,
-              inventory_item_id: item.id
-            }))
-          )}
-          onUploadPhotos={handlePhotoUpload}
-          onDeletePhoto={async (photoId) => {
-            if (!currentUserId) return;
-            await supabase
-              .from("inventory_photos")
-              .delete()
-              .eq("id", photoId)
-              .eq("uploaded_by", currentUserId);
-            await fetchInventoryItems();
-            toast({
-              title: "Photo Deleted",
-              description: "Photo has been removed.",
-            });
-          }}
-          uploadingPhotos={uploadingPhotos}
-          canDelete={(photo) => !!currentUserId && photo.uploaded_by === currentUserId}
-        />
-
-      </div>
+      <PhotoManagementDialog
+        isOpen={isPhotoDialogOpen}
+        onOpenChange={setIsPhotoDialogOpen}
+        selectedItemId={selectedItemForPhotos}
+        photos={inventoryItems.flatMap(item =>
+          (item.inventory_photos || []).map(photo => ({
+            ...photo,
+            inventory_item_id: item.id
+          }))
+        )}
+        onUploadPhotos={handlePhotoUpload}
+        onDeletePhoto={async (photoId) => {
+          if (!currentUserId) return;
+          await supabase
+            .from("inventory_photos")
+            .delete()
+            .eq("id", photoId)
+            .eq("uploaded_by", currentUserId);
+          await fetchInventoryItems();
+          toast({
+            title: "Photo Deleted",
+            description: "Photo has been removed.",
+          });
+        }}
+        uploadingPhotos={uploadingPhotos}
+        canDelete={(photo) => !!currentUserId && photo.uploaded_by === currentUserId}
+      />
     </div>
   );
 }

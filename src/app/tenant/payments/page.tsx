@@ -35,6 +35,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
+import { SecurePaymentUpload } from "@/components/SecurePaymentUpload";
 
 interface PaymentProof {
   id: string;
@@ -50,7 +51,6 @@ interface PaymentProof {
 export default function TenantPayments() {
   const [paymentProofs, setPaymentProofs] = useState<PaymentProof[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [tenantPropertyId, setTenantPropertyId] = useState<string | null>(null);
   const [monthlyRent, setMonthlyRent] = useState<number>(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -97,86 +97,6 @@ export default function TenantPayments() {
     }
   };
 
-  const uploadPaymentProof = async (
-    file: File,
-    monthYear: string,
-    amount: number,
-    paymentDate: string,
-  ) => {
-    if (!tenantPropertyId) return;
-
-    setUploading(true);
-    try {
-      // In a real app, you'd upload to Supabase Storage
-      // For demo, we'll use a placeholder URL
-      const proofUrl =
-        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80";
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase.from("payment_proofs").insert({
-        tenant_property_id: tenantPropertyId,
-        month_year: monthYear,
-        amount: amount,
-        payment_date: paymentDate,
-        proof_url: proofUrl,
-        status: "pending",
-        uploaded_by: user.id,
-      });
-
-      if (!error) {
-        // Create notification for admins
-        const { createTenantNotification } = await import(
-          "@/lib/notifications"
-        );
-
-        // Get all admin users
-        const { data: adminUsers } = await supabase
-          .from("users")
-          .select("id")
-          .eq("role", "admin");
-
-        if (adminUsers) {
-          // Create notifications for all admins
-          const notifications = adminUsers.map((admin) => ({
-            user_id: admin.id,
-            title: "New Payment Proof Submitted",
-            message: `A tenant has uploaded a new payment proof for ${monthYear} - ${amount}`,
-            type: "info",
-            is_admin_log: false,
-            related_entity_type: "payment",
-            related_entity_id: tenantPropertyId,
-            metadata: { monthYear, amount, paymentDate },
-          }));
-
-          await supabase.from("notifications").insert(notifications);
-        }
-
-        fetchPaymentProofs(); // Refresh the list
-        setIsDialogOpen(false);
-
-        toast({
-          title: "Payment Proof Uploaded",
-          description:
-            "Your payment proof has been uploaded successfully and is pending review.",
-        });
-      } else {
-        throw error;
-      }
-    } catch (error) {
-      console.error("Error uploading payment proof:", error);
-      toast({
-        title: "Error",
-        description: "Failed to upload payment proof. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -313,66 +233,21 @@ export default function TenantPayments() {
                     {t("payments.uploadProofDialogDescription")}
                   </DialogDescription>
                 </DialogHeader>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const file = formData.get("file") as File;
-                    const monthYear = formData.get("monthYear") as string;
-                    const amount = parseFloat(formData.get("amount") as string);
-                    const paymentDate = formData.get("paymentDate") as string;
-
-                    if (file && monthYear && amount && paymentDate) {
-                      uploadPaymentProof(file, monthYear, amount, paymentDate);
-                    }
-                  }}
-                  className="space-y-4"
-                >
-                  <div>
-                    <Label htmlFor="monthYear">{t("common.monthYear")}</Label>
-                    <Input
-                      id="monthYear"
-                      name="monthYear"
-                      type="month"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="amount">{t("common.amountPaid")}</Label>
-                    <Input
-                      id="amount"
-                      name="amount"
-                      type="number"
-                      step="0.01"
-                      defaultValue={monthlyRent}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="paymentDate">{t("common.paymentDate")}</Label>
-                    <Input
-                      id="paymentDate"
-                      name="paymentDate"
-                      type="date"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="file">
-                      {t("common.paymentProof")}
-                    </Label>
-                    <Input
-                      id="file"
-                      name="file"
-                      type="file"
-                      accept="image/*,.pdf"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" disabled={uploading} className="w-full">
-                    {uploading ? t("common.uploading") : t("common.uploadProof")}
-                  </Button>
-                </form>
+                {tenantPropertyId && (
+                  <SecurePaymentUpload
+                    tenantPropertyId={tenantPropertyId}
+                    monthlyRent={monthlyRent}
+                    onSuccess={() => {
+                      fetchPaymentProofs();
+                      setIsDialogOpen(false);
+                      toast({
+                        title: t("common.success"),
+                        description: t("payments.uploadProofDialogDescription"),
+                      });
+                    }}
+                    onCancel={() => setIsDialogOpen(false)}
+                  />
+                )}
               </DialogContent>
             </Dialog>
           </CardContent>

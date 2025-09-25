@@ -204,17 +204,10 @@ export default function PropertyPayments() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-gradient">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/admin/properties"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("common.backToProperties")}
-          </Link>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <CreditCard className="h-8 w-8" />

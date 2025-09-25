@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
+import Breadcrumb from "@/components/breadcrumb";
 
 interface DashboardContentProps {
   isAdmin: boolean;
@@ -39,6 +40,11 @@ export default function DashboardContent({
   return (
     <main className="w-full bg-hero-gradient min-h-screen">
       <div className="container mx-auto px-4 py-8">
+        {/* Breadcrumb Navigation */}
+        <div className="mb-6">
+          <Breadcrumb />
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">
@@ -58,162 +64,183 @@ export default function DashboardContent({
           <div className="space-y-8">
             {/* Admin Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-primary/5 border-0 shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     {t("properties.totalProperties")}
                   </CardTitle>
-                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <Building className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-3xl font-bold text-primary">
                     {adminStats?.properties}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Total managed properties
+                  </p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-blue-500/5 border-0 shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     {t("tenants.activeTenants")}
                   </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Users className="h-5 w-5 text-blue-600 group-hover:text-blue-500 transition-colors" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-3xl font-bold text-blue-600">
                     {adminStats?.tenants}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Active tenant accounts
+                  </p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-orange-500/5 border-0 shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     {t("payments.pendingPayments")}
                   </CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <CreditCard className="h-5 w-5 text-orange-600 group-hover:text-orange-500 transition-colors" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-3xl font-bold text-orange-600">
                     {adminStats?.pendingPayments}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Awaiting review
+                  </p>
                 </CardContent>
               </Card>
             </div>
 
             {/* Admin Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Building className="h-5 w-5" />
-                    {t("properties.manageProperties")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("properties.addEditManage")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/admin/properties">
-                    <Button className="w-full">
+              <Link href="/admin/properties" className="group">
+                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-emerald-500/10 border-0 shadow-md hover:shadow-emerald-100/50 h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                        <Building className="h-5 w-5 text-emerald-600" />
+                      </div>
+                      {t("properties.manageProperties")}
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {t("properties.addEditManage")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full group-hover:bg-emerald-600 transition-colors">
                       {t("properties.viewProperties")}
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    {t("tenants.manageTenants")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("tenants.addEditManage")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/admin/tenants">
-                    <Button className="w-full">
+              <Link href="/admin/tenants" className="group">
+                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-blue-500/10 border-0 shadow-md hover:shadow-blue-100/50 h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                        <Users className="h-5 w-5 text-blue-600" />
+                      </div>
+                      {t("tenants.manageTenants")}
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {t("tenants.addEditManage")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full group-hover:bg-blue-600 transition-colors">
                       {t("tenants.viewTenants")}
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="h-5 w-5" />
-                    {t("payments.paymentManagement")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("payments.reviewApprove")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/admin/payments">
-                    <Button className="w-full">
+              <Link href="/admin/payments" className="group">
+                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-orange-500/10 border-0 shadow-md hover:shadow-orange-100/50 h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                        <CreditCard className="h-5 w-5 text-orange-600" />
+                      </div>
+                      {t("payments.paymentManagement")}
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {t("payments.reviewApprove")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full group-hover:bg-orange-600 transition-colors">
                       {t("payments.viewPayments")}
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    {t("messages.conversations")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("messages.manageTenantCommunications")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/admin/conversations">
-                    <Button className="w-full">
+              <Link href="/admin/conversations" className="group">
+                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-purple-500/10 border-0 shadow-md hover:shadow-purple-100/50 h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                        <MessageSquare className="h-5 w-5 text-purple-600" />
+                      </div>
+                      {t("messages.conversations")}
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {t("messages.manageTenantCommunications")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full group-hover:bg-purple-600 transition-colors">
                       {t("messages.viewMessages")}
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    {t("inventory.inventoryManagement")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("inventory.managePropertyInventories")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/admin/inventory">
-                    <Button className="w-full">
+              <Link href="/admin/inventory" className="group">
+                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-indigo-500/10 border-0 shadow-md hover:shadow-indigo-100/50 h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                        <Package className="h-5 w-5 text-indigo-600" />
+                      </div>
+                      {t("inventory.inventoryManagement")}
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {t("inventory.managePropertyInventories")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full group-hover:bg-indigo-600 transition-colors">
                       {t("inventory.viewInventory")}
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
 
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    {t("handover.keyHandovers")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("handover.scheduleManage")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Link href="/admin/handovers">
-                    <Button className="w-full">
+              <Link href="/admin/handovers" className="group">
+                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-rose-500/10 border-0 shadow-md hover:shadow-rose-100/50 h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-rose-100 rounded-lg group-hover:bg-rose-200 transition-colors">
+                        <Calendar className="h-5 w-5 text-rose-600" />
+                      </div>
+                      {t("handover.keyHandovers")}
+                    </CardTitle>
+                    <CardDescription className="text-sm leading-relaxed">
+                      {t("handover.scheduleManage")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button className="w-full group-hover:bg-rose-600 transition-colors">
                       {t("handover.viewSchedule")}
                     </Button>
-                  </Link>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             </div>
           </div>
         ) : (
@@ -222,67 +249,76 @@ export default function DashboardContent({
             {tenantProperty ? (
               <>
                 {/* Property Info */}
-                <Card>
+                <Card className="bg-gradient-to-br from-card via-card to-primary/5 border-0 shadow-lg">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Home className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Home className="h-6 w-6 text-primary" />
+                      </div>
                       {t("property.yourProperty")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">
+                    <div className="space-y-6">
+                      <div className="bg-gradient-to-r from-primary/5 to-transparent p-4 rounded-lg">
+                        <h3 className="font-bold text-xl text-foreground">
                           {tenantProperty.properties.name}
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-muted-foreground mt-1">
                           {tenantProperty.properties.address}
                         </p>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-500">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-colors">
+                          <span className="text-emerald-700 text-sm font-medium">
                             {t("property.monthlyRent")}
                           </span>
-                          <p className="font-semibold">
+                          <p className="font-bold text-lg text-emerald-800">
                             ${tenantProperty.monthly_rent}
                           </p>
                         </div>
-                        <div>
-                          <span className="text-gray-500">
+                        <div className="p-3 bg-blue-50 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
+                          <span className="text-blue-700 text-sm font-medium">
                             {t("property.leaseStart")}
                           </span>
-                          <p className="font-semibold">
+                          <p className="font-bold text-sm text-blue-800">
                             {new Intl.DateTimeFormat("en-GB", { timeZone: "UTC" }).format(
                               new Date(tenantProperty.lease_start_date)
                             )}
                           </p>
                         </div>
-                        <div>
-                          <span className="text-gray-500">
+                        <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 hover:bg-orange-100 transition-colors">
+                          <span className="text-orange-700 text-sm font-medium">
                             {t("property.leaseEnd")}
                           </span>
-                          <p className="font-semibold">
+                          <p className="font-bold text-sm text-orange-800">
                             {new Intl.DateTimeFormat("en-GB", { timeZone: "UTC" }).format(
                               new Date(tenantProperty.lease_end_date)
                             )}
                           </p>
                         </div>
-                        <div>
-                          <span className="text-gray-500">
+                        <div className="p-3 bg-purple-50 rounded-lg border border-purple-100 hover:bg-purple-100 transition-colors">
+                          <span className="text-purple-700 text-sm font-medium">
                             {t("property.status")}
                           </span>
-                          <Badge
-                            variant={
-                              tenantProperty.status === "active"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {tenantProperty.status === "active"
-                              ? t("common.active")
-                              : t("common.inactive")}
-                          </Badge>
+                          <div className="mt-1">
+                            <Badge
+                              variant={
+                                tenantProperty.status === "active"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className={
+                                tenantProperty.status === "active"
+                                  ? "bg-green-100 text-green-800 border-green-200"
+                                  : ""
+                              }
+                            >
+                              {tenantProperty.status === "active"
+                                ? t("common.active")
+                                : t("common.inactive")}
+                            </Badge>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -291,81 +327,89 @@ export default function DashboardContent({
 
                 {/* Quick Actions */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Package className="h-5 w-5" />
-                        {t("inventory.inventory")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("inventory.viewManageProperty")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Link href="/tenant/inventory">
-                        <Button className="w-full">
+                  <Link href="/tenant/inventory" className="group">
+                    <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-indigo-500/10 border-0 shadow-md hover:shadow-indigo-100/50 h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                            <Package className="h-5 w-5 text-indigo-600" />
+                          </div>
+                          {t("inventory.inventory")}
+                        </CardTitle>
+                        <CardDescription className="text-sm leading-relaxed">
+                          {t("inventory.viewManageProperty")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button className="w-full group-hover:bg-indigo-600 transition-colors">
                           {t("inventory.viewInventory")}
                         </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
 
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <CreditCard className="h-5 w-5" />
-                        {t("payments.paymentManagement")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("payments.uploadProofView")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Link href="/tenant/payments">
-                        <Button className="w-full">
+                  <Link href="/tenant/payments" className="group">
+                    <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-emerald-500/10 border-0 shadow-md hover:shadow-emerald-100/50 h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                            <CreditCard className="h-5 w-5 text-emerald-600" />
+                          </div>
+                          {t("payments.paymentManagement")}
+                        </CardTitle>
+                        <CardDescription className="text-sm leading-relaxed">
+                          {t("payments.uploadProofView")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button className="w-full group-hover:bg-emerald-600 transition-colors">
                           {t("payments.managePayments")}
                         </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
 
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <MessageSquare className="h-5 w-5" />
-                        {t("messages.messages")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("messages.contactAdminProperty")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Link href="/tenant/messages">
-                        <Button className="w-full">
+                  <Link href="/tenant/messages" className="group">
+                    <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-blue-500/10 border-0 shadow-md hover:shadow-blue-100/50 h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                            <MessageSquare className="h-5 w-5 text-blue-600" />
+                          </div>
+                          {t("messages.messages")}
+                        </CardTitle>
+                        <CardDescription className="text-sm leading-relaxed">
+                          {t("messages.contactAdminProperty")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button className="w-full group-hover:bg-blue-600 transition-colors">
                           {t("messages.sendMessage")}
                         </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
 
-                  <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
-                        {t("handover.keyHandover")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("handover.scheduleKeyExchanges")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Link href="/tenant/handover">
-                        <Button className="w-full">
+                  <Link href="/tenant/handover" className="group">
+                    <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-orange-500/10 border-0 shadow-md hover:shadow-orange-100/50 h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                          <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                            <Calendar className="h-5 w-5 text-orange-600" />
+                          </div>
+                          {t("handover.keyHandover")}
+                        </CardTitle>
+                        <CardDescription className="text-sm leading-relaxed">
+                          {t("handover.scheduleKeyExchanges")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button className="w-full group-hover:bg-orange-600 transition-colors">
                           {t("handover.schedule")}
                         </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </Link>
                 </div>
               </>
             ) : (

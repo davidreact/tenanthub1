@@ -43,6 +43,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
+import { formatCurrency } from "@/lib/utils";
+import { SecurePropertyForm } from "@/components/SecurePropertyForm";
 
 interface Property {
   id: string;
@@ -163,15 +165,15 @@ export default function AdminProperties() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "available":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400";
       case "occupied":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400";
       case "maintenance":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400";
       case "unavailable":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-muted-foreground";
     }
   };
 
@@ -187,286 +189,144 @@ export default function AdminProperties() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-gradient">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("common.backToDashboard")}
-          </Link>
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-                <Building className="h-8 w-8" />
-                {t("properties.manageProperties")}
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                {t("properties.addEditManage")}
-              </p>
-            </div>
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={setIsCreateDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("common.add")} {t("common.property")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>
-                    {t("common.add")} {t("common.property")}
-                  </DialogTitle>
-                  <DialogDescription>
-                    {t("properties.addEditManage")}
-                  </DialogDescription>
-                </DialogHeader>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const formData = new FormData(e.currentTarget);
-                    const propertyData = {
-                      name: formData.get("name") as string,
-                      address: formData.get("address") as string,
-                      description: formData.get("description") as string,
-                      property_type: formData.get("property_type") as string,
-                      bedrooms: parseInt(formData.get("bedrooms") as string),
-                      bathrooms: parseInt(formData.get("bathrooms") as string),
-                      square_meters: parseInt(
-                        formData.get("square_meters") as string,
-                      ),
-                      monthly_rent: parseFloat(
-                        formData.get("monthly_rent") as string,
-                      ),
-                      deposit_amount: parseFloat(
-                        formData.get("deposit_amount") as string,
-                      ),
-                      status: formData.get("status") as string,
-                    };
-
-                    createProperty(propertyData);
-                  }}
-                  className="space-y-4"
-                >
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name">{t("common.propertyName")}</Label>
-                      <Input id="name" name="name" required />
-                    </div>
-                    <div>
-                      <Label htmlFor="property_type">
-                        {t("common.propertyType")}
-                      </Label>
-                      <Select name="property_type" required>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t("common.propertyType")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="apartment">
-                            {t("common.apartment")}
-                          </SelectItem>
-                          <SelectItem value="house">
-                            {t("common.house")}
-                          </SelectItem>
-                          <SelectItem value="condo">
-                            {t("common.condo")}
-                          </SelectItem>
-                          <SelectItem value="studio">
-                            {t("common.studio")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="address">{t("common.address")}</Label>
-                    <Textarea id="address" name="address" required />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="description">
-                      {t("common.description")}
-                    </Label>
-                    <Textarea id="description" name="description" rows={3} />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="bedrooms">{t("common.bedrooms")}</Label>
-                      <Input
-                        id="bedrooms"
-                        name="bedrooms"
-                        type="number"
-                        min="0"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="bathrooms">{t("common.bathrooms")}</Label>
-                      <Input
-                        id="bathrooms"
-                        name="bathrooms"
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="square_meters">
-                        {t("common.squareMeters")}
-                      </Label>
-                      <Input
-                        id="square_meters"
-                        name="square_meters"
-                        type="number"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="monthly_rent">
-                        {t("common.monthlyRent")} ($)
-                      </Label>
-                      <Input
-                        id="monthly_rent"
-                        name="monthly_rent"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="deposit_amount">
-                        {t("common.depositAmount")} ($)
-                      </Label>
-                      <Input
-                        id="deposit_amount"
-                        name="deposit_amount"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="status">{t("common.status")}</Label>
-                    <Select name="status" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t("common.status")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="available">Available</SelectItem>
-                        <SelectItem value="occupied">Occupied</SelectItem>
-                        <SelectItem value="maintenance">Maintenance</SelectItem>
-                        <SelectItem value="unavailable">Unavailable</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button type="submit" className="w-full">
-                    {t("common.createProperty")}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+    <div className="px-6 py-4">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <Building className="h-8 w-8 text-emerald-600" />
+              </div>
+              {t("properties.manageProperties")}
+            </h1>
+            <p className="text-muted-foreground mt-3">
+              {t("properties.addEditManage")}
+            </p>
           </div>
+          <Dialog
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t("common.add")} {t("common.property")}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+                 <DialogHeader>
+                   <DialogTitle>
+                     {t("common.add")} {t("common.property")}
+                   </DialogTitle>
+                   <DialogDescription>
+                     {t("properties.addEditManage")}
+                   </DialogDescription>
+                 </DialogHeader>
+                 <SecurePropertyForm
+                   onSuccess={() => {
+                     fetchProperties();
+                     setIsCreateDialogOpen(false);
+                     toast({
+                       title: t("common.propertyCreated"),
+                       description: t("common.propertyCreatedDescription"),
+                     });
+                   }}
+                   onCancel={() => setIsCreateDialogOpen(false)}
+                 />
+            </DialogContent>
+          </Dialog>
         </div>
+      </div>
 
-        {/* Properties Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {properties.map((property) => (
-            <Card
-              key={property.id}
-              className="hover:shadow-lg transition-shadow"
-            >
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{property.name}</CardTitle>
-                  <Badge className={getStatusColor(property.status)}>
-                    {property.status === "available"
-                      ? t("common.available")
-                      : property.status === "occupied"
-                        ? t("common.occupied")
-                        : property.status === "maintenance"
-                          ? t("common.maintenance")
-                          : property.status === "unavailable"
-                            ? t("common.unavailable")
-                            : property.status}
-                  </Badge>
+      {/* Properties Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {properties.map((property) => (
+          <Card
+            key={property.id}
+            className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 bg-gradient-to-br from-card via-card to-emerald-500/5 border-0 shadow-md hover:shadow-emerald-100/50"
+          >
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <CardTitle className="text-xl font-bold group-hover:text-emerald-600 transition-colors">
+                  {property.name}
+                </CardTitle>
+                <Badge
+                  className={`${getStatusColor(property.status)} border-0 shadow-sm`}
+                >
+                  {property.status === "available"
+                    ? t("common.available")
+                    : property.status === "occupied"
+                      ? t("common.occupied")
+                      : property.status === "maintenance"
+                        ? t("common.maintenance")
+                        : property.status === "unavailable"
+                          ? t("common.unavailable")
+                          : property.status}
+                </Badge>
+              </div>
+              <CardDescription className="text-sm text-muted-foreground mt-2">
+                📍 {property.address}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {/* Property Type and Rent Row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Building className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground capitalize text-sm">{property.property_type}</span>
                 </div>
-                <CardDescription className="text-sm">
-                  {property.address}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">
-                      {t("common.propertyType")}:
-                    </span>
-                    <p className="font-medium capitalize">
-                      {property.property_type}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">
-                      {t("common.monthlyRent")}:
-                    </span>
-                    <p className="font-medium">${property.monthly_rent}/mo</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">
-                      {t("common.bedrooms")}:
-                    </span>
-                    <p className="font-medium">{property.bedrooms}</p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">
-                      {t("common.bathrooms")}:
-                    </span>
-                    <p className="font-medium">{property.bathrooms}</p>
-                  </div>
+                <div className="text-right">
+                  <div className="font-bold text-foreground text-lg">{formatCurrency(property.monthly_rent)}</div>
+                  <div className="text-muted-foreground text-xs">per month</div>
                 </div>
+              </div>
 
-                {property.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+              {/* Bedrooms and Bathrooms Row */}
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground text-xs">Bedrooms:</span>
+                  <span className="font-medium text-foreground">{property.bedrooms}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground text-xs">Bathrooms:</span>
+                  <span className="font-medium text-foreground">{property.bathrooms}</span>
+                </div>
+              </div>
+
+              {/* Description - show if exists */}
+              {property.description && (
+                <div className="pt-2 border-t border-border/50">
+                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
                     {property.description}
                   </p>
-                )}
+                </div>
+              )}
 
-                <div className="flex gap-2">
-                  <Dialog
-                    open={isEditDialogOpen}
-                    onOpenChange={setIsEditDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          setSelectedProperty(property);
-                          setIsEditing(true);
-                          setIsEditDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        {t("common.edit")}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
+              <div className="flex gap-2 pt-3 border-t border-border">
+                <Dialog
+                  open={isEditDialogOpen}
+                  onOpenChange={setIsEditDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 hover:bg-muted transition-colors"
+                      onClick={() => {
+                        setSelectedProperty(property);
+                        setIsEditing(true);
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      {t("common.edit")}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>
                           {t("common.edit")} {t("common.property")}
@@ -476,255 +336,98 @@ export default function AdminProperties() {
                         </DialogDescription>
                       </DialogHeader>
                       {selectedProperty && (
-                        <form
-                          onSubmit={(e) => {
-                            e.preventDefault();
-                            const formData = new FormData(e.currentTarget);
-                            const propertyData = {
-                              name: formData.get("name") as string,
-                              address: formData.get("address") as string,
-                              description: formData.get(
-                                "description",
-                              ) as string,
-                              property_type: formData.get(
-                                "property_type",
-                              ) as string,
-                              bedrooms: parseInt(
-                                formData.get("bedrooms") as string,
-                              ),
-                              bathrooms: parseInt(
-                                formData.get("bathrooms") as string,
-                              ),
-                              square_meters: parseInt(
-                                formData.get("square_meters") as string,
-                              ),
-                              monthly_rent: parseFloat(
-                                formData.get("monthly_rent") as string,
-                              ),
-                              deposit_amount: parseFloat(
-                                formData.get("deposit_amount") as string,
-                              ),
-                              status: formData.get("status") as string,
-                            };
-
-                            updateProperty(selectedProperty.id, propertyData);
+                        <SecurePropertyForm
+                          initialData={{
+                            name: selectedProperty.name,
+                            address: selectedProperty.address,
+                            description: selectedProperty.description,
+                            property_type: selectedProperty.property_type,
+                            bedrooms: selectedProperty.bedrooms,
+                            bathrooms: selectedProperty.bathrooms,
+                            square_meters: selectedProperty.square_meters,
+                            monthly_rent: selectedProperty.monthly_rent,
+                            deposit_amount: selectedProperty.deposit_amount,
+                            status: selectedProperty.status as "available" | "occupied" | "maintenance",
                           }}
-                          className="space-y-4"
-                        >
-                          <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="edit-name">{t("common.propertyName")}</Label>
-                            <Input
-                              id="edit-name"
-                              name="name"
-                              defaultValue={selectedProperty.name}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="edit-property_type">
-                              {t("common.propertyType")}
-                            </Label>
-                              <Select
-                                name="property_type"
-                                defaultValue={selectedProperty.property_type}
-                                required
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="apartment">
-                                    Apartment
-                                  </SelectItem>
-                                  <SelectItem value="house">
-                                    {t("common.house")}
-                                  </SelectItem>
-                                  <SelectItem value="condo">
-                                    {t("common.condo")}
-                                  </SelectItem>
-                                  <SelectItem value="studio">
-                                    {t("common.studio")}
-                                  </SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-
-                          <div>
-                            <Label htmlFor="edit-address">{t("common.address")}</Label>
-                            <Textarea
-                              id="edit-address"
-                              name="address"
-                              defaultValue={selectedProperty.address}
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <Label htmlFor="edit-description">
-                              {t("common.description")}
-                            </Label>
-                            <Textarea
-                              id="edit-description"
-                              name="description"
-                              defaultValue={selectedProperty.description}
-                              rows={3}
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <Label htmlFor="edit-bedrooms">{t("common.bedrooms")}</Label>
-                              <Input
-                                id="edit-bedrooms"
-                                name="bedrooms"
-                                type="number"
-                                min="0"
-                                defaultValue={selectedProperty.bedrooms}
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-bathrooms">{t("common.bathrooms")}</Label>
-                              <Input
-                                id="edit-bathrooms"
-                                name="bathrooms"
-                                type="number"
-                                min="0"
-                                step="0.5"
-                                defaultValue={selectedProperty.bathrooms}
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-square_meters">
-                                {t("common.squareMeters")}
-                              </Label>
-                              <Input
-                                id="edit-square_meters"
-                                name="square_meters"
-                                type="number"
-                                min="0"
-                                defaultValue={selectedProperty.square_meters}
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <Label htmlFor="edit-monthly_rent">
-                                {t("common.monthlyRent")} ($)
-                              </Label>
-                              <Input
-                                id="edit-monthly_rent"
-                                name="monthly_rent"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                defaultValue={selectedProperty.monthly_rent}
-                                required
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="edit-deposit_amount">
-                                {t("common.depositAmount")} ($)
-                              </Label>
-                              <Input
-                                id="edit-deposit_amount"
-                                name="deposit_amount"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                defaultValue={selectedProperty.deposit_amount}
-                              />
-                            </div>
-                          </div>
-
-
-                          <div>
-                          <Label htmlFor="edit-status">{t("common.status")}</Label>                            
-                          <Select
-                              name="status"
-                              defaultValue={selectedProperty.status}
-                              required
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="available">
-                                  Available
-                                </SelectItem>
-                                <SelectItem value="occupied">
-                                  Occupied
-                                </SelectItem>
-                                <SelectItem value="maintenance">
-                                  Maintenance
-                                </SelectItem>
-                                <SelectItem value="unavailable">
-                                  Unavailable
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <Button type="submit" className="w-full">
-                            {t("common.saveChanges")}
-                          </Button>
-                        </form>
+                          isEditing={true}
+                          onSuccess={() => {
+                            fetchProperties();
+                            setIsEditDialogOpen(false);
+                            setSelectedProperty(null);
+                            toast({
+                              title: t("common.propertyUpdated"),
+                              description: t("common.propertyUpdatedDescription"),
+                            });
+                          }}
+                          onCancel={() => {
+                            setIsEditDialogOpen(false);
+                            setSelectedProperty(null);
+                          }}
+                        />
                       )}
                     </DialogContent>
                   </Dialog>
 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => deleteProperty(property.id)}
+                  className="hover:bg-destructive/10 hover:border-destructive/20 hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <Link href={`/admin/properties/${property.id}/tenants`}>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    onClick={() => deleteProperty(property.id)}
+                    className="w-full h-8 text-xs hover:bg-muted"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Users className="h-3 w-3 mr-1" />
+                    Tenants
                   </Button>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <Link
-                    href={`/admin/properties/${property.id}/tenants`}
-                    className="flex-1"
+                </Link>
+                <Link href={`/admin/properties/${property.id}/inventory`}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full h-8 text-xs hover:bg-muted"
                   >
-                    <Button variant="secondary" size="sm" className="w-full">
-                      <Users className="h-4 w-4 mr-2" />
-                      {t("tenants.viewTenants")}
-                    </Button>
-                  </Link>
-                  <Link
-                    href={`/admin/properties/${property.id}/inventory`}
-                    className="flex-1"
-                  >
-                    <Button variant="secondary" size="sm" className="w-full">
-                      <Package className="h-4 w-4 mr-2" />
-                      {t("inventory.inventory")}
-                    </Button>
-                  </Link>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {properties.length === 0 && (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Building className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-2">
-                {t("common.noProperties")}
-              </h3>
-              <p className="text-muted-foreground">
-                {t("common.noPropertiesDescription")}
-              </p>
+                    <Package className="h-3 w-3 mr-1" />
+                    Inventory
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
-        )}
+        ))}
       </div>
+
+      {properties.length === 0 && (
+        <Card className="bg-gradient-to-br from-card via-card to-emerald-500/5 border-0 shadow-lg">
+          <CardContent className="text-center py-16">
+            <div className="p-4 bg-emerald-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+              <Building className="h-12 w-12 text-emerald-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-foreground mb-3">
+              {t("common.noProperties")}
+            </h3>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              {t("common.noPropertiesDescription")}
+            </p>
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="mt-6 bg-emerald-600 hover:bg-emerald-700 shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t("common.add")} {t("common.property")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

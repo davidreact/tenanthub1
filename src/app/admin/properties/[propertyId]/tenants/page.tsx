@@ -19,6 +19,7 @@ import { formatTranslation } from "@/lib/i18n";
 import { formatCurrency } from "@/lib/utils";
 
 import { useToast } from "@/components/ui/use-toast";
+import { useCSRF } from "@/hooks/useCSRF";
 
 interface Property {
   id: string;
@@ -55,6 +56,7 @@ export default function PropertyTenants() {
   const supabase = createClient();
   const { t, language } = useLanguage();
   const { toast } = useToast();
+  const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
 
   useEffect(() => {
     if (propertyId) {
@@ -152,23 +154,46 @@ export default function PropertyTenants() {
     tenantPropertyId: string,
     newStatus: string,
   ) => {
-    try {
-      await supabase
-        .from("tenant_properties")
-        .update({ status: newStatus })
-        .eq("id", tenantPropertyId);
+    if (!csrfToken) {
+      toast({
+        title: t("common.error"),
+        description: "Security token missing. Please refresh and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      // If terminating lease, update property status to available
-      if (newStatus === "terminated") {
-        await supabase
-          .from("properties")
-          .update({ status: "available" })
-          .eq("id", propertyId);
+    try {
+      const response = await fetch("/api/admin/update-tenant-property", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tenantPropertyId,
+          status: newStatus,
+          csrfToken,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update tenant property status");
       }
 
       fetchData(); // Refresh data
+
+      toast({
+        title: t("common.success"),
+        description: `Tenant property status updated to ${newStatus}.`,
+      });
     } catch (error) {
       console.error("Error updating tenant property status:", error);
+      toast({
+        title: t("common.error"),
+        description: error instanceof Error ? error.message : "Failed to update tenant property status. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -205,17 +230,10 @@ export default function PropertyTenants() {
   }
 
   return (
-    <div className="min-h-screen bg-hero-gradient">
+    <div className="min-h-screen">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/admin/properties"
-            className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("common.backToProperties")}
-          </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
               <Users className="h-8 w-8" />

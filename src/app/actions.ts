@@ -4,13 +4,29 @@ import { encodedRedirect } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "../../supabase/server";
+import { getRateLimit } from "@/lib/rate-limit";
+import { validateCSRFToken } from "@/lib/csrf";
 
 export const signUpAction = async (formData: FormData) => {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ||
+             headersList.get('x-real-ip') ||
+             'unknown';
+
+  // Rate limiting for sign-up attempts
+  const rateLimitResult = await getRateLimit('auth', `signup:${ip}`);
+  if (!rateLimitResult.success) {
+    return encodedRedirect(
+      "error",
+      "/sign-up",
+      "Too many sign-up attempts. Please try again later.",
+    );
+  }
+
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const fullName = formData.get("full_name")?.toString() || "";
   const supabase = await createClient();
-  const headersList = await headers();
   const origin = headersList.get("origin");
 
   if (!email || !password) {
@@ -50,6 +66,21 @@ export const signUpAction = async (formData: FormData) => {
 };
 
 export const signInAction = async (formData: FormData) => {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ||
+             headersList.get('x-real-ip') ||
+             'unknown';
+
+  // Rate limiting for sign-in attempts
+  const rateLimitResult = await getRateLimit('auth', `signin:${ip}`);
+  if (!rateLimitResult.success) {
+    return encodedRedirect(
+      "error",
+      "/sign-in",
+      "Too many sign-in attempts. Please try again later.",
+    );
+  }
+
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const supabase = await createClient();
@@ -67,9 +98,23 @@ export const signInAction = async (formData: FormData) => {
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ||
+             headersList.get('x-real-ip') ||
+             'unknown';
+
+  // Rate limiting for password reset attempts
+  const rateLimitResult = await getRateLimit('auth', `reset:${ip}`);
+  if (!rateLimitResult.success) {
+    return encodedRedirect(
+      "error",
+      "/forgot-password",
+      "Too many password reset attempts. Please try again later.",
+    );
+  }
+
   const email = formData.get("email")?.toString();
   const supabase = await createClient();
-  const headersList = await headers();
   const origin = headersList.get("origin");
   const callbackUrl = formData.get("callbackUrl")?.toString();
 
@@ -145,6 +190,22 @@ export const signOutAction = async () => {
 };
 
 export const createTenantAction = async (formData: FormData) => {
+  const headersList = await headers();
+  const ip = headersList.get('x-forwarded-for') ||
+             headersList.get('x-real-ip') ||
+             'unknown';
+
+  // Rate limiting for tenant creation (admin action)
+  const rateLimitResult = await getRateLimit('admin', `create-tenant:${ip}`);
+  if (!rateLimitResult.success) {
+    return encodedRedirect(
+      "error",
+      "/admin/tenants",
+      "Too many tenant creation attempts. Please try again later.",
+    );
+  }
+
+
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const fullName = formData.get("fullName")?.toString() || "";
