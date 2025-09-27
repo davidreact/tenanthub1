@@ -52,7 +52,7 @@ export default function Hero() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link
-                href="/dashboard"
+                href="/pm-dashboard"
                 className="inline-flex items-center px-8 py-4 text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors text-lg font-medium"
               >
                 {t("home.accessPortal")}

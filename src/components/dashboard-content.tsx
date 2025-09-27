@@ -21,16 +21,15 @@ import {
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Breadcrumb from "@/components/breadcrumb";
+import UserWelcomeCard from "@/components/user-welcome-card";
 
 interface DashboardContentProps {
-  isAdmin: boolean;
   userProfile: any;
   tenantProperty: any;
   adminStats: any;
 }
 
 export default function DashboardContent({
-  isAdmin,
   userProfile,
   tenantProperty,
   adminStats,
@@ -47,202 +46,207 @@ export default function DashboardContent({
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">
-            {isAdmin
-              ? t("dashboard.adminDashboard")
-              : t("dashboard.tenantDashboard")}
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            {isAdmin
-              ? t("dashboard.manageProperties")
-              : `${t("dashboard.welcomeBack")}, ${userProfile?.full_name || userProfile?.name || "Tenant"}`}
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                {userProfile?.role === 'property_manager'
+                  ? "Property Manager Dashboard"
+                  : "Tenant Dashboard"}
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                {userProfile?.role === 'property_manager'
+                  ? "Manage your assigned properties and tenants"
+                  : "View your property and lease information"}
+              </p>
+            </div>
+            <UserWelcomeCard userProfile={userProfile} />
+          </div>
         </div>
 
-        {isAdmin ? (
-          // Admin Dashboard
+        {userProfile?.role === 'property_manager' ? (
+          // Property Manager Dashboard
           <div className="space-y-8">
-            {/* Admin Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-primary/5 border-0 shadow-md">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {t("properties.totalProperties")}
-                  </CardTitle>
-                  <Building className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-primary">
-                    {adminStats?.properties}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Total managed properties
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-blue-500/5 border-0 shadow-md">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {t("tenants.activeTenants")}
-                  </CardTitle>
-                  <Users className="h-5 w-5 text-blue-600 group-hover:text-blue-500 transition-colors" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-blue-600">
-                    {adminStats?.tenants}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Active tenant accounts
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-orange-500/5 border-0 shadow-md">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    {t("payments.pendingPayments")}
-                  </CardTitle>
-                  <CreditCard className="h-5 w-5 text-orange-600 group-hover:text-orange-500 transition-colors" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-orange-600">
-                    {adminStats?.pendingPayments}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Awaiting review
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Admin Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Link href="/admin/properties" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-emerald-500/10 border-0 shadow-md hover:shadow-emerald-100/50 h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
-                        <Building className="h-5 w-5 text-emerald-600" />
-                      </div>
-                      {t("properties.manageProperties")}
-                    </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
-                      {t("properties.addEditManage")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full group-hover:bg-emerald-600 transition-colors">
-                      {t("properties.viewProperties")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/tenants" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-blue-500/10 border-0 shadow-md hover:shadow-blue-100/50 h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                        <Users className="h-5 w-5 text-blue-600" />
-                      </div>
-                      {t("tenants.manageTenants")}
-                    </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
-                      {t("tenants.addEditManage")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full group-hover:bg-blue-600 transition-colors">
-                      {t("tenants.viewTenants")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/payments" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-orange-500/10 border-0 shadow-md hover:shadow-orange-100/50 h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
-                        <CreditCard className="h-5 w-5 text-orange-600" />
-                      </div>
-                      {t("payments.paymentManagement")}
-                    </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
-                      {t("payments.reviewApprove")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full group-hover:bg-orange-600 transition-colors">
-                      {t("payments.viewPayments")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/conversations" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-purple-500/10 border-0 shadow-md hover:shadow-purple-100/50 h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                        <MessageSquare className="h-5 w-5 text-purple-600" />
-                      </div>
-                      {t("messages.conversations")}
-                    </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
-                      {t("messages.manageTenantCommunications")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full group-hover:bg-purple-600 transition-colors">
-                      {t("messages.viewMessages")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/inventory" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-indigo-500/10 border-0 shadow-md hover:shadow-indigo-100/50 h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-                        <Package className="h-5 w-5 text-indigo-600" />
-                      </div>
-                      {t("inventory.inventoryManagement")}
-                    </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
-                      {t("inventory.managePropertyInventories")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full group-hover:bg-indigo-600 transition-colors">
-                      {t("inventory.viewInventory")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-
-              <Link href="/admin/handovers" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-rose-500/10 border-0 shadow-md hover:shadow-rose-100/50 h-full">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-rose-100 rounded-lg group-hover:bg-rose-200 transition-colors">
-                        <Calendar className="h-5 w-5 text-rose-600" />
-                      </div>
-                      {t("handover.keyHandovers")}
-                    </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
-                      {t("handover.scheduleManage")}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full group-hover:bg-rose-600 transition-colors">
-                      {t("handover.viewSchedule")}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Link>
-            </div>
+          {/* Property Manager Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-primary/5 border-0 shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  My Properties
+                </CardTitle>
+                <Building className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  {adminStats?.properties || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Properties I manage
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-blue-500/5 border-0 shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  My Tenants
+                </CardTitle>
+                <Users className="h-5 w-5 text-blue-600 group-hover:text-blue-500 transition-colors" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {adminStats?.tenants || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tenants in my properties
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-orange-500/5 border-0 shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Pending Reviews
+                </CardTitle>
+                <CreditCard className="h-5 w-5 text-orange-600 group-hover:text-orange-500 transition-colors" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-600">
+                  {adminStats?.pendingPayments || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Payments to review
+                </p>
+              </CardContent>
+            </Card>
           </div>
+
+          {/* Property Manager Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <Link href="/pm-dashboard/properties" className="group">
+              <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-emerald-500/10 border-0 shadow-md hover:shadow-emerald-100/50 h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+                      <Building className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    My Properties
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    View and manage properties assigned to me
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full group-hover:bg-emerald-600 transition-colors">
+                    View Properties
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/pm-dashboard/tenants" className="group">
+              <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-blue-500/10 border-0 shadow-md hover:shadow-blue-100/50 h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                      <Users className="h-5 w-5 text-blue-600" />
+                    </div>
+                    My Tenants
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Manage tenants in my properties
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full group-hover:bg-blue-600 transition-colors">
+                    View Tenants
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/pm-dashboard/payments" className="group">
+              <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-orange-500/10 border-0 shadow-md hover:shadow-orange-100/50 h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                      <CreditCard className="h-5 w-5 text-orange-600" />
+                    </div>
+                    Payment Reviews
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Review and approve tenant payments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full group-hover:bg-orange-600 transition-colors">
+                    Review Payments
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/pm-dashboard/messages" className="group">
+              <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-purple-500/10 border-0 shadow-md hover:shadow-purple-100/50 h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                      <MessageSquare className="h-5 w-5 text-purple-600" />
+                    </div>
+                    Tenant Messages
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Communicate with tenants in my properties
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full group-hover:bg-purple-600 transition-colors">
+                    View Messages
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/pm-dashboard/inventory" className="group">
+              <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-indigo-500/10 border-0 shadow-md hover:shadow-indigo-100/50 h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
+                      <Package className="h-5 w-5 text-indigo-600" />
+                    </div>
+                    Property Inventory
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Manage inventory for my properties
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full group-hover:bg-indigo-600 transition-colors">
+                    Manage Inventory
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/pm-dashboard/handovers" className="group">
+              <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-rose-500/10 border-0 shadow-md hover:shadow-rose-100/50 h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3">
+                    <div className="p-2 bg-rose-100 rounded-lg group-hover:bg-rose-200 transition-colors">
+                      <Calendar className="h-5 w-5 text-rose-600" />
+                    </div>
+                    Key Handovers
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed">
+                    Schedule and manage key exchanges
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full group-hover:bg-rose-600 transition-colors">
+                    Manage Handovers
+                  </Button>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
+        </div>
         ) : (
           // Tenant Dashboard
           <div className="space-y-8">

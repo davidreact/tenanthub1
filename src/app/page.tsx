@@ -153,7 +153,7 @@ export default function Home() {
             {t("home.joinHundreds")}
           </p>
           <a
-            href="/dashboard"
+            href="/pm-dashboard"
             className="inline-flex items-center px-6 py-3 text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors"
           >
             {t("home.accessPortal")}

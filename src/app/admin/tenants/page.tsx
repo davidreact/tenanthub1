@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -40,7 +41,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { createTenantAction } from "../../actions";
-import { useRouter, useSearchParams } from "next/navigation";
 import { FormMessage } from "@/components/form-message";
 import { useToast } from "@/components/ui/use-toast";
 import { useCSRF } from "@/hooks/useCSRF";
@@ -92,22 +92,31 @@ export default function AdminTenants() {
   const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const scope = pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [scope]);
 
   const fetchData = async () => {
     try {
-      // Fetch tenants
-      const { data: tenantsData } = await supabase
-        .from("users")
-        .select("*")
-        .eq("role", "tenant")
-        .order("created_at", { ascending: false });
+      let propertyIds: string[] = [];
+
+      if (scope === 'pm') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: pmProperties } = await supabase
+            .from("properties")
+            .select("id")
+            .eq("managed_by", user.id);
+          propertyIds = pmProperties?.map(p => p.id) || [];
+        }
+      }
 
       // Fetch tenant properties
-      const { data: tenantPropsData } = await supabase
+      let tenantPropsQuery = supabase
         .from("tenant_properties")
         .select(
           `
@@ -117,11 +126,39 @@ export default function AdminTenants() {
         )
         .order("created_at", { ascending: false });
 
+      if (scope === 'pm' && propertyIds.length > 0) {
+        tenantPropsQuery = tenantPropsQuery.in("property_id", propertyIds);
+      }
+
+      const { data: tenantPropsData } = await tenantPropsQuery;
+
+      // Get tenant ids from tenant properties
+      const tenantIds = tenantPropsData?.map(tp => tp.tenant_id) || [];
+
+      // Fetch tenants
+      let tenantsQuery = supabase
+        .from("users")
+        .select("*")
+        .eq("role", "tenant")
+        .order("created_at", { ascending: false });
+
+      if (scope === 'pm' && tenantIds.length > 0) {
+        tenantsQuery = tenantsQuery.in("id", tenantIds);
+      }
+
+      const { data: tenantsData } = await tenantsQuery;
+
       // Fetch available properties
-      const { data: propertiesData } = await supabase
+      let propertiesQuery = supabase
         .from("properties")
         .select("id, name, address, status")
         .order("name");
+
+      if (scope === 'pm' && propertyIds.length > 0) {
+        propertiesQuery = propertiesQuery.in("id", propertyIds);
+      }
+
+      const { data: propertiesData } = await propertiesQuery;
 
       setTenants(tenantsData || []);
       setTenantProperties(tenantPropsData || []);
@@ -227,6 +264,21 @@ export default function AdminTenants() {
       </div>
     );
   }
+  
+  function AdminTenantsContent() {
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      }>
+        <AdminTenantsContent />
+      </Suspense>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-hero-gradient">
@@ -234,7 +286,7 @@ export default function AdminTenants() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/dashboard"
+            href={pathname.startsWith('/pm-dashboard') ? "/pm-dashboard" : "/admin"}
             className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -262,16 +314,17 @@ export default function AdminTenants() {
                 {t("tenants.addEditManage")}
               </p>
             </div>
-            <Dialog
-              open={isCreateDialogOpen}
-              onOpenChange={setIsCreateDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("common.add")} {t("common.tenant")}
-                </Button>
-              </DialogTrigger>
+            {scope === 'admin' && (
+              <Dialog
+                open={isCreateDialogOpen}
+                onOpenChange={setIsCreateDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("common.add")} {t("common.tenant")}
+                  </Button>
+                </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>
@@ -325,6 +378,7 @@ export default function AdminTenants() {
                 </form>
               </DialogContent>
             </Dialog>
+            )}
           </div>
         </div>
 

@@ -105,7 +105,7 @@ DROP POLICY IF EXISTS "Admins can manage admin properties" ON admin_properties;
 
 -- Admins can do everything with properties
 CREATE POLICY "Admins can manage all properties" ON properties
-FOR ALL USING (auth.jwt() ->> 'role' = 'admin');
+FOR ALL USING ((auth.jwt() -> 'user_metadata' ->> 'role') = 'admin');
 
 -- Tenants can only view properties they are associated with
 CREATE POLICY "Tenants can view their properties" ON properties

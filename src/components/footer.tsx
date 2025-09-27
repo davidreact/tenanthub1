@@ -18,7 +18,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/dashboard"
+                  href="/pm-dashboard"
                   className="text-muted-foreground hover:text-foreground"
                 >
                   {t("dashboard.tenantDashboard")}

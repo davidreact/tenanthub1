@@ -66,6 +66,7 @@ export default function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
     // Map common segments to readable labels
     const segmentLabels: Record<string, string> = {
       dashboard: t("nav.dashboard"),
+      "pm-dashboard": "Property Manager Dashboard",
       admin: t("dashboard.adminDashboard"),
       tenant: t("dashboard.tenantDashboard"),
       properties: t("properties.manageProperties"),
@@ -111,8 +112,12 @@ export default function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
 
       // Fix routing for admin and tenant sections
       let href = currentPath;
-      if (segment === 'admin' || segment === 'tenant') {
-        href = '/dashboard'; // Both admin and tenant sections redirect to dashboard
+      if (segment === 'admin') {
+        href = '/admin';
+      } else if (segment === 'tenant') {
+        href = '/tenant';
+      } else if (segment === 'pm-dashboard') {
+        href = '/pm-dashboard';
       }
 
       breadcrumbs.push({

@@ -147,7 +147,7 @@ export default function TenantPayments() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/dashboard"
+            href="/pm-dashboard"
             className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

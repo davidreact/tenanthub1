@@ -23,7 +23,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface SecurePropertyFormProps {
   onSuccess: () => void;
   onCancel: () => void;
-  initialData?: Partial<PropertyInput>;
+  initialData?: Partial<PropertyInput & { id?: string }>;
   isEditing?: boolean;
 }
 
@@ -65,10 +65,17 @@ export function SecurePropertyForm({
     setIsSubmitting(true);
 
     try {
-      // Include CSRF token in the request
+      // Get current user for property ownership
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Include CSRF token and ownership tracking
       const requestData = {
         ...data,
         csrfToken,
+        // Include property ID for editing
+        ...(isEditing && initialData?.id ? { id: initialData.id } : {}),
+        // Track who created the property (only for new properties)
+        ...(isEditing ? {} : { created_by: user?.id }),
       };
 
       const response = await fetch("/api/properties", {

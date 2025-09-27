@@ -23,8 +23,8 @@ export default async function AdminLayout({
     .eq("id", user.id)
     .single();
 
-  if (error || !userData || userData.role !== "admin") {
-    redirect("/dashboard"); // or unauthorized page
+  if (error || !userData || !['admin', 'property_manager'].includes(userData.role)) {
+    redirect("/pm-dashboard"); // or unauthorized page
   }
 
   return (

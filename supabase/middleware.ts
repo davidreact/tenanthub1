@@ -43,14 +43,53 @@ export const updateSession = async (request: NextRequest) => {
       isTempobook &&
       !path.includes("/admin") &&
       !path.includes("/tenant") &&
-      !path.includes("/dashboard") &&
+      !path.includes("/pm-dashboard") &&
       !path.includes("/profile");
     const isPublicRoute =
       path === "/" ||
       path.startsWith("/sign-in") ||
       path.startsWith("/sign-up") ||
       path.startsWith("/forgot-password") ||
+      path.startsWith("/pending-approval") ||
+      path.startsWith("/account-disabled") ||
+      path.startsWith("/access-denied") ||
       isTempobookPublic;
+
+    // Check user status and active state for authenticated users
+    if (user && !isPublicRoute) {
+      try {
+        const { data: userData } = await supabase
+          .from('users')
+          .select('status, is_active, role')
+          .eq('id', user.id)
+          .single();
+
+        // Check if user is active
+        if (!userData?.is_active) {
+          return NextResponse.redirect(new URL("/account-disabled", request.url));
+        }
+
+        // Check if user is approved
+        if (userData?.status !== 'approved') {
+          if (userData?.status === 'pending') {
+            return NextResponse.redirect(new URL("/pending-approval", request.url));
+          } else {
+            return NextResponse.redirect(new URL("/access-denied", request.url));
+          }
+        }
+
+        // Check role-based access for admin routes
+        if (path.startsWith('/admin')) {
+          const allowedRoles = ['admin', 'property_manager'];
+          if (!allowedRoles.includes(userData?.role)) {
+            return NextResponse.redirect(new URL("/pm-dashboard", request.url));
+          }
+        }
+      } catch (error) {
+        console.error('User status check error:', error);
+        // Continue with normal flow if check fails
+      }
+    }
 
     // Redirect unauthenticated users away from all non-public routes
     if (!user && !isPublicRoute) {
@@ -59,7 +98,7 @@ export const updateSession = async (request: NextRequest) => {
 
     // Redirect authenticated users away from auth pages
     if (user && (path === "/sign-in" || path === "/sign-up")) {
-      return NextResponse.redirect(new URL("/dashboard", request.url));
+      return NextResponse.redirect(new URL("/pm-dashboard", request.url));
     }
 
     return response;

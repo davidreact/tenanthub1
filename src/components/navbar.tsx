@@ -54,7 +54,7 @@ export default function Navbar() {
   };
 
   const isDashboardPage =
-    pathname?.startsWith("/dashboard") ||
+    pathname?.startsWith("/pm-dashboard") ||
     pathname?.startsWith("/admin") ||
     pathname?.startsWith("/tenant");
 
@@ -96,7 +96,7 @@ export default function Navbar() {
                 isAdmin={userProfile?.role === "admin"}
               />
               {!isDashboardPage && (
-                <Link href="/dashboard">
+                <Link href="/pm-dashboard">
                   <Button variant="outline">{t("nav.dashboard")}</Button>
                 </Link>
               )}

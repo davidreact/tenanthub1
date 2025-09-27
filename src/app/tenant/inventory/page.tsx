@@ -425,7 +425,7 @@ export default function TenantInventory() {
       {/* Header */}
       <div className="mb-8">
         <Link
-          href="/dashboard"
+          href="/pm-dashboard"
           className="inline-flex items-center text-primary hover:text-primary/80 mb-6 transition-colors group"
         >
           <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />

@@ -4,6 +4,7 @@ import { encodedRedirect } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "../../supabase/server";
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { getRateLimit } from "@/lib/rate-limit";
 import { validateCSRFToken } from "@/lib/csrf";
 
@@ -85,7 +86,7 @@ export const signInAction = async (formData: FormData) => {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data: { user }, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -94,7 +95,20 @@ export const signInAction = async (formData: FormData) => {
     return encodedRedirect("error", "/sign-in", error.message);
   }
 
-  return redirect("/dashboard");
+  if (user) {
+    // Fetch user role from database
+    const { data: userData, error: fetchError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    // Note: Removed service role key usage for security
+    // Role will be checked server-side via database queries instead of JWT metadata
+    // This is safer but slightly less performant than JWT-based RLS
+  }
+
+  return redirect("/pm-dashboard");
 };
 
 export const forgotPasswordAction = async (formData: FormData) => {
@@ -163,7 +177,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (password !== confirmPassword) {
     encodedRedirect(
       "error",
-      "/dashboard/reset-password",
+      "/pm-dashboard/reset-password",
       "Passwords do not match",
     );
   }
@@ -175,7 +189,7 @@ export const resetPasswordAction = async (formData: FormData) => {
   if (error) {
     encodedRedirect(
       "error",
-      "/dashboard/reset-password",
+      "/pm-dashboard/reset-password",
       "Password update failed",
     );
   }

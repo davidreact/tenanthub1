@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -57,15 +58,19 @@ export default function AdminHandovers() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const supabase = createClient();
+  const pathname = usePathname();
   const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
+
+  const scope = pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
 
   useEffect(() => {
     fetchHandovers();
-  }, []);
+  }, [scope]);
 
   const fetchHandovers = async () => {
     try {
-      const { data } = await supabase
+      const scope = window.location.pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
+      let query = supabase
         .from("key_handovers")
         .select(
           `
@@ -77,6 +82,22 @@ export default function AdminHandovers() {
         `,
         )
         .order("scheduled_date", { ascending: true });
+
+      if (scope === 'pm') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: pmProperties } = await supabase
+            .from("properties")
+            .select("id")
+            .eq("managed_by", user.id);
+          const propertyIds = pmProperties?.map(p => p.id) || [];
+          if (propertyIds.length > 0) {
+            query = query.in("tenant_properties.property_id", propertyIds);
+          }
+        }
+      }
+
+      const { data } = await query;
 
       setHandovers(data || []);
     } catch (error) {
@@ -176,7 +197,7 @@ export default function AdminHandovers() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/dashboard"
+            href={pathname.startsWith('/pm-dashboard') ? "/pm-dashboard" : "/admin"}
             className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

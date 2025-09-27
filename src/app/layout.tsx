@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { LanguageModalWrapper } from "@/components/language-modal-wrapper";
 import { Toaster } from "@/components/ui/toaster";
 import Navbar from "@/components/navbar";
+import { AuthProvider } from "@/components/AuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 const sairaStencilOne = Saira_Stencil_One({
@@ -54,11 +55,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <LanguageProvider>
-             <LanguageModalWrapper />
-             <Navbar />
+             <AuthProvider>
+               <LanguageModalWrapper />
+               <Navbar />
 
-             {children}
-             <Toaster />
+               {children}
+               <Toaster />
+             </AuthProvider>
            </LanguageProvider>
         </ThemeProvider>
         <TempoInit />

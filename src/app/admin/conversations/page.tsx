@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -60,7 +61,7 @@ interface Conversation {
   messages: Message[];
 }
 
-export default function AdminConversations() {
+function AdminConversationsContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] =
@@ -72,12 +73,15 @@ export default function AdminConversations() {
   const supabase = createClient();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
 
+  const scope = pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
+
   useEffect(() => {
     fetchConversations();
-  }, []);
+  }, [scope]);
 
   // Open specific conversation from deep link (?conversationId=...)
   useEffect(() => {
@@ -166,7 +170,8 @@ export default function AdminConversations() {
 
   const fetchConversations = async () => {
     try {
-      const { data } = await supabase
+      const scope = window.location.pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
+      let query = supabase
         .from("conversations")
         .select(
           `
@@ -180,6 +185,24 @@ export default function AdminConversations() {
         `,
         )
         .order("updated_at", { ascending: false });
+
+      if (scope === 'pm') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: pmProperties } = await supabase
+            .from("properties")
+            .select("id")
+            .eq("managed_by", user.id);
+          const propertyIds = pmProperties?.map(p => p.id) || [];
+          if (propertyIds.length > 0) {
+            query = query.in("tenant_id",
+              (await supabase.from("tenant_properties").select("tenant_id").in("property_id", propertyIds)).data?.map(tp => tp.tenant_id) || []
+            );
+          }
+        }
+      }
+
+      const { data } = await query;
 
       setConversations(data || []);
     } catch (error) {
@@ -339,7 +362,7 @@ export default function AdminConversations() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/dashboard"
+            href={pathname.startsWith('/pm-dashboard') ? "/pm-dashboard" : "/admin"}
             className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

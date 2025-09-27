@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
@@ -73,17 +74,26 @@ export default function AdminProperties() {
   const { toast } = useToast();
   const { t } = useLanguage();
   const supabase = createClient();
+  const pathname = usePathname();
+
+  const scope = pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
 
   useEffect(() => {
     fetchProperties();
-  }, []);
+  }, [scope]);
 
   const fetchProperties = async () => {
     try {
-      const { data } = await supabase
-        .from("properties")
-        .select("*")
-        .order("created_at", { ascending: false });
+      let query = supabase.from("properties").select("*");
+
+      if (scope === 'pm') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          query = query.eq("managed_by", user.id);
+        }
+      }
+
+      const { data } = await query.order("created_at", { ascending: false });
 
       setProperties(data || []);
     } catch (error) {
@@ -338,6 +348,7 @@ export default function AdminProperties() {
                       {selectedProperty && (
                         <SecurePropertyForm
                           initialData={{
+                            id: selectedProperty.id,
                             name: selectedProperty.name,
                             address: selectedProperty.address,
                             description: selectedProperty.description,
@@ -379,28 +390,30 @@ export default function AdminProperties() {
               </div>
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-2 gap-2">
-                <Link href={`/admin/properties/${property.id}/tenants`}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full h-8 text-xs hover:bg-muted"
-                  >
-                    <Users className="h-3 w-3 mr-1" />
-                    Tenants
-                  </Button>
-                </Link>
-                <Link href={`/admin/properties/${property.id}/inventory`}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full h-8 text-xs hover:bg-muted"
-                  >
-                    <Package className="h-3 w-3 mr-1" />
-                    Inventory
-                  </Button>
-                </Link>
-              </div>
+              {scope === 'admin' && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link href={`/admin/properties/${property.id}/tenants`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-8 text-xs hover:bg-muted"
+                    >
+                      <Users className="h-3 w-3 mr-1" />
+                      Tenants
+                    </Button>
+                  </Link>
+                  <Link href={`/admin/properties/${property.id}/inventory`}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full h-8 text-xs hover:bg-muted"
+                    >
+                      <Package className="h-3 w-3 mr-1" />
+                      Inventory
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

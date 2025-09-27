@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { createClient } from "../../../../supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import * as XLSX from "xlsx";
@@ -89,11 +90,14 @@ export default function AdminInventory() {
   const { t } = useLanguage();
   const { toast } = useToast();
   const supabase = createClient();
+  const pathname = usePathname();
   const { csrfToken, loading: csrfLoading, error: csrfError } = useCSRF();
+
+  const scope = pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     filterItems();
@@ -107,8 +111,10 @@ export default function AdminInventory() {
 
   const fetchData = async () => {
     try {
+      const scope = window.location.pathname.startsWith('/pm-dashboard') ? 'pm' : 'admin';
+
       // Fetch properties with tenant inventory summaries
-      const { data: propertiesData } = await supabase
+      let propertiesQuery = supabase
         .from("properties")
         .select(`
           id,
@@ -117,6 +123,15 @@ export default function AdminInventory() {
           status
         `)
         .order("name");
+
+      if (scope === 'pm') {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          propertiesQuery = propertiesQuery.eq("managed_by", user.id);
+        }
+      }
+
+      const { data: propertiesData } = await propertiesQuery;
 
       if (!propertiesData) {
         setProperties([]);
@@ -731,7 +746,7 @@ email: user?.email || "",
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/dashboard"
+            href={pathname.startsWith('/pm-dashboard') ? "/pm-dashboard" : "/admin"}
             className="inline-flex items-center text-primary hover:text-primary/80 mb-4"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

@@ -29,7 +29,7 @@ export default function NotFound() {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          router.push('/dashboard');
+          router.push('/pm-dashboard');
           return 0;
         }
         return prev - 1;
@@ -43,7 +43,7 @@ export default function NotFound() {
     if (window.history.length > 1) {
       router.back();
     } else {
-      router.push('/dashboard');
+      router.push('/pm-dashboard');
     }
   };
 
@@ -134,8 +134,8 @@ export default function NotFound() {
                   Go Back
                 </Button>
                 
-                <Link href="/dashboard">
-                  <Button 
+                <Link href="/pm-dashboard">
+                  <Button
                     size="lg"
                     className="bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
                   >
@@ -162,8 +162,8 @@ export default function NotFound() {
                     <Home className="w-4 h-4" />
                     Home
                   </Link>
-                  <Link 
-                    href="/dashboard" 
+                  <Link
+                    href="/pm-dashboard"
                     className="text-primary hover:text-primary/80 transition-colors"
                   >
                     Dashboard
