@@ -14,7 +14,7 @@ import {
   Package,
   CreditCard,
   MessageSquare,
-  Calendar,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -25,6 +25,9 @@ interface TenantDashboardProps {
   tenantProperty: any;
 }
 
+/**
+ * @description Displays the tenant dashboard with property information and navigation links for tenant-specific actions.
+ */
 export default function TenantDashboard({
   userProfile,
   tenantProperty,
@@ -73,29 +76,29 @@ export default function TenantDashboard({
                     </p>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="p-3 bg-primary/5 rounded-lg border border-primary/20 hover:bg-primary/10 transition-colors">
-                      <span className="text-primary text-sm font-medium">
+                    <div className="p-3 bg-muted rounded-lg border border-border hover:bg-muted/80 transition-colors">
+                      <span className="text-foreground text-sm font-medium">
                         {t("property.monthlyRent")}
                       </span>
-                      <p className="font-bold text-lg text-primary">
+                      <p className="font-bold text-lg text-foreground">
                         ${tenantProperty.monthly_rent}
                       </p>
                     </div>
-                    <div className="p-3 bg-secondary/5 rounded-lg border border-secondary/20 hover:bg-secondary/10 transition-colors">
-                      <span className="text-secondary text-sm font-medium">
+                    <div className="p-3 bg-muted rounded-lg border border-border hover:bg-muted/80 transition-colors">
+                      <span className="text-foreground text-sm font-medium">
                         {t("property.leaseStart")}
                       </span>
-                      <p className="font-bold text-sm text-secondary">
+                      <p className="font-bold text-sm text-foreground">
                         {new Intl.DateTimeFormat("en-GB", { timeZone: "UTC" }).format(
                           new Date(tenantProperty.lease_start_date)
                         )}
                       </p>
                     </div>
-                    <div className="p-3 bg-accent/5 rounded-lg border border-accent/20 hover:bg-accent/10 transition-colors">
-                      <span className="text-accent text-sm font-medium">
+                    <div className="p-3 bg-muted rounded-lg border border-border hover:bg-muted/80 transition-colors">
+                      <span className="text-foreground text-sm font-medium">
                         {t("property.leaseEnd")}
                       </span>
-                      <p className="font-bold text-sm text-accent">
+                      <p className="font-bold text-sm text-foreground">
                         {new Intl.DateTimeFormat("en-GB", { timeZone: "UTC" }).format(
                           new Date(tenantProperty.lease_end_date)
                         )}
@@ -132,15 +135,15 @@ export default function TenantDashboard({
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Link href="/tenant/inventory" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
+                <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <Package className="h-8 w-8 text-primary" />
+                      <div className="p-2 rounded-lg bg-orange-500 text-white">
+                        <Package className="h-6 w-6" />
                       </div>
                       {t("inventory.inventory")}
                     </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
+                    <CardDescription className="text-sm leading-relaxed min-h-[3rem]">
                       {t("inventory.viewManageProperty")}
                     </CardDescription>
                   </CardHeader>
@@ -153,20 +156,20 @@ export default function TenantDashboard({
               </Link>
 
               <Link href="/tenant/payments" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-secondary/10 border-0 shadow-md hover:shadow-secondary/20 h-full">
+                <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-secondary/10 rounded-lg group-hover:bg-secondary/20 transition-colors">
-                        <CreditCard className="h-8 w-8 text-secondary" />
+                      <div className="p-2 rounded-lg bg-red-500 text-white">
+                        <CreditCard className="h-6 w-6" />
                       </div>
                       {t("payments.paymentManagement")}
                     </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
+                    <CardDescription className="text-sm leading-relaxed min-h-[3rem]">
                       {t("payments.uploadProofView")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button className="w-full group-hover:bg-secondary transition-colors">
+                    <Button className="w-full group-hover:bg-primary transition-colors">
                       {t("payments.managePayments")}
                     </Button>
                   </CardContent>
@@ -174,20 +177,20 @@ export default function TenantDashboard({
               </Link>
 
               <Link href="/tenant/messages" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-accent/10 border-0 shadow-md hover:shadow-accent/20 h-full">
+                <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
-                        <MessageSquare className="h-8 w-8 text-accent" />
+                      <div className="p-2 rounded-lg bg-indigo-500 text-white">
+                        <MessageSquare className="h-6 w-6" />
                       </div>
                       {t("messages.messages")}
                     </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
+                    <CardDescription className="text-sm leading-relaxed min-h-[3rem]">
                       {t("messages.contactAdminProperty")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button className="w-full group-hover:bg-accent transition-colors">
+                    <Button className="w-full group-hover:bg-primary transition-colors">
                       {t("messages.sendMessage")}
                     </Button>
                   </CardContent>
@@ -195,15 +198,15 @@ export default function TenantDashboard({
               </Link>
 
               <Link href="/tenant/handover" className="group">
-                <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
+                <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                        <Calendar className="h-8 w-8 text-primary" />
+                      <div className="p-2 rounded-lg bg-teal-500 text-white">
+                        <FileText className="h-6 w-6" />
                       </div>
                       {t("handover.keyHandover")}
                     </CardTitle>
-                    <CardDescription className="text-sm leading-relaxed">
+                    <CardDescription className="text-sm leading-relaxed min-h-[3rem]">
                       {t("handover.scheduleKeyExchanges")}
                     </CardDescription>
                   </CardHeader>

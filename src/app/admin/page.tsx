@@ -292,7 +292,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {adminCards.map((card) => (
             <Link key={card.href} href={card.href}>
-              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-0 shadow-md hover:shadow-lg">
+              <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className={`p-2 rounded-lg ${card.color} text-white`}>

@@ -14,9 +14,10 @@ import {
   CreditCard,
   MessageSquare,
   Package,
-  Calendar,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
 import UserWelcomeCard from "@/components/shared/user-welcome-card";
 
 interface PropertyManagerDashboardProps {
@@ -24,10 +25,15 @@ interface PropertyManagerDashboardProps {
   adminStats: any;
 }
 
+/**
+ * @description Displays the property manager dashboard with statistics and navigation links for managing properties and tenants.
+ */
 export default function PropertyManagerDashboard({
   userProfile,
   adminStats,
 }: PropertyManagerDashboardProps) {
+  const { t } = useLanguage();
+
   return (
     <>
       {/* Header */}
@@ -35,10 +41,10 @@ export default function PropertyManagerDashboard({
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">
-              Property Manager Dashboard
+              {t("dashboard.propertyManagerDashboard")}
             </h1>
             <p className="text-muted-foreground mt-2">
-              Manage your assigned properties and tenants
+              {t("dashboard.manageAssignedPropertiesTenants")}
             </p>
           </div>
           <UserWelcomeCard userProfile={userProfile} />
@@ -52,8 +58,8 @@ export default function PropertyManagerDashboard({
           <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-primary/5 border-0 shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                My Properties
-              </CardTitle>
+                  {t("dashboard.myProperties")}
+                </CardTitle>
               <Building className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
             </CardHeader>
             <CardContent>
@@ -61,14 +67,14 @@ export default function PropertyManagerDashboard({
                 {adminStats?.properties || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Properties I manage
+                {t("dashboard.propertiesIManage")}
               </p>
             </CardContent>
           </Card>
           <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-primary/5 border-0 shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                My Tenants
+                {t("dashboard.myTenants")}
               </CardTitle>
               <Users className="h-5 w-5 text-primary group-hover:text-primary/80 transition-colors" />
             </CardHeader>
@@ -77,23 +83,23 @@ export default function PropertyManagerDashboard({
                 {adminStats?.tenants || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Tenants in my properties
+                {t("dashboard.tenantsInMyProperties")}
               </p>
             </CardContent>
           </Card>
           <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-card via-card to-secondary/5 border-0 shadow-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Pending Reviews
+                {t("dashboard.pendingReviews")}
               </CardTitle>
               <CreditCard className="h-5 w-5 text-secondary group-hover:text-secondary/80 transition-colors" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-secondary">
+              <div className="text-3xl font-bold text-primary">
                 {adminStats?.pendingPayments || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Payments to review
+                {t("dashboard.paymentsToReview")}
               </p>
             </CardContent>
           </Card>
@@ -102,126 +108,126 @@ export default function PropertyManagerDashboard({
         {/* Property Manager Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link href="/pm-dashboard/properties" className="group">
-            <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                    <Building className="h-8 w-8 text-primary" />
+                  <div className="p-2 rounded-lg bg-green-500 text-white">
+                    <Building className="h-6 w-6" />
                   </div>
-                  My Properties
+                  {t("dashboard.myProperties")}
                 </CardTitle>
                 <CardDescription className="text-sm leading-relaxed">
-                  View and manage properties assigned to me
+                  {t("dashboard.viewAndManagePropertiesAssigned")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button className="w-full group-hover:bg-primary transition-colors">
-                  View Properties
+                  {t("dashboard.viewProperties")}
                 </Button>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/pm-dashboard/tenants" className="group">
-            <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-secondary/10 border-0 shadow-md hover:shadow-secondary/20 h-full">
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-secondary/10 rounded-lg group-hover:bg-secondary/20 transition-colors">
-                    <Users className="h-8 w-8 text-secondary" />
+                  <div className="p-2 rounded-lg bg-purple-500 text-white">
+                    <Users className="h-6 w-6" />
                   </div>
-                  My Tenants
+                  {t("dashboard.myTenants")}
                 </CardTitle>
                 <CardDescription className="text-sm leading-relaxed">
-                  Manage tenants in my properties
+                  {t("dashboard.manageTenantsInMyProperties")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full group-hover:bg-secondary transition-colors">
-                  View Tenants
+                <Button className="w-full group-hover:bg-primary transition-colors">
+                  {t("dashboard.viewTenants")}
                 </Button>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/pm-dashboard/payments" className="group">
-            <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-accent/10 border-0 shadow-md hover:shadow-accent/20 h-full">
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
-                    <CreditCard className="h-8 w-8 text-accent" />
+                  <div className="p-2 rounded-lg bg-red-500 text-white">
+                    <CreditCard className="h-6 w-6" />
                   </div>
-                  Payment Reviews
+                  {t("dashboard.paymentReviews")}
                 </CardTitle>
                 <CardDescription className="text-sm leading-relaxed">
-                  Review and approve tenant payments
+                  {t("dashboard.reviewAndApproveTenantPayments")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full group-hover:bg-accent transition-colors">
-                  Review Payments
+                <Button className="w-full group-hover:bg-primary transition-colors">
+                  {t("dashboard.reviewPayments")}
                 </Button>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/pm-dashboard/messages" className="group">
-            <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                    <MessageSquare className="h-8 w-8 text-primary" />
+                  <div className="p-2 rounded-lg bg-indigo-500 text-white">
+                    <MessageSquare className="h-6 w-6" />
                   </div>
-                  Tenant Messages
+                  {t("dashboard.tenantMessages")}
                 </CardTitle>
                 <CardDescription className="text-sm leading-relaxed">
-                  Communicate with tenants in my properties
+                  {t("dashboard.communicateWithTenantsInMyProperties")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button className="w-full group-hover:bg-primary transition-colors">
-                  View Messages
+                  {t("dashboard.viewMessages")}
                 </Button>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/pm-dashboard/inventory" className="group">
-            <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-secondary/10 border-0 shadow-md hover:shadow-secondary/20 h-full">
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-secondary/10 rounded-lg group-hover:bg-secondary/20 transition-colors">
-                    <Package className="h-8 w-8 text-secondary" />
+                  <div className="p-2 rounded-lg bg-orange-500 text-white">
+                    <Package className="h-6 w-6" />
                   </div>
-                  Property Inventory
+                  {t("dashboard.propertyInventory")}
                 </CardTitle>
                 <CardDescription className="text-sm leading-relaxed">
-                  Manage inventory for my properties
+                  {t("dashboard.manageInventoryForMyProperties")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full group-hover:bg-secondary transition-colors">
-                  Manage Inventory
+                <Button className="w-full group-hover:bg-primary transition-colors">
+                  {t("dashboard.manageInventory")}
                 </Button>
               </CardContent>
             </Card>
           </Link>
 
           <Link href="/pm-dashboard/handovers" className="group">
-            <Card className="hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-accent/10 border-0 shadow-md hover:shadow-accent/20 h-full">
+            <Card className="group hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer bg-gradient-to-br from-card via-card to-primary/10 border-0 shadow-md hover:shadow-primary/20 h-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3">
-                  <div className="p-2 bg-accent/10 rounded-lg group-hover:bg-accent/20 transition-colors">
-                    <Calendar className="h-8 w-8 text-accent" />
+                  <div className="p-2 rounded-lg bg-teal-500 text-white">
+                    <FileText className="h-6 w-6" />
                   </div>
-                  Key Handovers
+                  {t("dashboard.keyHandovers")}
                 </CardTitle>
                 <CardDescription className="text-sm leading-relaxed">
-                  Schedule and manage key exchanges
+                  {t("dashboard.scheduleAndManageKeyExchanges")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full group-hover:bg-accent transition-colors">
-                  Manage Handovers
+                <Button className="w-full group-hover:bg-primary transition-colors">
+                  {t("dashboard.manageHandovers")}
                 </Button>
               </CardContent>
             </Card>
