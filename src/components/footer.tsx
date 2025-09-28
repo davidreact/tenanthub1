@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Twitter, Linkedin, Github, Home } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+/**
+ * @description Site-wide footer component with navigation links, social media, and legal information.
+ */
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const { t } = useLanguage();

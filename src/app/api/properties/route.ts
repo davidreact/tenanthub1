@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error("Database error:", error);
       return NextResponse.json(
-        { error: "Failed to create property" },
+        { error: `Failed to create property: ${error.message || error.details || 'Unknown error'}` },
         { status: 500 }
       );
     }
@@ -98,7 +98,7 @@ export async function PUT(request: NextRequest) {
     if (error) {
       console.error("Database error:", error);
       return NextResponse.json(
-        { error: "Failed to update property" },
+        { error: `Failed to update property: ${error.message || error.details || 'Unknown error'}` },
         { status: 500 }
       );
     }

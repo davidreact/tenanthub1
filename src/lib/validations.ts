@@ -8,13 +8,14 @@ export const propertySchema = z.object({
   property_type: z.string().optional(),
   bedrooms: z.number().int().min(0).max(20).optional(),
   bathrooms: z.number().min(0).max(20).optional(),
-  monthly_rent: z.number().positive('Rent must be positive').max(100000, 'Rent too high').optional(),
-  deposit_amount: z.number().min(0).max(100000).optional(),
+  monthly_rent: z.number().positive('Rent must be positive').max(999999999, 'Rent too high').optional(),
+  deposit_amount: z.number().min(0).max(999999999).optional(),
   square_feet: z.number().positive().max(100000).optional(),
   square_meters: z.number().positive().max(100000).optional(),
   lease_start_date: z.string().optional(),
   lease_end_date: z.string().optional(),
   status: z.enum(['available', 'occupied', 'maintenance']).optional(),
+  created_by: z.string().uuid().optional(),
 });
 
 // Inventory item validation schema

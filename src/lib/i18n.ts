@@ -29,6 +29,9 @@ export const translations = {
     "auth.forgotPasswordTitle": "Forgot Password?",
     "auth.sendingResetLink": "Sending reset link...",
     "auth.resetPassword": "Reset Password",
+    "auth.welcomeBack": "Welcome Back",
+    "auth.signInDescription": "Sign in to your account to continue",
+    "auth.securityNote": "Protected by industry-standard security",
 
     // Dashboard
     "dashboard.adminDashboard": "Admin Dashboard",
@@ -439,6 +442,9 @@ export const translations = {
     "auth.emailPlaceholder": "tu@ejemplo.com",
     "auth.passwordPlaceholder": "Tu contraseña",
     "auth.fullNamePlaceholder": "Juan Pérez",
+    "auth.welcomeBack": "Bienvenido de Nuevo",
+    "auth.signInDescription": "Inicia sesión en tu cuenta para continuar",
+    "auth.securityNote": "Protegido por seguridad estándar de la industria",
 
     // Dashboard
     "dashboard.adminDashboard": "Panel de Administrador",
@@ -856,6 +862,9 @@ export const translations = {
     "auth.emailPlaceholder": "vous@exemple.com",
     "auth.passwordPlaceholder": "Votre mot de passe",
     "auth.fullNamePlaceholder": "Jean Dupont",
+    "auth.welcomeBack": "Bon Retour",
+    "auth.signInDescription": "Connectez-vous à votre compte pour continuer",
+    "auth.securityNote": "Protégé par une sécurité standard de l'industrie",
 
     // Dashboard
     "dashboard.adminDashboard": "Tableau de Bord Admin",

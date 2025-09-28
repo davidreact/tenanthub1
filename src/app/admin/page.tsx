@@ -25,7 +25,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
-import UserWelcomeCard from "@/components/user-welcome-card";
+import UserWelcomeCard from "@/components/shared/user-welcome-card";
 
 interface DashboardStats {
   totalUsers: number;

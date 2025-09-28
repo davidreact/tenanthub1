@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Image as ImageIcon, Edit } from "lucide-react";
 import { InventoryItem, InventoryPhoto } from "@/types/inventory";
+import { getConditionColor } from "@/utils/statusUtils";
 
 interface InventoryCardsViewProps {
   t: any;
@@ -12,6 +13,9 @@ interface InventoryCardsViewProps {
   onEditClick: (item: InventoryItem) => void;
 }
 
+/**
+ * @description Renders inventory items in a card-based grid layout with photos, details, and action buttons.
+ */
 export function InventoryCardsView({
   t,
   filteredItems,
@@ -19,20 +23,6 @@ export function InventoryCardsView({
   onPhotoClick,
   onEditClick,
 }: InventoryCardsViewProps) {
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case "excellent":
-        return "bg-green-100 text-green-800";
-      case "good":
-        return "bg-blue-100 text-blue-800";
-      case "fair":
-        return "bg-yellow-100 text-yellow-800";
-      case "poor":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -66,12 +56,29 @@ export function InventoryCardsView({
                       alt={photo.caption || item.item}
                       className="w-full h-20 object-cover rounded cursor-pointer"
                       onClick={() => onPhotoClick(item.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onPhotoClick(item.id);
+                        }
+                      }}
                     />
                   ))}
                   {itemPhotos.length > 4 && (
                     <div
                       className="bg-gray-100 rounded flex items-center justify-center text-sm text-gray-600 cursor-pointer"
                       onClick={() => onPhotoClick(item.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onPhotoClick(item.id);
+                        }
+                      }}
+                      aria-label={`View ${itemPhotos.length - 4} more photos`}
                     >
                       +{itemPhotos.length - 4} more
                     </div>

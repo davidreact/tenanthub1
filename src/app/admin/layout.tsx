@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "supabase/server";
-import Breadcrumb from "@/components/breadcrumb";
+import Breadcrumb from "@/components/shared/breadcrumb";
 
 export default async function AdminLayout({
   children,

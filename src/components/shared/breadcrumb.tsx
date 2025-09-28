@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { createClient } from "../../supabase/client";
+import { createClient } from "../../../supabase/client";
 
 interface BreadcrumbItem {
   label: string;
@@ -17,6 +17,9 @@ interface BreadcrumbProps {
   className?: string;
 }
 
+/**
+ * @description Renders a breadcrumb navigation component with dynamic property name fetching for UUID segments.
+ */
 export default function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
   const pathname = usePathname();
   const { t } = useLanguage();
@@ -115,7 +118,7 @@ export default function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
       if (segment === 'admin') {
         href = '/admin';
       } else if (segment === 'tenant') {
-        href = '/tenant';
+        href = '/pm-dashboard';
       } else if (segment === 'pm-dashboard') {
         href = '/pm-dashboard';
       }
@@ -139,7 +142,7 @@ export default function Breadcrumb({ items, className = "" }: BreadcrumbProps) {
       aria-label="Breadcrumb"
     >
       {breadcrumbItems.map((item, index) => (
-        <Fragment key={item.href}>
+        <Fragment key={`${item.href}-${index}`}>
           {index === 0 ? (
             <Link
               href={item.href}

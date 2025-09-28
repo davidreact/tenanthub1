@@ -5,6 +5,9 @@ import { ArrowUpRight, Check, FileText, Calendar } from "lucide-react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+/**
+ * @description Landing page hero section with branding, call-to-action buttons, and feature highlights.
+ */
 export default function Hero() {
   const { t } = useLanguage();
 

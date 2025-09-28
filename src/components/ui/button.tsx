@@ -40,6 +40,9 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
+/**
+ * @description A customizable button component with variants and sizes, built on Radix UI primitives.
+ */
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";

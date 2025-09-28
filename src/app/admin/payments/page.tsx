@@ -49,6 +49,9 @@ interface PaymentProof {
   };
 }
 
+/**
+ * @description Admin payments page for reviewing, approving, and managing tenant payment proofs.
+ */
 export default function AdminPayments() {
   const [payments, setPayments] = useState<PaymentProof[]>([]);
   const [loading, setLoading] = useState(true);

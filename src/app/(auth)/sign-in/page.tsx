@@ -31,22 +31,22 @@ export default async function SignInPage({ searchParams }: LoginProps) {
       <div className="w-full max-w-md">
         {/* Logo/Brand Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-xl mb-4 shadow-lg">
-            <Shield className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-xl mb-4 shadow-lg">
+            <Shield className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your account to continue</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">{t("auth.welcomeBack")}</h1>
+          <p className="text-muted-foreground">{t("auth.signInDescription")}</p>
         </div>
 
         {/* Auth Card */}
-        <div className="bg-white rounded-2xl shadow-xl border-0 p-8 backdrop-blur-sm">
+        <div className="bg-card rounded-2xl shadow-xl border-0 p-8 backdrop-blur-sm">
           <form className="space-y-6">
             <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold text-gray-900">{t("auth.signInTitle")}</h2>
-              <p className="text-gray-600 mt-2">
+              <h2 className="text-3xl font-bold text-foreground">{t("auth.signInTitle")}</h2>
+              <p className="text-muted-foreground mt-2">
                 {t("auth.dontHaveAccount")}{" "}
                 <Link
-                  className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+                  className="text-primary font-semibold hover:text-primary-foreground transition-colors"
                   href="/sign-up"
                 >
                   {t("auth.signUp")}
@@ -56,50 +56,50 @@ export default async function SignInPage({ searchParams }: LoginProps) {
 
             <div className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+                <Label htmlFor="email" className="text-sm font-semibold text-muted-foreground">
                   {t("common.email")}
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                   <Input
                     id="email"
                     name="email"
                     type="email"
                     placeholder={t("auth.emailPlaceholder")}
                     required
-                    className="pl-11 h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl transition-all"
+                    className="pl-11 h-12 border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all bg-background text-foreground"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+                  <Label htmlFor="password" className="text-sm font-semibold text-muted-foreground">
                     {t("common.password")}
                   </Label>
                   <Link
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                    className="text-primary hover:text-primary-foreground font-medium transition-colors"
                     href="/forgot-password"
                   >
                     {t("auth.forgotPassword")}
                   </Link>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
                   <Input
                     id="password"
                     type="password"
                     name="password"
                     placeholder={t("auth.passwordPlaceholder")}
                     required
-                    className="pl-11 h-12 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl transition-all"
+                    className="pl-11 h-12 border-2 border-border focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl transition-all bg-background text-foreground"
                   />
                 </div>
               </div>
             </div>
 
             <SubmitButton
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full h-12 bg-primary hover:bg-primary-foreground text-primary-foreground font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               pendingText={t("auth.signingIn")}
               formAction={signInAction}
             >
@@ -112,8 +112,8 @@ export default async function SignInPage({ searchParams }: LoginProps) {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8 text-sm text-gray-600">
-          <p>Protected by industry-standard security</p>
+        <div className="text-center mt-8 text-sm text-muted-foreground">
+          <p>{t("auth.securityNote")}</p>
         </div>
       </div>
     </div>

@@ -205,8 +205,8 @@ export default function AdminProperties() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <Building className="h-8 w-8 text-emerald-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Building className="h-8 w-8 text-primary" />
               </div>
               {t("properties.manageProperties")}
             </h1>
@@ -261,7 +261,10 @@ export default function AdminProperties() {
           >
             <CardHeader>
               <div className="flex justify-between items-start">
-                <CardTitle className="text-xl font-bold group-hover:text-emerald-600 transition-colors">
+                <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                    <Building className="h-6 w-6 text-primary" />
+                  </div>
                   {property.name}
                 </CardTitle>
                 <Badge
@@ -422,8 +425,8 @@ export default function AdminProperties() {
       {properties.length === 0 && (
         <Card className="bg-gradient-to-br from-card via-card to-emerald-500/5 border-0 shadow-lg">
           <CardContent className="text-center py-16">
-            <div className="p-4 bg-emerald-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-              <Building className="h-12 w-12 text-emerald-600" />
+            <div className="p-4 bg-primary/10 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+              <Building className="h-12 w-12 text-primary" />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3">
               {t("common.noProperties")}

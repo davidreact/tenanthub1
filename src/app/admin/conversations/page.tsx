@@ -61,7 +61,7 @@ interface Conversation {
   messages: Message[];
 }
 
-function AdminConversationsContent() {
+export default function AdminConversationsContent() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedConversation, setSelectedConversation] =

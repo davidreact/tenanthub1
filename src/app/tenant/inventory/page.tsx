@@ -35,6 +35,9 @@ import { useInventoryReport } from "@/components/inventory/inventory-report-gene
 import { formatTranslation } from "@/lib/i18n";
 import { InventoryItem } from "@/types/inventory";
 
+/**
+ * @description Tenant inventory page for viewing, managing, and documenting assigned property inventory items.
+ */
 export default function TenantInventory() {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -424,16 +427,9 @@ export default function TenantInventory() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-8">
-        <Link
-          href="/pm-dashboard"
-          className="inline-flex items-center text-primary hover:text-primary/80 mb-6 transition-colors group"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          {t("common.backToDashboard")}
-        </Link>
         <div className="flex items-center gap-4 mb-4">
-          <div className="p-3 bg-blue-100 rounded-xl">
-            <Package className="h-10 w-10 text-blue-600" />
+          <div className="p-3 bg-primary/10 rounded-xl">
+            <Package className="h-10 w-10 text-primary" />
           </div>
           <div>
             <h1 className="text-4xl font-bold text-foreground">
@@ -552,8 +548,8 @@ export default function TenantInventory() {
       {inventoryItems.length === 0 && (
         <Card className="bg-gradient-to-br from-card via-card to-blue-500/5 border-0 shadow-lg">
           <CardContent className="text-center py-16">
-            <div className="p-4 bg-blue-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-              <Package className="h-12 w-12 text-blue-600" />
+            <div className="p-4 bg-primary/10 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+              <Package className="h-12 w-12 text-primary" />
             </div>
             <h3 className="text-2xl font-bold text-foreground mb-3">
               {t("inventory.noInventoryItemsTitle")}

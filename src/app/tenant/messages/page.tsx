@@ -369,13 +369,6 @@ export default function TenantMessages() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/pm-dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("common.backToDashboard")}
-          </Link>
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">

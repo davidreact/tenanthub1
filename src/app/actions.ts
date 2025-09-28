@@ -96,16 +96,38 @@ export const signInAction = async (formData: FormData) => {
   }
 
   if (user) {
-    // Fetch user role from database
+    // Fetch user role and active status from database
     const { data: userData, error: fetchError } = await supabase
       .from("users")
-      .select("role")
+      .select("role, is_active")
       .eq("id", user.id)
       .single();
 
-    // Note: Removed service role key usage for security
-    // Role will be checked server-side via database queries instead of JWT metadata
-    // This is safer but slightly less performant than JWT-based RLS
+    if (fetchError) {
+      console.error("Error fetching user data:", fetchError);
+      await supabase.auth.signOut();
+      return encodedRedirect("error", "/sign-in", "Failed to fetch user data");
+    }
+
+    // Check if user is active
+    if (!userData.is_active) {
+      await supabase.auth.signOut();
+      return encodedRedirect("error", "/sign-in", "Account has been disabled. Please contact administrator.");
+    }
+
+    // Update JWT with role for RLS policies
+    if (userData.role) {
+      try {
+        await supabase.auth.updateUser({
+          data: { role: userData.role }
+        });
+        // Refresh session to ensure JWT is updated
+        await supabase.auth.refreshSession();
+      } catch (jwtError) {
+        console.error('Error updating JWT claims:', jwtError);
+        // Continue anyway - role will be checked server-side
+      }
+    }
   }
 
   return redirect("/pm-dashboard");

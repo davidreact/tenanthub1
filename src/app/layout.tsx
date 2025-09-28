@@ -3,12 +3,7 @@ import { Inter, Saira_Stencil_One } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import { TempoInit } from "@/components/tempo-init";
-import { ThemeProvider } from "@/components/theme-provider";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import { LanguageModalWrapper } from "@/components/language-modal-wrapper";
-import { Toaster } from "@/components/ui/toaster";
-import Navbar from "@/components/navbar";
-import { AuthProvider } from "@/components/AuthProvider";
+import { Providers } from "@/components/providers";
 
 const inter = Inter({ subsets: ["latin"] });
 const sairaStencilOne = Saira_Stencil_One({
@@ -48,22 +43,9 @@ export default function RootLayout({
       <body
         className={`${inter.className} ${sairaStencilOne.variable} bg-background min-h-screen`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <LanguageProvider>
-             <AuthProvider>
-               <LanguageModalWrapper />
-               <Navbar />
-
-               {children}
-               <Toaster />
-             </AuthProvider>
-           </LanguageProvider>
-        </ThemeProvider>
+        <Providers>
+          {children}
+        </Providers>
         <TempoInit />
       </body>
     </html>

@@ -20,6 +20,9 @@ interface SecurePaymentUploadProps {
   onCancel: () => void;
 }
 
+/**
+ * @description Handles secure upload of payment proof files with CSRF protection and Zod validation.
+ */
 export function SecurePaymentUpload({
   tenantPropertyId,
   monthlyRent,

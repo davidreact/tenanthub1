@@ -11,6 +11,15 @@ import {
 } from "@/components/ui/table";
 import { Image as ImageIcon, Edit } from "lucide-react";
 import { InventoryItem, InventoryPhoto } from "@/types/inventory";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+  createColumnHelper,
+  ColumnDef,
+} from '@tanstack/react-table';
+import { getConditionColor } from "@/utils/statusUtils";
 
 interface InventoryGridViewProps {
   t: any;
@@ -20,6 +29,9 @@ interface InventoryGridViewProps {
   onEditClick: (item: InventoryItem) => void;
 }
 
+/**
+ * @description Renders a table view of inventory items with columns for item details, condition, notes, photos, and actions.
+ */
 export function InventoryGridView({
   t,
   filteredItems,
@@ -27,20 +39,83 @@ export function InventoryGridView({
   onPhotoClick,
   onEditClick,
 }: InventoryGridViewProps) {
-  const getConditionColor = (condition: string) => {
-    switch (condition) {
-      case "excellent":
-        return "bg-green-100 text-green-800";
-      case "good":
-        return "bg-blue-100 text-blue-800";
-      case "fair":
-        return "bg-yellow-100 text-yellow-800";
-      case "poor":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+
+  const columnHelper = createColumnHelper<InventoryItem>();
+
+  const columns: ColumnDef<InventoryItem, any>[] = [
+    columnHelper.accessor('item', {
+      header: t("common.item"),
+      cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('description', {
+      header: t("common.description"),
+      cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('quantity', {
+      header: t("common.quantity"),
+      cell: info => info.getValue(),
+    }),
+    columnHelper.accessor('condition', {
+      header: t("common.condition"),
+      cell: info => (
+        <Badge className={getConditionColor(info.getValue())}>
+          {info.getValue()}
+        </Badge>
+      ),
+    }),
+    columnHelper.accessor('notes', {
+      header: t("common.notes"),
+      cell: info => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onEditClick(info.row.original)}
+        >
+          <Edit className="h-4 w-4 mr-1" />
+          {t("common.notes")}
+        </Button>
+      ),
+    }),
+    columnHelper.display({
+      id: 'photos',
+      header: t("common.photos"),
+      cell: info => {
+        const itemPhotos = photos.filter(
+          (photo) => photo.inventory_item_id === info.row.original.id,
+        );
+        return (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onPhotoClick(info.row.original.id)}
+          >
+            <ImageIcon className="h-4 w-4 mr-1" />
+            {itemPhotos.length}
+          </Button>
+        );
+      },
+    }),
+    columnHelper.display({
+      id: 'actions',
+      header: t("common.actions"),
+      cell: info => (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onEditClick(info.row.original)}
+        >
+          <Edit className="h-4 w-4" />
+        </Button>
+      ),
+    }),
+  ];
+
+  const table = useReactTable({
+    data: filteredItems,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   return (
     <Card>
@@ -48,63 +123,42 @@ export function InventoryGridView({
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-32">{t("common.item")}</TableHead>
-                <TableHead className="w-40">{t("common.description")}</TableHead>
-                <TableHead className="w-20">{t("common.quantity")}</TableHead>
-                <TableHead className="w-24">{t("common.condition")}</TableHead>
-                <TableHead className="w-24">{t("common.notes")}</TableHead>
-                <TableHead className="w-24">{t("common.photos")}</TableHead>
-                <TableHead className="w-20">{t("common.actions")}</TableHead>
-              </TableRow>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} className="w-32">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
             </TableHeader>
             <TableBody>
-              {filteredItems.map((item) => {
-                const itemPhotos = photos.filter(
-                  (photo) => photo.inventory_item_id === item.id,
-                );
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.item}</TableCell>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>
-                      <Badge className={getConditionColor(item.condition)}>
-                        {item.condition}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEditClick(item)}
-                      >
-                        <Edit className="h-4 w-4 mr-1" />
-                        {t("common.notes")}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onPhotoClick(item.id)}
-                      >
-                        <ImageIcon className="h-4 w-4 mr-1" />
-                        {itemPhotos.length}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onEditClick(item)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                );
-              })}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>

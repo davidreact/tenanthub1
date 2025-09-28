@@ -36,6 +36,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/components/ui/use-toast";
 import { SecurePaymentUpload } from "@/components/SecurePaymentUpload";
+import { getStatusIcon, getStatusColor, formatMonthYear } from "@/utils/statusUtils";
 
 interface PaymentProof {
   id: string;
@@ -48,6 +49,9 @@ interface PaymentProof {
   created_at: string;
 }
 
+/**
+ * @description Tenant payments page for viewing rent information, uploading payment proofs, and managing payment history.
+ */
 export default function TenantPayments() {
   const [paymentProofs, setPaymentProofs] = useState<PaymentProof[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,37 +102,6 @@ export default function TenantPayments() {
   };
 
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "approved":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "pending":
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      case "rejected":
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const formatMonthYear = (monthYear: string) => {
-    const [year, month] = monthYear.split("-");
-    const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-  };
 
   if (loading) {
     return (
@@ -146,13 +119,6 @@ export default function TenantPayments() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Link
-            href="/pm-dashboard"
-            className="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("common.backToDashboard")}
-          </Link>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
             <CreditCard className="h-8 w-8" />
             {t("payments.paymentManagement")}

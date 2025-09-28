@@ -18,6 +18,9 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+/**
+ * @description Main navigation bar with authentication state, language/theme switchers, and user menu.
+ */
 export default function Navbar() {
   const supabase = createClient();
   const router = useRouter();
@@ -102,7 +105,7 @@ export default function Navbar() {
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="text-foreground">
                     <UserCircle className="h-6 w-6" />
                   </Button>
                 </DropdownMenuTrigger>

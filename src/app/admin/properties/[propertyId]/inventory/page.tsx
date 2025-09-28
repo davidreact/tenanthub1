@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { createClient } from "../../../../../../supabase/client";
 import { useInventoryData } from "@/hooks/useInventoryData";
 import { useInventoryActions } from "@/hooks/useInventoryActions";
@@ -58,7 +58,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useRef } from "react";
 import { InventoryCardsView } from "@/components/inventory/inventory-cards-view";
 import { InventoryGridView } from "@/components/inventory/inventory-grid-view";
 import { BulkEditDialog } from "@/components/inventory/bulk-edit-dialog";
@@ -102,6 +101,7 @@ export default function PropertyInventory() {
     handleExcelImport,
   } = useInventoryActions();
   const { t } = useLanguage();
+  const lastInventoryLengthRef = useRef(0);
 
   useEffect(() => {
     if (propertyId) {
@@ -110,10 +110,24 @@ export default function PropertyInventory() {
   }, [propertyId]);
 
   useEffect(() => {
-    if (viewMode === "grid") {
-      initializeGridData();
+    if (viewMode === "grid" && inventoryItems.length !== lastInventoryLengthRef.current) {
+      const gridData = inventoryItems.map((item) => ({
+        id: item.id,
+        item: item.item,
+        description: item.description || "",
+        location: item.location || "",
+        condition: item.condition || "good",
+        quantity: item.quantity || 1,
+        estimated_value: item.estimated_value || 0,
+        notes: item.notes || "",
+        property_id: propertyId,
+        isNew: false,
+        isEdited: false,
+      }));
+      setGridItems(gridData);
+      lastInventoryLengthRef.current = inventoryItems.length;
     }
-  }, [inventoryItems, viewMode]);
+  }, [inventoryItems, viewMode, propertyId]);
 
   // Wrapper functions for event handlers
   const handleExcelImportWrapper = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -201,22 +215,6 @@ export default function PropertyInventory() {
   };
 
 
-  const initializeGridData = () => {
-    const gridData = inventoryItems.map((item) => ({
-      id: item.id,
-      item: item.item,
-      description: item.description || "",
-      location: item.location || "",
-      condition: item.condition || "good",
-      quantity: item.quantity || 1,
-      estimated_value: item.estimated_value || 0,
-      notes: item.notes || "",
-      property_id: propertyId,
-      isNew: false,
-      isEdited: false,
-    }));
-    setGridItems(gridData);
-  };
 
 
   const handleGridCellChange = (
@@ -669,6 +667,7 @@ export default function PropertyInventory() {
             property_id: propertyId,
             properties: property ? { name: property.name, address: property.address } : { name: '', address: '' }
           }))}
+          showChart={false}
         />
 
         <BulkEditDialog

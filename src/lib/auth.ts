@@ -1,4 +1,5 @@
 import { createClient as createServerClient } from '../../supabase/server';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * Enhanced sign-in that includes role in JWT claims
@@ -54,6 +55,8 @@ export async function signInWithRole(email: string, password: string) {
         await supabase.auth.updateUser({
           data: { role: userData.role }
         });
+        // Refresh the session to get updated JWT with role
+        await supabase.auth.refreshSession();
       } catch (jwtError) {
         console.error('Error updating JWT claims:', jwtError);
         // Continue anyway - role will be checked server-side
@@ -89,8 +92,8 @@ export async function signUpWithRole(
 }
 
 /**
- * Update user role and refresh JWT claims
- * Call this when admin changes a user's role
+ * Update user role in database
+ * Note: User must re-authenticate to get updated JWT with new role
  */
 export async function updateUserRole(userId: string, newRole: string) {
   try {
@@ -104,12 +107,19 @@ export async function updateUserRole(userId: string, newRole: string) {
 
     if (updateError) throw updateError;
 
-    // If updating current user, refresh their JWT
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user && user.id === userId) {
-      await supabase.auth.updateUser({
-        data: { role: newRole }
+    // Send notification to user about role change
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title: 'Role Updated',
+        message: `Your role has been changed to ${newRole}. Please sign out and sign back in to apply the changes.`,
+        type: 'info'
       });
+
+    if (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      // Continue anyway
     }
 
     return { error: null };
