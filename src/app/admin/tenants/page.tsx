@@ -265,23 +265,16 @@ export default function AdminTenants() {
     );
   }
   
-  function AdminTenantsContent() {
-    return (
-      <Suspense fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      }>
-        <AdminTenantsContent />
-      </Suspense>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-hero-gradient">
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
+      <div className="min-h-screen bg-hero-gradient">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -676,5 +669,6 @@ export default function AdminTenants() {
         </div>
       </div>
     </div>
+    </Suspense>
   );
 }
